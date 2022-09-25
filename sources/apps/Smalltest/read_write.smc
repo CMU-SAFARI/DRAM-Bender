@@ -1,0 +1,170 @@
+// Initialize register ids
+// Similar to #define
+casr = 0
+basr = 1
+rasr = 2
+bar = 7
+rar = 6
+car = 4
+pattern_reg = 12
+no_row_reg = 8
+no_bank_reg = 11
+no_cols_reg = 14
+loop_cols_reg = 13
+temp_pattern_reg = 15
+
+// Begin writing the program
+LI no_row_reg 32768 // Write 2^15 to no_row_Reg
+LI no_bank_reg 16   // write 16 to no_bank_reg
+
+// Set stride registers (not required if you
+// are not going to increment address registers
+// with ddr commands)
+LI casr 8  // set column address stride to 8
+LI basr 1  // set bas to 1
+LI rasr 1  // set ras to 1
+
+// Init pattern register, we are going to fill
+// dram with some random pattern.
+LI pattern_reg 0x1a2b3c4d 
+
+// Load the data register with the pattern
+// second argument here is the word offset
+// we are writing to in the data register
+// e.g. LDWD 0 pattern reg fills the first four bytes
+
+LDWD 0 pattern_reg
+LDWD 1 pattern_reg
+LDWD 2 pattern_reg
+LDWD 3 pattern_reg
+LDWD 4 pattern_reg
+LDWD 5 pattern_reg
+LDWD 6 pattern_reg
+LDWD 7 pattern_reg
+LDWD 8 pattern_reg
+LDWD 9 pattern_reg
+LDWD 10 pattern_reg
+LDWD 11 pattern_reg
+LDWD 12 pattern_reg
+LDWD 13 pattern_reg
+LDWD 14 pattern_reg
+LDWD 15 pattern_reg
+
+LI bar 0 // Initialize bank address register
+
+BANK_BEGIN: // Add label to loop over banks
+LI rar 0    // Reload rar per bank loop
+
+ROW_BEGIN:  // Add label to loop over rows
+LI car 0    // Reload car per row loop
+
+PRE bar     // PREcharge bar, don't increment, no precharge-all
+WAIT 11      // Insert seven cycles of NOPs
+
+ACT bar rar // ACTivate bar, rar
+WAIT 11
+
+// Each write will write a different pattern
+// "car++" indicates that we will increment
+// car by casr value.
+
+LI no_cols_reg 128
+LI loop_cols_reg 0
+
+WR_BEGIN:
+
+WR bar car++
+WAIT 3
+
+// Cyclic shift pattern register to add "randomness"
+SRC pattern_reg pattern_reg
+
+// Reload the wide data register
+LDWD 0 pattern_reg
+LDWD 1 pattern_reg
+LDWD 2 pattern_reg
+LDWD 3 pattern_reg
+LDWD 4 pattern_reg
+LDWD 5 pattern_reg
+LDWD 6 pattern_reg
+LDWD 7 pattern_reg
+LDWD 8 pattern_reg
+LDWD 9 pattern_reg
+LDWD 10 pattern_reg
+LDWD 11 pattern_reg
+LDWD 12 pattern_reg
+LDWD 13 pattern_reg
+LDWD 14 pattern_reg
+LDWD 15 pattern_reg
+
+// increment loop variable and iterate
+ADDI loop_cols_reg loop_cols_reg 1
+BL WR_BEGIN loop_cols_reg no_cols_reg
+
+// multiply pattern_reg by 3
+MOV temp_pattern_reg pattern_reg
+ADD pattern_reg pattern_reg temp_pattern_reg
+ADD pattern_reg pattern_reg temp_pattern_reg
+
+// Reload the wide data register
+LDWD 0 pattern_reg
+LDWD 1 pattern_reg
+LDWD 2 pattern_reg
+LDWD 3 pattern_reg
+LDWD 4 pattern_reg
+LDWD 5 pattern_reg
+LDWD 6 pattern_reg
+LDWD 7 pattern_reg
+LDWD 8 pattern_reg
+LDWD 9 pattern_reg
+LDWD 10 pattern_reg
+LDWD 11 pattern_reg
+LDWD 12 pattern_reg
+LDWD 13 pattern_reg
+LDWD 14 pattern_reg
+LDWD 15 pattern_reg
+
+WAIT 8
+PRE bar
+WAIT 3
+
+// Reload car, we are now going to read from DRAM
+LI car 0
+
+// Precharge the open bank
+PRE bar
+WAIT 11
+
+ACT bar rar
+WAIT 11
+
+// This is a basic primitive that can be used
+// to replicate instructions-commands
+// this block replicates the RD command 128 times
+// and adds it to the program
+times 128 {
+  RD bar car++
+  WAIT 7
+}
+
+WAIT 8
+PRE bar
+WAIT 3
+
+// Increment rar per row loop
+ADDI rar rar 1
+// if rar < no_row_reg, execute the "row loop" once more
+BL ROW_BEGIN rar no_row_reg
+
+ADDI bar bar 1
+BL BANK_BEGIN bar no_bank_reg
+
+WAIT 16
+
+// Tell softmc that the program has ended
+// This is important!
+END
+
+// Tell the parser the program definition has ended
+// This is even more important!!
+ENDPROGRAM

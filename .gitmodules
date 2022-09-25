@@ -1,0 +1,6 @@
+[submodule "sources/api/ext/pybind11"]
+	path = sources/api/ext/pybind11
+	url = https://github.com/pybind/pybind11.git
+[submodule "sources/apps/RowHammer/ext/spdlog"]
+	path = sources/apps/RowHammer/ext/spdlog
+	url = https://github.com/gabime/spdlog.git

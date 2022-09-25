@@ -1,0 +1,14 @@
+tRTP		= 7500
+tWTRc_S	= 2
+tWTRc_L	= 5
+tWR 		= 15000
+tMOD		= 36000
+tRCD 		= 16000
+tRC 		= 55000
+tRP 		= 15000
+tCCDc_S	= 4
+tCCDc_L	= 5
+tRAS 		= 39000
+tRRDc_S = 4
+tRRDc_L = 4
+tFAW 		=	20000

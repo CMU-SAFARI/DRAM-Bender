@@ -1,0 +1,102 @@
+// Initialize register ids
+// Similar to #define
+casr = 0
+basr = 1
+rasr = 2
+bar = 2
+rar = 3
+car = 4
+pattern_reg = 5
+no_row_reg = 6
+no_bank_reg = 7
+
+// Begin writing the program
+LI no_row_reg 32768 // Write 2^15 to no_row_Reg
+LI no_bank_reg 16   // write 16 to no_bank_reg
+
+// Set stride registers (not required if you
+// are not going to increment address registers
+// with ddr commands)
+LI casr 8  // set column address stride to 8
+LI basr 1  // set bas to 1
+LI rasr 1  // set ras to 1
+
+LI bar 0 // Initialize bank address register
+
+// Init pattern register, we are going to fill
+// dram with 0xffs.
+LI pattern_reg 0xffffffff 
+
+// Load the data register with the pattern
+// second argument here is the word offset
+// we are writing to in the data register
+// e.g. LDWD 0 pattern reg fills the first four bytes
+
+LDWD 0 pattern_reg
+LDWD 1 pattern_reg
+LDWD 2 pattern_reg
+LDWD 3 pattern_reg
+LDWD 4 pattern_reg
+LDWD 5 pattern_reg
+LDWD 6 pattern_reg
+LDWD 7 pattern_reg
+LDWD 8 pattern_reg
+LDWD 9 pattern_reg
+LDWD 10 pattern_reg
+LDWD 11 pattern_reg
+LDWD 12 pattern_reg
+LDWD 13 pattern_reg
+LDWD 14 pattern_reg
+LDWD 15 pattern_reg
+
+BANK_BEGIN: // Add label to loop over banks
+LI rar 0    // Reload rar per bank loop
+
+ROW_BEGIN:  // Add label to loop over rows
+LI car 0    // Reload car per row loop
+
+PRE bar     // PREcharge bar, don't increment, no precharge-all
+WAIT 7      // Insert seven cycles of NOPs
+
+ACT bar rar // ACTivate bar, rar
+WAIT 7
+
+// This is a basic primitive that can be used
+// to replicate instructions-commands
+// this block replicates the WR command 128 times
+// and adds it to the program
+times 128 {
+  WR bar car++
+  WAIT 3
+}
+
+// Reload car, we are now going to read from DRAM
+LI car 0
+
+// Wait tWR, might not be precise.
+WAIT 8
+PRE bar
+WAIT 7
+
+ACT bar rar
+WAIT 7
+
+times 128 {
+  RD bar car++
+  WAIT 3
+}
+
+WAIT 8
+PRE bar
+
+// Increment rar per row loop
+ADDI rar rar 1
+// if rar < no_row_reg, execute the "row loop" once more
+BL ROW_BEGIN rar no_row_reg
+
+ADDI bar bar 1
+BL BANK_BEGIN bar no_bank_reg
+
+// Tell softmc that the program has ended
+// This is important!
+END

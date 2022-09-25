@@ -1,0 +1,9 @@
+xdma/*.cmd
+xdma/*.d
+xdma/*.o
+xdma/*.ko
+xdma/*.o.cmd
+xdma/*.order
+xdma/*.mod
+xdma/*.mod.c
+xdma/*.symvers

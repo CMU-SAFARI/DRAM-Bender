@@ -1,0 +1,8 @@
+xpm_cdc.sv,systemverilog,xpm,../../tools/Xilinx/Vivado/2019.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv,incdir="$ref_dir/../../../ipstatic/hdl"incdir="../../../ipstatic/hdl"
+xpm_fifo.sv,systemverilog,xpm,../../tools/Xilinx/Vivado/2019.2/data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv,incdir="$ref_dir/../../../ipstatic/hdl"incdir="../../../ipstatic/hdl"
+xpm_memory.sv,systemverilog,xpm,../../tools/Xilinx/Vivado/2019.2/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv,incdir="$ref_dir/../../../ipstatic/hdl"incdir="../../../ipstatic/hdl"
+xpm_VCOMP.vhd,vhdl,xpm,../../tools/Xilinx/Vivado/2019.2/data/ip/xpm/xpm_VCOMP.vhd,incdir="$ref_dir/../../../ipstatic/hdl"incdir="../../../ipstatic/hdl"
+axis_infrastructure_v1_1_vl_rfs.v,verilog,axis_infrastructure_v1_1_0,../../../ipstatic/hdl/axis_infrastructure_v1_1_vl_rfs.v,incdir="$ref_dir/../../../ipstatic/hdl"incdir="../../../ipstatic/hdl"
+axis_clock_converter_v1_1_vl_rfs.v,verilog,axis_clock_converter_v1_1_21,../../../ipstatic/hdl/axis_clock_converter_v1_1_vl_rfs.v,incdir="$ref_dir/../../../ipstatic/hdl"incdir="../../../ipstatic/hdl"
+axis_clock_converter.v,verilog,xil_defaultlib,../../../../XUPVVH.srcs/sources_1/ip/axis_clock_converter/sim/axis_clock_converter.v,incdir="$ref_dir/../../../ipstatic/hdl"incdir="../../../ipstatic/hdl"
+glbl.v,Verilog,xil_defaultlib,glbl.v

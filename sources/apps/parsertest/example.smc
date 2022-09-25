@@ -1,0 +1,9 @@
+LI 0 8;
+LI 1 1;
+LI 2 1;
+LI 3 0;
+LI 4 0;
+LI 5 0;
+BEGIN:;
+WR 5 0 4 0 0 0, NOP, NOP, NOP;
+END;
