@@ -6,7 +6,7 @@ DRAM Bender is the next version of the [SoftMC memory testing infrastructure](ht
 
 We provide a) prebuilt binaries for quick installation and b) the source code (both in Verilog and C++) that you can modify as you wish.
 
-## Cite DRAM Bender
+## Cite DRAM Bender [Work-in-progress]
 
 Please cite the following paper if you find DRAM Bender useful:
 
