@@ -12,8 +12,8 @@ Please cite the following paper if you find DRAM Bender useful:
 
 A. Olgun, H. Hassan, A. G. Yaglikci, Y. C. Tugrul, L. Orosa, H. Luo, M. Patel, O. Ergin, O. Mutlu, "DRAM Bender: An Extensible and Versatile FPGA-based Infrastructure to Easily Test State-of-the-art DRAM Chips," arXiv:XXXX.YYYYY, Mar 2022
 
-Link to the PDF: https://arxiv.org/pdf/XXXX.YYYYY.pdf  
-Link to the abstract: https://arxiv.org/abs/XXXX.YYYYY
+Link to the PDF: https://arxiv.org/pdf/2211.05838  
+Link to the abstract: https://arxiv.org/abs/2211.05838
 
 Below is bibtex format for citation.
 ```
