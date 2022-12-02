@@ -31,7 +31,7 @@ We provide the sources to reproduce the results of two prior work: U-TRR ([PDF](
 
 U-TRR's sources are published as a separate repository and can be found [at this link](https://github.com/CMU-SAFARI/U-TRR).
 
-All sources required to reproduce QUAC-TRNG can be found under the `sources/apps/QUAC-TRNG` directory inside the DRAM-Bender repository.
+QUAC-TRNG's sources are published both as a separate repository [at this link](https://github.com/CMU-SAFARI/QUAC-TRNG), and under `sources/apps/QUAC-TRNG` directory inside this repository.
 
 ## Repository File Structure
 
