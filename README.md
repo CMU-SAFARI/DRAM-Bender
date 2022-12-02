@@ -33,6 +33,14 @@ U-TRR's sources are published as a separate repository and can be found [at this
 
 QUAC-TRNG's sources are published both as a separate repository [at this link](https://github.com/CMU-SAFARI/QUAC-TRNG), and under `sources/apps/QUAC-TRNG` directory inside this repository.
 
+We plan to open source the following prior research works that used DRAM Bender as part of future work:
+
+- Revisiting RowHammer: An Experimental Analysis of Modern DRAM Devices and Mitigation Techniques, [link to arXiv](https://arxiv.org/abs/2005.13121)
+- A Deeper Look into RowHammer's Sensitivities: Experimental Analysis of Real DRAM Chips and Implications on Future Attacks and Defenses, [link to arXiv](https://arxiv.org/abs/2110.10291)
+- Understanding RowHammer Under Reduced Wordline Voltage: An Experimental Study Using Real DRAM Devices, [link to arXiv](https://arxiv.org/abs/2206.09999)
+- TRRespass: Exploiting the Many Sides of Target Row Refresh, [link to arXiv](https://arxiv.org/abs/2004.01807), proof of concept already available [on Github](https://github.com/vusec/trrespass)
+- EDEN: Enabling Energy-Efficient, High-Performance Deep Neural Network Inference Using Approximate DRAM, [link to arXiv](https://arxiv.org/abs/1910.05340)
+
 ## Repository File Structure
 
 ```
