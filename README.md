@@ -423,6 +423,105 @@ DRAM Bender emitted DDR signals will be decoded by the DDR4 Adapter and proper (
 
 Users who wish to use DRAM Bender within designs which communicate to DRAM modules differently (e.g. another Xilinx IP) may want to modify this module.
 
+### Implementing New Instructions
+
+We explain the effort required to extend the system’s functionality over the example of adding the load/store (LD/ST) instructions to DRAM Bender’s ISA’s earlier version, which consisted of only the arithmetic, control, and miscellaneous instruction types listed in II. Adding the LD/ST instructions consists of two main steps:
+
+#### Modifying the hardware design
+
+First, we extend the hardware description of the decode stage to decode the LD/ST instructions into μ-ops. 
+
+```verilog
+// decode_stage.v, lines 159-178
+else if(instr[`MEM_OFFSET]) begin
+  case(instr[`FU_CODE_OFFSET +: 8])
+    `LD: begin
+      exe_uop_ns[`RS1 +: 4]    = instr[`DEC_RS1 +: 4];
+      exe_uop_ns[`RT  +: 4]    = instr[`DEC_RT +: 4];
+      exe_uop_ns[`IMD +: 16]   = instr[`DEC_IMD1  +: 16];
+      exe_uop_ns[`IS_MEM]      = `HIGH;
+      exe_uop_ns[`IS_LD]       = `HIGH;
+      exe_uop_ns[`HAS_IMD]     = `HIGH;
+    end
+    `ST: begin
+      exe_uop_ns[`RS1 +: 4]    = instr[`DEC_RS1 +: 4]; // The address base to write to
+      exe_uop_ns[`RS2 +: 4]    = instr[`DEC_RT  +: 4]; // The value to write
+      exe_uop_ns[`IMD +: 16]   = instr[`DEC_IMD1  +: 16];
+      exe_uop_ns[`IS_MEM]      = `HIGH;
+      exe_uop_ns[`IS_ST]       = `HIGH;
+      exe_uop_ns[`HAS_IMD]     = `HIGH;
+    end        
+  endcase
+end
+```
+
+By our design specification, LD/ST instructions access an on-chip memory. Second, we add a scratchpad on-chip memory to DRAM Bender’s design by instantiating a block ram (BRAM) using Vivado’s IP catalog. 
+
+```verilog
+// execute_stage.v, lines 113-117
+wire              mem_wen;
+wire              mem_ren;
+wire[9:0]         mem_addr;
+wire[31:0]        mem_wdata;
+wire[31:0]        mem_rdata;
+
+// execute_stage.v, lines 159-166
+scratchpad data_mem(
+    .addra(mem_addr),
+    .clka(clk),
+    .dina(mem_wdata),
+    .douta(mem_rdata),
+    .ena(mem_wen || mem_ren),
+    .wea(mem_wen)
+);
+```
+
+Third, we modify the hardware description of the execute stage to load data from and store data to the scratchpad memory when load and store instructions are executed. 
+
+```verilog
+// exe_pipeline.v, lines 136-142
+if(s2_uop[`IS_LD]) begin
+  s2_mem_ren = `HIGH;
+end
+if(s2_uop[`IS_ST]) begin
+  s2_mem_wdata = s2_rs2_data;
+  s2_mem_wen   = `HIGH;
+end
+```
+
+#### Modifying the software API
+
+We add two new functions in `instruction.cpp/h`, allowing users to insert load and store instructions into their programs.
+
+```c++
+// instruction.cpp, lines 165-188
+Inst SMC_LD(int rb, int offset, int rt)
+{
+  Inst op_code = (uint64_t)0x1 << __IS_MEM;
+  Inst fu_code = (uint64_t)__LD << __FU_CODE;
+  Inst s_reg   = rb;
+  Inst imd1    = offset << __IMD1;
+  Inst t_reg   = rt << __RT;
+
+  Inst inst    = op_code | fu_code | s_reg | imd1 | t_reg;
+
+  return inst;
+}
+Inst SMC_ST(int rb, int offset, int rv)
+{
+  Inst op_code = (uint64_t)0x1 << __IS_MEM;
+  Inst fu_code = (uint64_t)__ST << __FU_CODE;
+  Inst b_reg   = rb;
+  Inst imd1    = offset << __IMD1;
+  Inst v_reg   = rv << __RT; // We cannot have imd1 and rs2 present simultaneously
+
+  Inst inst    = op_code | fu_code | b_reg | imd1 | v_reg;
+
+  return inst;
+}
+```
+
+
 ## Known Issues:
 - Multi Rank SODIMMs are currently not supported.
 - Discrepancies between the API in the repository and the API described in our publication: We are working on developing a more clean API as described in the paper, the new API is still work in progress.
