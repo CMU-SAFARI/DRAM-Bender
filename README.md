@@ -35,6 +35,9 @@ QUAC-TRNG's sources are published both as a separate repository [at this link](h
 
 We plan to open source the following prior research works that used DRAM Bender as part of future work:
 
+- RowPress: Amplifying Read-Disturbance in Modern DRAM Chips, to appear in ISCA 2023
+- SpyHammer: Using RowHammer to Remotely Spy on Temperature, [link to arXiv](https://arxiv.org/abs/2210.04084)
+- HiRA: Hidden Row Activation for Reducing Refresh Latency of Off-the-Shelf DRAM Chips, [link to arXiv](https://arxiv.org/abs/2209.10198)
 - Revisiting RowHammer: An Experimental Analysis of Modern DRAM Devices and Mitigation Techniques, [link to arXiv](https://arxiv.org/abs/2005.13121)
 - A Deeper Look into RowHammer's Sensitivities: Experimental Analysis of Real DRAM Chips and Implications on Future Attacks and Defenses, [link to arXiv](https://arxiv.org/abs/2110.10291)
 - Understanding RowHammer Under Reduced Wordline Voltage: An Experimental Study Using Real DRAM Devices, [link to arXiv](https://arxiv.org/abs/2206.09999)
