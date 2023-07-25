@@ -70,12 +70,14 @@ We plan to open source the following prior research works that used DRAM Bender 
 - A Linux Host Machine, (We tested on Ubuntu 16.04, 18.04, 20.04)
 - DRAM Bender uses an 8-lane PCIe interface to communicate with the Host Machine. So, you would also need to attach the board to the  8x/16x PCIe slot on the motherboard of the Host Machine
 - One of the four FPGA boards: Bittware XUSP3S, XUPP3R, XUPVVH, Xilinx Alveo U200
-  - These boards should be connected to the host machine via a programming cable. Please refer to manufacturer data sheets for more information on how to use the programming cable.
+  - These boards should be connected to the host machine via a programming cable. Please refer to manufacturer data sheets or user guides (e.g., [this document](https://docs.xilinx.com/r/en-US/ug1289-u200-u250-reconfig-accel) for Alveo U200) for more information on how to use the programming cable.
+  - Make sure to install the Xilinx Cable Drivers. These drivers are not installed by default in some cases. Follow [this guide](https://docs.xilinx.com/r/2020.2-English/ug973-vivado-release-notes-install-license/Install-Cable-Drivers) to learn how to install cable drivers. 
 - A proper form factor memory attached to your FPGA board
 - If you want to build your own bitfile from the source:
   - Xilinx Vivado 2018.2 for the XUSP3S and XUPP3R boards
   - Xilinx Vivado 2019.2 for the XUPVVH board
   - Xilinx Vivado 2020.2 for the Alveo U200 board
+
 
 
 ### Overview of the Prebuilt Bitstreams
