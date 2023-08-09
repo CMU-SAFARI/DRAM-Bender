@@ -2,6 +2,13 @@
 
 DRAM Bender is an experimental FPGA-based memory controller design that can be used to develop tests for DDR4 [SO/R/U]DIMMs. DRAM Bender currently supports the *Bittware XUSP3S, XUPP3R, XUPVVH and Xilinx Alveo U200* boards. 
 
+<p align="center">
+<img src="images/overview.png" width="512"><br>
+	<em>An example DRAM Bender prototype.</em>
+</p>
+	
+
+
 DRAM Bender is the next version of the [SoftMC memory testing infrastructure](https://github.com/CMU-SAFARI/SoftMC). DRAM Bender introduces general purpose registers and a brand new DRAM Bender ISA to provide a programmable memory controller.
 
 We provide a) prebuilt binaries for quick installation and b) the source code (both in Verilog and C++) that you can modify as you wish.
@@ -24,6 +31,12 @@ Below is bibtex format for citation.
       howpublished={arXiv:2211.05838}
 }
 ```
+
+## More DRAM Bender Resources
+
+[DRAM Bender Tutorial Video](https://www.youtube.com/watch?v=FklVEsfdZCI): 43-minute tutorial on how to set up and use DRAM Bender.
+
+[ETH Projects & Seminars Course on DRAM Bender](https://safari.ethz.ch/projects_and_seminars/spring2023/doku.php?id=softmc)
 
 ## Prior Works that Use DRAM Bender
 
@@ -97,7 +110,16 @@ We provide a set of bitstreams in the `prebuilt` directory under four directorie
 </p>
 
 * XUPP3R: We provide three bitstreams for: (1) single rank x4 RDIMMs, (2) dual rank x8 RDIMMs, (3) single rank x8 UDIMMs.
+
+<p align="center">
+<img src="images/xupp3r.png" width="512">
+</p>
+
 * XUPVVH: We provide a single bitstream for x4 RDIMMs.
+
+<p align="center">
+<img src="images/xupvvh.png" width="512">
+</p>
 
 We provide a script (```prebuild/programFPGA.sh```) that programs the FPGA according to user-specified board, DIMM slot, DIMM type, the number of ranks and the DQ width. Run the script as ```./programFPGA.sh <board> <slot> <dimm_type> <num_rank> <dq_width>```
 
