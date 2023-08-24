@@ -17,10 +17,9 @@ We provide a) prebuilt binaries for quick installation and b) the source code (b
 
 Please cite the following paper if you find DRAM Bender useful:
 
-A. Olgun, H. Hassan, A. G. Yaglikci, Y. C. Tugrul, L. Orosa, H. Luo, M. Patel, O. Ergin, O. Mutlu, "DRAM Bender: An Extensible and Versatile FPGA-based Infrastructure to Easily Test State-of-the-art DRAM Chips," arXiv:2211.05838, Mar 2022
+[A. Olgun, H. Hassan, A. G. Yaglikci, Y. C. Tugrul, L. Orosa, H. Luo, M. Patel, O. Ergin, O. Mutlu, "DRAM Bender: An Extensible and Versatile FPGA-based Infrastructure to Easily Test State-of-the-art DRAM Chips", IEEE TCAD, June 2023.](https://ieeexplore.ieee.org/document/10141996)
 
 Link to the PDF: https://arxiv.org/pdf/2211.05838.pdf  
-Link to the abstract: https://arxiv.org/abs/2211.05838
 
 Below is bibtex format for citation.
 ```
