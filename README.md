@@ -23,11 +23,11 @@ Link to the PDF: https://arxiv.org/pdf/2211.05838.pdf
 
 Below is bibtex format for citation.
 ```
-@misc{olgun2022drambender,
+@article{olgun2023drambender,
       title={{DRAM Bender: An Extensible and Versatile FPGA-based Infrastructure to Easily Test State-of-the-art DRAM Chips}}, 
       author={Olgun, Ataberk and Hassan, Hasan and Yaglikci, A. Giray and Tugrul, Yahya Can and Orosa, Lois and Luo, Haocong and Patel, Minesh and Ergin, Oguz and Mutlu, Onur},
-      year={2022},
-      howpublished={arXiv:2211.05838}
+      year={2023},
+      journal={IEEE TCAD}
 }
 ```
 
