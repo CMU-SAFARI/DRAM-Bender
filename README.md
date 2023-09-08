@@ -197,7 +197,10 @@ From here on you may refer to the installation guide for XUSP3S.
 
 We recommend users who would like to test DDR4 SODIMMs obtain a SODIMM to DIMM adapter and use it on the widely available Alveo U200 board. We have tested the (**TODO**: model/make/link) DDR4 SODIMM to DIMM adapter for this purpose. The Alveo U200 DRAM Bender prototype can test all major DDR4 module form factors/types (UDIMMs, RDIMMs, and SODIMMs) with a SODIMM to DIMM adapter.
 
-(**TODO**: Photo of the setup with the adapter)
+<p align="center">
+<img src="images/sodimm_dimm_adapter.jpg" width="512"><br>
+	<em>An Alveo U200 board using the SODIMM to DIMM adapter.</em>
+</p>
 
 ## Simulating a DRAM Bender Design
 
