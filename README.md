@@ -193,6 +193,12 @@ You first need to modify the `project.vh` header file according to your DIMMs co
 
 From here on you may refer to the installation guide for XUSP3S.
 
+### Testing SODIMMs with the Alveo U200 board (this subsection is work in progress)
+
+We recommend users who would like to test DDR4 SODIMMs obtain a SODIMM to DIMM adapter and use it on the widely available Alveo U200 board. We have tested the (**TODO**: model/make/link) DDR4 SODIMM to DIMM adapter for this purpose. The Alveo U200 DRAM Bender prototype can test all major DDR4 module form factors/types (UDIMMs, RDIMMs, and SODIMMs) with a SODIMM to DIMM adapter.
+
+(**TODO**: Photo of the setup with the adapter)
+
 ## Simulating a DRAM Bender Design
 
 This section describes how to run a Vivado simulation of the DRAM Bender hardware. 
