@@ -1,6 +1,6 @@
 # DRAM Bender
 
-DRAM Bender is an experimental FPGA-based memory controller design that can be used to develop tests for DDR4 [SO/R/U]DIMMs. DRAM Bender currently supports the *Bittware XUSP3S, XUPP3R, XUPVVH and Xilinx Alveo U200* boards. 
+DRAM Bender is an experimental FPGA-based memory controller design that can be used to develop tests for DDR4 [SO/R/U]DIMMs and HBM2 chips. DRAM Bender currently supports the *Bittware XUSP3S, XUPP3R, XUPVVH, Xilinx Alveo U200, and Xilinx Alveo U50* boards. 
 
 <p align="center">
 <img src="images/overview.png" width="512"><br>
@@ -67,6 +67,7 @@ We plan to open source the following prior research works that used DRAM Bender 
 |       +-- U200/                   
 |       +-- VU095/                  # Vivado project for the XUSP3S board
 |       +-- XUPVVH/
+|       +-- XCU50/
 |       +-- XUSP3R/                 # Vivado project for the XUPP3R board
 +-- sources/                       
         +-- api/                    # DRAM Bender software API code
@@ -81,20 +82,20 @@ We plan to open source the following prior research works that used DRAM Bender 
 ### Prerequisites:
 - A Linux Host Machine, (We tested on Ubuntu 16.04, 18.04, 20.04)
 - DRAM Bender uses an 8-lane PCIe interface to communicate with the Host Machine. So, you would also need to attach the board to the  8x/16x PCIe slot on the motherboard of the Host Machine
-- One of the four FPGA boards: Bittware XUSP3S, XUPP3R, XUPVVH, Xilinx Alveo U200
+- One of the five FPGA boards: Bittware XUSP3S, XUPP3R, XUPVVH, Xilinx Alveo U200, and Xilinx Alveo U50
   - These boards should be connected to the host machine via a programming cable. Please refer to manufacturer data sheets or user guides (e.g., [this document](https://docs.xilinx.com/r/en-US/ug1289-u200-u250-reconfig-accel) for Alveo U200) for more information on how to use the programming cable.
   - Make sure to install the Xilinx Cable Drivers. These drivers are not installed by default in some cases. Follow [this guide](https://docs.xilinx.com/r/2020.2-English/ug973-vivado-release-notes-install-license/Install-Cable-Drivers) to learn how to install cable drivers. 
 - A proper form factor memory attached to your FPGA board
 - If you want to build your own bitfile from the source:
   - Xilinx Vivado 2018.2 for the XUSP3S and XUPP3R boards
   - Xilinx Vivado 2019.2 for the XUPVVH board
-  - Xilinx Vivado 2020.2 for the Alveo U200 board
+  - Xilinx Vivado 2020.2 for the Alveo U200 and the U50 boards
 
 
 
 ### Overview of the Prebuilt Bitstreams
 
-We provide a set of bitstreams in the `prebuilt` directory under four directories that contain the bitstreams for a specific FPGA board.
+We provide a set of bitstreams in the `prebuilt` directory under five directories that contain the bitstreams for a specific FPGA board.
 
 * XCU200: We provide four bitstreams for: (1) dual rank x8 RDIMMs, (2) dual rank x8 UDIMMs, (3) single rank x8 UDIMMs (you can just use the dual rank bitfile), (4) single rank X4 RDIMMs. All of these bitstreams allow DRAM Bender to work with the memory module plugged in on the module slot that is visible in the following picture.
 
@@ -119,6 +120,8 @@ We provide a set of bitstreams in the `prebuilt` directory under four directorie
 <p align="center">
 <img src="images/xupvvh.png" width="512">
 </p>
+
+* XCU50: We provide a single bitstream to test the HBM2 chip.
 
 We provide a script (```prebuild/programFPGA.sh```) that programs the FPGA according to user-specified board, DIMM slot, DIMM type, the number of ranks and the DQ width. Run the script as ```./programFPGA.sh <board> <slot> <dimm_type> <num_rank> <dq_width>```
 
