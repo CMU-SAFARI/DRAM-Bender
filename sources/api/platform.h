@@ -21,6 +21,7 @@ class SoftMCPlatform{
   public:
     SoftMCPlatform();
     SoftMCPlatform(bool);
+    SoftMCPlatform(int dimm_select);
     ~SoftMCPlatform();
     /**
      * Initializes the whole platform
@@ -60,6 +61,9 @@ class SoftMCPlatform{
      */
     void set_aref(bool on);
 
+    void read_HBM_temperature();
+    int return_HBM_temperature();
+
     /**
      * Used along with Program::dumpRegisters to read register content
      */
@@ -67,6 +71,7 @@ class SoftMCPlatform{
 
   private:
     bool is_dummy;
+    int dimm_select;
 
     BoardInterface *iface;
     void* instr_buf;

@@ -6,9 +6,10 @@
 #include <fcntl.h>
 #include <string.h>
 
-BoardInterface::BoardInterface(IFACE iface_type)
+BoardInterface::BoardInterface(IFACE iface_type, int dimm_select)
 {
   this -> iface_type = iface_type;
+  this -> dimm_select = dimm_select;
 }
 BoardInterface::~BoardInterface()
 {
@@ -24,23 +25,31 @@ int BoardInterface::init()
   {
     case IFACE::XDMA:
     {
-      int fpga_fd = open(TO_FPGA_DEFAULT.c_str(), O_RDWR);
+      int fpga_fd;
+      if (dimm_select == 0)
+        fpga_fd = open(TO_FPGA_DEFAULT.c_str(), O_RDWR);
+      else
+        fpga_fd = open("/dev/xdma0_h2c_1", O_RDWR);
+  
       if(fpga_fd<0)
       {
         std::cerr << "Open to card failed!" << std::endl;
         return 1;
       }
       else
-        std::cout << "Opened " << TO_FPGA_DEFAULT <<  " -> " << fpga_fd << std::endl;
+        std::cout << "Opened " << (dimm_select == 0 ? TO_FPGA_DEFAULT : "/dev/xdma0_h2c_1") <<  " -> " << fpga_fd << std::endl;
       to_card = fpga_fd;
-      fpga_fd = open(FROM_FPGA_DEFAULT.c_str(), O_RDWR);
+      if (dimm_select == 0)
+        fpga_fd = open(FROM_FPGA_DEFAULT.c_str(), O_RDWR);
+      else
+        fpga_fd = open("/dev/xdma0_c2h_1", O_RDWR);
       if(fpga_fd<0)
       {
         std::cerr << "Open to host failed!" << std::endl;
         return 1;
       }
       else
-        std::cout << "Opened " << FROM_FPGA_DEFAULT <<  " -> " << fpga_fd << std::endl;
+        std::cout << "Opened " << (dimm_select == 0 ? FROM_FPGA_DEFAULT : "/dev/xdma0_c2h_1") <<  " -> " << fpga_fd << std::endl;
       from_card = fpga_fd;
       // allocate page size aligned X page size regions to our buffers
       if (posix_memalign((void **)&send_buf, 4096 /*alignment */ , SEND_BUF_SIZE + (4096-(SEND_BUF_SIZE % 4096))) != 0)
@@ -104,6 +113,7 @@ int BoardInterface::xdma_send(void* data, const uint size)
   while (count < size) {
     /* write data to file from memory buffer */
     rc = write(fd, buf, size);
+    // std::cout << rc << std::endl;
     assert(rc == size || rc == 0);
     count += rc;
   }

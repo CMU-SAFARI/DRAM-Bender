@@ -20,13 +20,15 @@
 `define DDR_CODE_OFFSET   12
 `define DEC_CAR           4
 `define DEC_BAR           0
+`define DEC_SEL_CH        0
 `define DEC_RAR           4
 `define DEC_INC_BAR       10
 `define DEC_PRE_ALL       11
 `define DEC_INC_RAR       11
 `define DEC_INC_CAR       11
 `define DEC_AP            9
-`define DEC_BL4           8
+`define DEC_BL4           8 // deprecated
+`define DEC_RANK          8
 // function codes - exe
 `define ADD               0
 `define ADDI              1
@@ -54,6 +56,7 @@
 `define PRE               2
 `define ACT               3
 `define ZQ                4
+`define SEL_CH            4
 `define REF               5
 `define NOP               7
 
@@ -63,6 +66,7 @@
 `define IS_PRE            2
 `define IS_ACT            3
 `define IS_ZQ             4
+`define IS_SEL_CH         4
 `define IS_REF            5
 `define CAR               6  // column address register identifier
 `define RAR               10 // row address register identifier
@@ -72,10 +76,12 @@
 `define INC_RAR           20
 `define INC_BAR           21
 `define IS_NOP            22
-`define IS_BL4            23
+`define IS_BL4            23 // deprecated
+`define IS_RANK           23 
 `define DO_AP             24
 `define IS_SRE            25
 `define IS_SRX            26
+`define HBM_CHANNEL       27  // HBM channel identifier
 // SoftMC exe uops
 `define IS_ADD            0
 `define IS_SUB            1

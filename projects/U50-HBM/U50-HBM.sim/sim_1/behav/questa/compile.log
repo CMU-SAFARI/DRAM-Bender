@@ -1,0 +1,79 @@
+** Warning: (vlib-34) Library already exists at "questa_lib/work".
+** Warning: (vlib-34) Library already exists at "questa_lib/msim".
+** Warning: (vlib-34) Library already exists at "questa_lib/msim/xil_defaultlib".
+QuestaSim vmap 2020.1 Lib Mapping Utility 2020.01 Jan 28 2020
+vmap xil_defaultlib questa_lib/msim/xil_defaultlib 
+Modifying modelsim.ini
+QuestaSim-64 vlog 2020.1 Compiler 2020.01 Jan 28 2020
+Start time: 17:31:21 on Aug 31,2022
+vlog -incr "+notimingchecks" -work xil_defaultlib "+incdir+../../../../verilog" "+incdir+../../../../../../sources/hdl/header_verilog" "+incdir+../../../../XUPVVH.srcs/sources_1/ip/hbm_0/hdl/rtl" "+incdir+../../../../XUPVVH.ip_user_files/ipstatic/verif/model" "+incdir+/usr/pack/vitis-2020.2-kgf/Vivado/2020.2/data/xilinx_vip/include" ../../../../XUPVVH.srcs/sources_1/ip/rdback_fifo/sim/rdback_fifo.v ../../../../XUPVVH.srcs/sources_1/ip/instr_blk_mem/sim/instr_blk_mem.v ../../../../XUPVVH.srcs/sources_1/ip/instr_blk_mem_sim/sim/instr_blk_mem_sim.v ../../../../XUPVVH.srcs/sources_1/ip/pr_ref_mem/sim/pr_ref_mem.v ../../../../XUPVVH.srcs/sources_1/ip/zq_calib_mem/sim/zq_calib_mem.v ../../../../XUPVVH.srcs/sources_1/ip/pr_read_mem/sim/pr_read_mem.v ../../../../XUPVVH.srcs/sources_1/ip/scratchpad/sim/scratchpad.v ../../../../XUPVVH.srcs/sources_1/ip/cdc_fifo/sim/cdc_fifo.v 
+-- Compiling module rdback_fifo
+-- Compiling module instr_blk_mem
+-- Compiling module instr_blk_mem_sim
+-- Compiling module pr_ref_mem
+-- Compiling module zq_calib_mem
+-- Compiling module pr_read_mem
+-- Compiling module scratchpad
+-- Compiling module cdc_fifo
+
+Top level modules:
+	rdback_fifo
+	instr_blk_mem
+	instr_blk_mem_sim
+	pr_ref_mem
+	zq_calib_mem
+	pr_read_mem
+	scratchpad
+	cdc_fifo
+End time: 17:31:21 on Aug 31,2022, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+QuestaSim-64 vlog 2020.1 Compiler 2020.01 Jan 28 2020
+Start time: 17:31:21 on Aug 31,2022
+vlog -incr "+notimingchecks" -sv -L hbm_v1_0_9 -work xil_defaultlib "+incdir+../../../../verilog" "+incdir+../../../../../../sources/hdl/header_verilog" "+incdir+../../../../XUPVVH.srcs/sources_1/ip/hbm_0/hdl/rtl" "+incdir+../../../../XUPVVH.ip_user_files/ipstatic/verif/model" "+incdir+/usr/pack/vitis-2020.2-kgf/Vivado/2020.2/data/xilinx_vip/include" ../../../../XUPVVH.srcs/sources_1/ip/hbm_0/hdl/rtl/hbm_v1_0_9.sv ../../../../XUPVVH.srcs/sources_1/ip/hbm_0/verif/model/hbm_model.sv ../../../../XUPVVH.srcs/sources_1/ip/hbm_0/sim/hbm_0.sv 
+-- Compiling module hbm_v1_0_9
+-- Compiling module HBM
+-- Compiling module hbm_0
+
+Top level modules:
+	HBM
+	hbm_0
+End time: 17:31:22 on Aug 31,2022, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
+QuestaSim-64 vlog 2020.1 Compiler 2020.01 Jan 28 2020
+Start time: 17:31:22 on Aug 31,2022
+vlog -incr "+notimingchecks" -work xil_defaultlib "+incdir+../../../../verilog" "+incdir+../../../../../../sources/hdl/header_verilog" "+incdir+../../../../XUPVVH.srcs/sources_1/ip/hbm_0/hdl/rtl" "+incdir+../../../../XUPVVH.ip_user_files/ipstatic/verif/model" "+incdir+/usr/pack/vitis-2020.2-kgf/Vivado/2020.2/data/xilinx_vip/include" ../../../../XUPVVH.srcs/sources_1/new/HBM_adapter.v ../../../../XUPVVH.srcs/sources_1/new/HBM_interface.v ../../../../XUPVVH.srcs/sources_1/new/cdc_HBM_to_rbe.v ../../../../XUPVVH.srcs/sources_1/new/cmd_buf.v ../../../../XUPVVH.srcs/sources_1/imports/new/cmd_gen.v ../../../../XUPVVH.srcs/sources_1/imports/new/controller_top.v ../../../../../../sources/hdl/verilog/ddr_pipeline.v ../../../../../../sources/hdl/verilog/decode_stage.v ../../../../../../sources/hdl/verilog/diff_shift_reg.v ../../../../../../sources/hdl/verilog/exe_pipeline.v ../../../../../../sources/hdl/verilog/execute_stage.v ../../../../../../sources/hdl/verilog/fetch_stage.v ../../../../../../sources/hdl/verilog/frontend.v ../../../../../../sources/hdl/verilog/maintenance_controller.v ../../../../../../sources/hdl/verilog/pop_count4.v ../../../../../../sources/hdl/verilog/pre_decode.v ../../../../../../sources/hdl/verilog/readback_engine.v ../../../../../../sources/hdl/verilog/register_file.v ../../../../../../sources/hdl/verilog/softmc_pipeline.v ../../../../verilog/softmc_top.v ../../../../XUPVVH.srcs/sim_1/new/sim_tb_top.v 
+-- Compiling module HBM_adapter
+-- Compiling module HBM_interface
+-- Compiling module cdc_HBM_to_rbe
+-- Compiling module cmd_buf
+-- Compiling module cmd_gen
+-- Compiling module controller_top
+-- Compiling module ddr_pipeline
+-- Compiling module decode_stage
+-- Compiling module diff_shift_reg
+-- Compiling module exe_pipeline
+-- Compiling module execute_stage
+-- Compiling module fetch_stage
+-- Compiling module frontend
+-- Compiling module maintenance_controller
+-- Compiling module pop_count4
+-- Compiling module pre_decode
+-- Compiling module readback_engine
+-- Compiling module register_file
+-- Compiling module softmc_pipeline
+-- Compiling module softmc_top
+-- Compiling module sim_tb_top
+
+Top level modules:
+	sim_tb_top
+End time: 17:31:22 on Aug 31,2022, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+QuestaSim vlog 2020.1 Compiler 2020.01 Jan 28 2020
+Start time: 17:31:22 on Aug 31,2022
+vlog -work xil_defaultlib glbl.v 
+-- Compiling module glbl
+
+Top level modules:
+	glbl
+End time: 17:31:23 on Aug 31,2022, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0

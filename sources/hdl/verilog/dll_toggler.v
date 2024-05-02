@@ -1,5 +1,5 @@
 `include "parameters.vh"
-
+`define CKE_WIDTH 2
 module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRAM_CMD_SLOTS = 4,
 										DATA_BUF_ADDR_WIDTH = 5, DBUF_WIDTH = 4, DQ_BURST = 8)
 
@@ -12,7 +12,7 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
   
   // ----------  DDR4 Signals  ----------
   output [7:0]                                      mc_ACT_n,  // DRAM ACT_n command signal for four DRAM clock cycles.
-  output [`ADDR_WIDTH*8-1:0]                        mc_ADR,    // DRAM address. There are 8 bits in the fabric interface for each address bit on the DRAM bus.
+  output [17*8-1:0]                                 mc_ADR,    // DRAM address. There are 8 bits in the fabric interface for each address bit on the DRAM bus.
   output [`BANK_WIDTH*8-1:0]                        mc_BA,     // DRAM bank address. 8 bits for each DRAM bank address.
   output [`BG_WIDTH*8-1:0]                          mc_BG,     // DRAM bank group address.
   output [`CS_WIDTH*8-1:0]                          mc_CS_n,   // DRAM CS_n
@@ -25,7 +25,7 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
     
   wire [13:0] MR1_CONF = 14'b00001100000000;  
     
-  reg [`ADDR_WIDTH*8-1:0]       ADR_ns, ADR_r;
+  reg [17*8-1:0]       ADR_ns, ADR_r;
   reg [`BANK_WIDTH*8-1:0]       BA_ns, BA_r;
   reg [`BG_WIDTH*8-1:0]         BG_ns, BG_r;
   reg [`CS_WIDTH*8-1:0]         CS_n_ns, CS_n_r;
@@ -83,7 +83,7 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
   always @* begin
     // Set bank and bank group signals
     dllt_done  = `LOW;
-    ADR_ns     = {`ADDR_WIDTH*8{`HIGH}};
+    ADR_ns     = {17*8{`HIGH}};
     BG_ns      = {`BG_WIDTH*8{`LOW}};
     BA_ns      = {`BANK_WIDTH*8{`LOW}};
     CS_n_ns    = {`CS_WIDTH*8{`HIGH}}; // by default we don't issue any commands
@@ -95,9 +95,9 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
       IDLE_S: begin
         if(toggle_valid) begin
           CS_n_ns[1:0] = {2*`CS_WIDTH{`LOW}};
-          ADR_ns[`ADDR_WIDTH*8-3*8 +: 2] = {2{`LOW}};  // WE
-          ADR_ns[`ADDR_WIDTH*8-2*8 +: 2] = {2{`HIGH}}; // ~CAS
-          ADR_ns[`ADDR_WIDTH*8-8   +: 2] = {2{`LOW}};  // RAS
+          ADR_ns[17*8-3*8 +: 2] = {2{`LOW}};  // WE
+          ADR_ns[17*8-2*8 +: 2] = {2{`HIGH}}; // ~CAS
+          ADR_ns[17*8-8   +: 2] = {2{`LOW}};  // RAS
           ADR_ns[10*8 +: 2]              = {2{`HIGH}}; // Pre ALL
           wait_ns                        = T_PRECHARGE;
           state_ns                       = IDLE_WAIT_S;
@@ -111,9 +111,9 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
       end
       SET_MR_1_S: begin
         CS_n_ns[1:0] = {2*`CS_WIDTH{`LOW}};
-        ADR_ns[`ADDR_WIDTH*8-3*8 +: 2] = {2{`LOW}};  // WE
-        ADR_ns[`ADDR_WIDTH*8-2*8 +: 2] = {2{`LOW}};  // CAS
-        ADR_ns[`ADDR_WIDTH*8-8   +: 2] = {2{`LOW}};  // RAS
+        ADR_ns[17*8-3*8 +: 2] = {2{`LOW}};  // WE
+        ADR_ns[17*8-2*8 +: 2] = {2{`LOW}};  // CAS
+        ADR_ns[17*8-8   +: 2] = {2{`LOW}};  // RAS
         for(adr_bit_i = 0 ; adr_bit_i < 14 ; adr_bit_i = adr_bit_i + 1) begin
             ADR_ns[adr_bit_i*8 +: 2] =
                       {2{MR1_CONF[adr_bit_i]}};
@@ -133,9 +133,9 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
       ENTER_SELF_REF_S: begin
         CKE_ns = `LOW;
         CS_n_ns[1:0] = {2*`CS_WIDTH{`LOW}};
-        ADR_ns[`ADDR_WIDTH*8-3*8 +: 2] = {2{`HIGH}};  // ~WE
-        ADR_ns[`ADDR_WIDTH*8-2*8 +: 2] = {2{`LOW}};  // CAS
-        ADR_ns[`ADDR_WIDTH*8-8   +: 2] = {2{`LOW}};  // RAS
+        ADR_ns[17*8-3*8 +: 2] = {2{`HIGH}};  // ~WE
+        ADR_ns[17*8-2*8 +: 2] = {2{`LOW}};  // CAS
+        ADR_ns[17*8-8   +: 2] = {2{`LOW}};  // RAS
         state_ns = WAIT_ENTER_SELF_REF_S;
         wait_ns  = T_CKSRE;
       end
@@ -161,9 +161,9 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
       EXIT_SELF_REF_S: begin
         CKE_ns = {`CKE_WIDTH*8{`HIGH}};
         CS_n_ns[7:0] = {8*`CS_WIDTH{`HIGH}};
-        ADR_ns[`ADDR_WIDTH*8-3*8 +: 2] = {2{`HIGH}};  // ~WE
-        ADR_ns[`ADDR_WIDTH*8-2*8 +: 2] = {2{`HIGH}};  // CAS
-        ADR_ns[`ADDR_WIDTH*8-8   +: 2] = {2{`HIGH}};  // RAS
+        ADR_ns[17*8-3*8 +: 2] = {2{`HIGH}};  // ~WE
+        ADR_ns[17*8-2*8 +: 2] = {2{`HIGH}};  // CAS
+        ADR_ns[17*8-8   +: 2] = {2{`HIGH}};  // RAS
         state_ns = WAIT_EXIT_SELF_REF_S;
         wait_ns  = T_XS;
       end
@@ -186,7 +186,7 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
       wait_r    <= `LOW;
       clk_sel_r <= `LOW;
       CKE_r     <= {`CKE_WIDTH*8{`HIGH}};
-      ADR_r      = {`ADDR_WIDTH*8{`LOW}};
+      ADR_r      = {17*8{`LOW}};
       BG_r       = {`BG_WIDTH*8{`LOW}};
       BA_r       = {`BANK_WIDTH*8{`LOW}};
       CS_n_r     = {`CS_WIDTH*8{`HIGH}};

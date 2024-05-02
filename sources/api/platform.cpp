@@ -22,6 +22,7 @@ SoftMCPlatform::SoftMCPlatform()
   // 32 KB large read buffer
   is_dummy = false;
   xdma_recv_buf = malloc(32*1024);
+  this->dimm_select = 0; // by default, use DIMM 0 in C3 (or A in the diagram on the spreadsheet)
 
   #ifdef PYSMC
   py_data_buffer = (uint8_t*)malloc(32*1024*sizeof(uint8_t));
@@ -33,6 +34,20 @@ SoftMCPlatform::SoftMCPlatform(bool sandbox)
   // 32 KB large read buffer
   is_dummy = sandbox;
   xdma_recv_buf = malloc(32*1024);
+  this->dimm_select = 0;
+}
+
+SoftMCPlatform::SoftMCPlatform(int dimm_select)
+{
+  // 32 KB large read buffer
+  is_dummy = false;
+  xdma_recv_buf = malloc(32*1024);
+
+  this->dimm_select = dimm_select;
+
+  #ifdef PYSMC
+  py_data_buffer = (uint8_t*)malloc(32*1024*sizeof(uint8_t));
+  #endif
 }
 
 SoftMCPlatform::~SoftMCPlatform(){
@@ -66,11 +81,14 @@ int SoftMCPlatform::init(){
     instr_buf = malloc(INSTR_BUF_SIZE);
     memset(instr_buf, 0, INSTR_BUF_SIZE);
 
-    iface = new BoardInterface(BoardInterface::IFACE::XDMA);
-    if(!iface -> init())
-      return SOFTMC_SUCCESS;
-    else
+    iface = new BoardInterface(BoardInterface::IFACE::XDMA, this->dimm_select);
+  
+    int init = iface -> init();
+
+    if (init)
       return SOFTMC_ERR;
+
+    return SOFTMC_SUCCESS;
   }
 }
 
@@ -120,6 +138,7 @@ void SoftMCPlatform::execute(Program &prog)
       receiver.join();
 
     receiver = std::thread(&SoftMCPlatform::consumeData, this);
+
     int sent = iface -> sendData(instr_buf, bytes*4 /*in bytes*/);
     memset(instr_buf, 0, bytes*4);
     free(iseq);
@@ -143,12 +162,13 @@ void SoftMCPlatform::consumeData()
       xdma_read_size = recvd-32;
     xdma_read_size /= 4;
     int total_size = xdma_read_size;
+
     int pushsz = api_recv_buf.push(((int*) xdma_recv_buf), xdma_read_size);
     while(pushsz < total_size)
       pushsz += api_recv_buf.push(((int*) xdma_recv_buf) + pushsz, xdma_read_size = (total_size - pushsz));
 
-//    printf("SoftMCPlatform::consumedata(): spsc filled with %d beats of data\n", pushsz);
-//    printf("Consume total: %d\n",++consume_total);
+  //  printf("SoftMCPlatform::consumedata(): spsc filled with %d beats of data\n", pushsz);
+  //  printf("Consume total: %d\n",++consume_total);
 
     assert(pushsz == total_size &&
       "Unexpected amount of data pushed into spsc\n");
@@ -270,6 +290,36 @@ void SoftMCPlatform::set_aref(const bool on)
     // else
     //   std::cout << (on ? "Enabled" : "Disabled") << " autorefresh!" << std::endl;
   }
+}
+
+void SoftMCPlatform::read_HBM_temperature()
+{
+    ((uint8_t*) instr_buf)[8] = (uint8_t) 0x10;
+    int sent = iface -> sendData(instr_buf, 32 /*in bytes*/);
+    // We do not need to zero out the whole buffer
+    memset(instr_buf, 0, 512);
+
+    sent = iface -> sendData(instr_buf, 512 /*in bytes*/);
+
+    int recvd = iface -> recvData((void*)xdma_recv_buf, 32*1024);
+
+    printf("Temp1: %d Celsius\n", ((uint8_t*) xdma_recv_buf)[32]);
+    printf("Temp2: %d Celsius\n", ((uint8_t*) xdma_recv_buf)[33]);
+}
+
+int SoftMCPlatform::return_HBM_temperature()
+{
+    ((uint8_t*) instr_buf)[8] = (uint8_t) 0x10;
+    int sent = iface -> sendData(instr_buf, 32 /*in bytes*/);
+    // We do not need to zero out the whole buffer
+    memset(instr_buf, 0, 512);
+
+    sent = iface -> sendData(instr_buf, 512 /*in bytes*/);
+
+    int recvd = iface -> recvData((void*)xdma_recv_buf, 32*1024);
+
+    // Return stack 2's temperature
+    return (int)(((uint8_t*) xdma_recv_buf)[33]);
 }
 
 void SoftMCPlatform::readRegisterDump()

@@ -103,7 +103,7 @@ Inst SMC_LDPC(PC_TYPE pc_type, int rt)
     case PC_TYPE::ACT:
       pc_reg = 3;
       break;
-    case PC_TYPE::ZQ:
+    case PC_TYPE::SEL_CH:
       pc_reg = 4;
       break;
     case PC_TYPE::REF:
@@ -229,76 +229,92 @@ Inst SMC_INFO(int rdcnt)
   Inst fu_code = (uint64_t)__INFO << __FU_CODE;
   return op_code | fu_code | (uint64_t) rdcnt;
 }
-Mininst SMC_WRITE(int bar, int ibar, int car, int icar, int BL4, int ap)
+Mininst SMC_WRITE(int bar, int ibar, int car, int icar, int rank, int ap)
 {
   Mininst fu_code   = ((uint64_t)__WRITE) << __DDR_CMD;
   Mininst i_bar     = bar;
   Mininst i_car     = car << __DDR_CAR;
   Mininst i_ibar    = ibar << __DDR_IBAR;
   Mininst i_icar    = icar << __DDR_ICAR;
-  Mininst i_BL4     = BL4 << __DDR_BL4;
+  Mininst i_rank    = rank << __DDR_RANK;
   Mininst i_ap      = ap <<__DDR_AP;
 
   Mininst inst = fu_code | i_bar | i_car | i_ibar |
-          i_icar | i_BL4 | i_ap;
+          i_icar | i_rank | i_ap;
 
   return inst;
 }
-Mininst SMC_READ(int bar, int ibar, int car, int icar, int BL4, int ap)
+Mininst SMC_READ(int bar, int ibar, int car, int icar, int rank, int ap)
 {
   Mininst fu_code   = ((uint64_t)__READ) << __DDR_CMD;
   Mininst i_bar     = bar;
   Mininst i_car     = car << __DDR_CAR;
   Mininst i_ibar    = ibar << __DDR_IBAR;
   Mininst i_icar    = icar << __DDR_ICAR;
-  Mininst i_BL4     = BL4 << __DDR_BL4;
+  Mininst i_rank    = rank << __DDR_RANK;
   Mininst i_ap      = ap <<__DDR_AP;
 
   Mininst inst = fu_code | i_bar | i_car | i_ibar |
-          i_icar | i_BL4 | i_ap;
+          i_icar | i_rank | i_ap;
 
   return inst;
 }
-Mininst SMC_PRE(int bar, int ibar, int pall)
+Mininst SMC_PRE(int bar, int ibar, int pall, int rank)
 {
   Mininst fu_code   = ((uint64_t)__PRE) << __DDR_CMD;
   Mininst i_bar     = bar;
   Mininst i_ibar    = ibar << __DDR_IBAR;
   Mininst i_pall    = pall << __DDR_PALL;
+  Mininst i_rank    = rank << __DDR_RANK;
 
-  Mininst inst = fu_code | i_bar | i_ibar | i_pall;
+
+  Mininst inst = fu_code | i_bar | i_ibar | i_pall | i_rank;
 
   return inst;
 }
-Mininst SMC_ACT(int bar, int ibar, int rar, int irar)
+Mininst SMC_ACT(int bar, int ibar, int rar, int irar, int rank)
 {
   Mininst fu_code   = ((uint64_t)__ACT) << __DDR_CMD;
   Mininst i_bar     = bar;
   Mininst i_rar     = rar << __DDR_RAR;
   Mininst i_ibar    = ibar << __DDR_IBAR;
   Mininst i_irar    = irar << __DDR_IRAR;
+  Mininst i_rank    = rank << __DDR_RANK;
 
-  Mininst inst = fu_code | i_bar | i_rar | i_ibar | i_irar;
+
+  Mininst inst = fu_code | i_bar | i_rar | i_ibar | i_irar | i_rank;
 
   return inst;
 }
-Mininst SMC_ZQ()
-{
-  Mininst fu_code   = ((uint64_t)__ZQ) << __DDR_CMD;
 
-  return fu_code;
+Mininst SMC_SEL_CH(int channel, int pseudo_channel)
+{
+  Mininst fu_code   = ((uint64_t)__SEL_CH) << __DDR_CMD;
+  Mininst i_rank    = pseudo_channel << __DDR_RANK;
+  Mininst i_channel = channel;
+
+  Mininst inst = fu_code | i_rank | i_channel;
+
+  return inst;
 }
-Mininst SMC_REF()
+
+Mininst SMC_REF(int rank)
 {
   Mininst fu_code   = ((uint64_t)__REF) << __DDR_CMD;
+  Mininst i_rank    = rank << __DDR_RANK;
 
-  return fu_code;
+  Mininst inst = fu_code | i_rank; 
+
+  return inst;
 }
-Mininst SMC_NOP()
+Mininst SMC_NOP(int rank)
 {
   Mininst fu_code   = ((uint64_t)__NOP) << __DDR_CMD;
+  Mininst i_rank    = rank << __DDR_RANK;
 
-  return fu_code;
+  Mininst inst = fu_code | i_rank;
+  
+  return inst;
 }
 Inst SMC_SRE()
 {
@@ -455,7 +471,7 @@ void decode_inst(Inst inst)
               printf("LDPC r%d ACT_COUNTER", rt);
               break;
             case 4:
-              printf("LDPC r%d ZQ_COUNTER", rt);
+              printf("LDPC r%d SEL_CH_COUNTER", rt);
               break;
             case 5:
               printf("LDPC r%d REF_COUNTER", rt);
@@ -538,32 +554,32 @@ void decode_ddr(Mininst i)
   int irar     = (i >> __DDR_IRAR) & 0x1;
   int pall     = (i >> __DDR_PALL) & 0x1;
   int ap       = (i >> __DDR_AP) & 0x1;
-  int bc       = (i >> __DDR_BL4) & 0x1;
+  int rank     = (i >> __DDR_RANK) & 0x1;
 
   switch(ddr_code)
   {
     case __WRITE:
-      printf("WR r%d%s r%d%s%s%s", bar, ibar?"++":"", car, icar?"++":"",
-        ap?" AP":"",bc?" BC":"");
+      printf("WR r%d%s r%d%s%s %d", bar, ibar?"++":"", car, icar?"++":"",
+        ap?" AP":"", rank);
       break;
     case __READ:
-      printf("RD r%d%s r%d%s%s%s", bar, ibar?"++":"", car, icar?"++":"",
-        ap?" AP":"",bc?" BC":"");
+      printf("RD r%d%s r%d%s%s %d", bar, ibar?"++":"", car, icar?"++":"",
+        ap?" AP":"", rank);
       break;
     case __PRE:
-      printf("PRE r%d%s%s", bar, ibar?"++":"", pall?" PALL":"");
+      printf("PRE r%d%s%s %d", bar, ibar?"++":"", pall?" PALL":"", rank);
       break;
     case __ACT:
-      printf("ACT r%d%s r%d%s", bar, ibar?"++":"", rar, irar?"++":"");
+      printf("ACT r%d%s r%d%s %d", bar, ibar?"++":"", rar, irar?"++":"", rank);
       break;
-    case __ZQ:
-      printf("ZQ");
+    case __SEL_CH:
+      printf("SEL_CH %d", rank);
       break;
     case __REF:
-      printf("REF");
+      printf("REF %d", rank);
       break;
     case __NOP:
-      printf("NOP");
+      printf("NOP %d", rank);
       break;
   }
 }

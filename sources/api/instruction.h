@@ -31,7 +31,7 @@
 #define __DDR_IRAR  11
 #define __DDR_PALL  11
 #define __DDR_AP    9
-#define __DDR_BL4   8
+#define __DDR_RANK  8
 // EXE function codes
 #define __ADD   0
 #define __ADDI  1
@@ -55,13 +55,13 @@
 #define __LD    0
 #define __ST    1
 // DDR function codes
-#define __WRITE 8
-#define __READ  9
-#define __PRE   10
-#define __ACT   11
-#define __ZQ    12
-#define __REF   13
-#define __NOP   15
+#define __WRITE   8
+#define __READ    9
+#define __PRE     10
+#define __ACT     11
+#define __SEL_CH  12
+#define __REF     13
+#define __NOP     15
 
 // 64 bit instructions
 typedef uint64_t Inst;
@@ -69,7 +69,7 @@ typedef uint64_t Inst;
 typedef uint16_t Mininst;
 
 //Counter types for LDPC Inst
-enum class PC_TYPE { WRITE, READ, PRE, ACT, ZQ, REF, CYC };
+enum class PC_TYPE { WRITE, READ, PRE, ACT, SEL_CH, REF, CYC };
 
 /**
  * Load a word from memory into rt
@@ -133,47 +133,50 @@ Inst SMC_SLEEP(uint32_t samt);
  * @param ibar increment BAR (BAR=BAR+BASR) after issuing the write
  * @param car column address register ID
  * @param icar increment CAR (CAR=CAR+CASR) after issuing the write
- * @param BL4 burst-chop write
+ * @param rank target rank
  * @param ap auto-precharge after issuing write
  */
-Mininst SMC_WRITE(int bar, int ibar, int car, int icar, int BL4, int ap);
+Mininst SMC_WRITE(int bar, int ibar, int car, int icar, int rank, int ap);
 /**
  * Generate a DDR-RD command
  * @param bar bank address register ID
  * @param ibar increment BAR (BAR=BAR+BASR) after issuing the read
  * @param car column address register ID
  * @param icar increment CAR (CAR=CAR+CASR) after issuing the read
- * @param BL4 burst-chop read
+ * @param rank target rank
  * @param ap auto-precharge after issuing read
  */
-Mininst SMC_READ(int bar, int ibar, int car, int icar, int BL4, int ap);
+Mininst SMC_READ(int bar, int ibar, int car, int icar, int rank, int ap);
 /**
  * Generate a DDR-PRE command
  * @param bar bank address register ID
  * @param ibar increment BAR (BAR=BAR+BASR) after issuing the write
  * @param pall precharge all banks
+ * @param rank target rank
  */
-Mininst SMC_PRE(int bar, int ibar, int pall);
+Mininst SMC_PRE(int bar, int ibar, int pall, int rank = 0);
 /**
  * Generate a DDR-RD command
  * @param bar bank address register ID
  * @param ibar increment BAR (BAR=BAR+BASR) after issuing the activate
  * @param rar row address register ID
  * @param irar increment RAR (RAR=RAR+RASR) after issuing the activate
+ * @param rank target rank
  */
-Mininst SMC_ACT(int bar, int ibar, int rar, int irar);
+Mininst SMC_ACT(int bar, int ibar, int rar, int irar, int rank = 0);
 /**
- * Generate a zq-calibration command
+ * Select a channel (for HBM)
+ * @param pseudo_channel target pseudo channel ID
  */ 
-Mininst SMC_ZQ();
+Mininst SMC_SEL_CH(int channel, int pseudo_channel = 0);
 /**
  * Generate a refresh command
  */ 
-Mininst SMC_REF();
+Mininst SMC_REF(int rank = 0);
 /**
  * Generate a no-operation command
  */ 
-Mininst SMC_NOP();
+Mininst SMC_NOP(int rank = 0);
 /**
  * Enters Self-Refresh Mode
  */

@@ -12,23 +12,25 @@ module ddr_pipeline(
   input [`DDR_UOP_WIDTH*4-1:0]  ddr_uop,
 
   // ddr_pipeline <-> outer DDRX IP interface
-  output [3:0]                ddr_write,
-  output [3:0]                ddr_read,
-  output [3:0]                ddr_pre,
-  output [3:0]                ddr_act,
-  output [3:0]                ddr_ref,
-  output [3:0]                ddr_zq,
-  output [3:0]                ddr_nop,
-  output [3:0]                ddr_sre,
-  output [3:0]                ddr_srx,
-  output [3:0]                ddr_ap,
-  output [3:0]                ddr_pall,
-  output [3:0]                ddr_half_bl,
-  output [4*`BG_WIDTH-1:0]    ddr_bg, 
-  output [4*`BANK_WIDTH-1:0]  ddr_bank,
-  output [4*`COL_WIDTH-1:0]   ddr_col,
-  output [4*`ROW_WIDTH-1:0]   ddr_row,
-  output [511:0]              ddr_wdata,
+  output [3:0]                  ddr_write,
+  output [3:0]                  ddr_read,
+  output [3:0]                  ddr_pre,
+  output [3:0]                  ddr_act,
+  output [3:0]                  ddr_ref,
+  output [3:0]                  ddr_zq,
+  output [3:0]                  ddr_nop,
+  output [3:0]                  ddr_sre,
+  output [3:0]                  ddr_srx,
+  output [3:0]                  ddr_ap,
+  output [3:0]                  ddr_pall,
+  output [3:0]                  ddr_half_bl,
+  output [3:0]                  ddr_rank,
+  output [4*`HBM_CH_WIDTH-1:0]  hbm_ch, 
+  output [4*`BG_WIDTH-1:0]      ddr_bg, 
+  output [4*`BANK_WIDTH-1:0]    ddr_bank,
+  output [4*`COL_WIDTH-1:0]     ddr_col,
+  output [4*`ROW_WIDTH-1:0]     ddr_row,
+  output [511:0]                ddr_wdata,
 
   // ddr_pipeline <-> regfile interface
   input  [511:0]                        wide_reg,
@@ -59,23 +61,25 @@ module ddr_pipeline(
   reg [7:0] s2_update_en; // which registers will we update
   reg [8*32-1:0] s2_update_val; 
 
-  reg [3:0]                ddr_write_ns, ddr_write_r;
-  reg [3:0]                ddr_read_ns, ddr_read_r; 
-  reg [3:0]                ddr_pre_ns, ddr_pre_r;
-  reg [3:0]                ddr_act_ns, ddr_act_r;
-  reg [3:0]                ddr_ref_ns, ddr_ref_r;
-  reg [3:0]                ddr_sre_ns, ddr_sre_r;
-  reg [3:0]                ddr_srx_ns, ddr_srx_r;
-  reg [3:0]                ddr_zq_ns, ddr_zq_r;
-  reg [3:0]                ddr_nop_ns, ddr_nop_r;
-  reg [3:0]                ddr_ap_ns, ddr_ap_r;
-  reg [3:0]                ddr_pall_ns, ddr_pall_r;
-  reg [3:0]                ddr_half_bl_ns, ddr_half_bl_r;
-  reg [4*`BG_WIDTH-1:0]    ddr_bg_ns, ddr_bg_r;
-  reg [4*`BANK_WIDTH-1:0]  ddr_bank_ns, ddr_bank_r;
-  reg [4*`COL_WIDTH-1:0]   ddr_col_ns, ddr_col_r;
-  reg [4*`ROW_WIDTH-1:0]   ddr_row_ns, ddr_row_r;
-  reg [511:0]              ddr_data_r;
+  reg [3:0]                   ddr_write_ns, ddr_write_r;
+  reg [3:0]                   ddr_read_ns, ddr_read_r; 
+  reg [3:0]                   ddr_pre_ns, ddr_pre_r;
+  reg [3:0]                   ddr_act_ns, ddr_act_r;
+  reg [3:0]                   ddr_ref_ns, ddr_ref_r;
+  reg [3:0]                   ddr_sre_ns, ddr_sre_r;
+  reg [3:0]                   ddr_srx_ns, ddr_srx_r;
+  reg [3:0]                   ddr_zq_ns, ddr_zq_r;
+  reg [3:0]                   ddr_nop_ns, ddr_nop_r;
+  reg [3:0]                   ddr_ap_ns, ddr_ap_r;
+  reg [3:0]                   ddr_pall_ns, ddr_pall_r;
+  reg [3:0]                   ddr_half_bl_ns, ddr_half_bl_r;
+  reg [4*`HBM_CH_WIDTH-1:0]   hbm_ch_ns, hbm_ch_r;
+  reg [3:0]                   ddr_rank_ns, ddr_rank_r;
+  reg [4*`BG_WIDTH-1:0]       ddr_bg_ns, ddr_bg_r;
+  reg [4*`BANK_WIDTH-1:0]     ddr_bank_ns, ddr_bank_r;
+  reg [4*`COL_WIDTH-1:0]      ddr_col_ns, ddr_col_r;
+  reg [4*`ROW_WIDTH-1:0]      ddr_row_ns, ddr_row_r;
+  reg [511:0]                 ddr_data_r;
 
   assign update_vals  = s2_update_val;
   assign update_en    = s2_update_en;
@@ -95,6 +99,8 @@ module ddr_pipeline(
   assign ddr_ap       = ddr_ap_r;
   assign ddr_pall     = ddr_pall_r;
   assign ddr_half_bl  = ddr_half_bl_r;
+  assign ddr_rank     = ddr_rank_r;
+  assign hbm_ch       = hbm_ch_r;
   assign ddr_bg       = ddr_bg_r;
   assign ddr_bank     = ddr_bank_r;
   assign ddr_col      = ddr_col_r;
@@ -131,8 +137,11 @@ module ddr_pipeline(
       ddr_sre_ns[i]     = s2_uop[i][`IS_SRE];
       ddr_srx_ns[i]     = s2_uop[i][`IS_SRX];
       ddr_ap_ns[i]      = s2_uop[i][`DO_AP] & (s2_uop[i][`IS_WRITE] | s2_uop[i][`IS_READ]);
+      ddr_rank_ns[i]    = s2_uop[i][`IS_RANK];
       ddr_half_bl_ns[i] = s2_uop[i][`IS_BL4] & (s2_uop[i][`IS_WRITE] | s2_uop[i][`IS_READ]);
       ddr_nop_ns[i]     = s2_valid ? s2_uop[i][`IS_NOP] : {4{`HIGH}};
+      hbm_ch_ns[i*`HBM_CH_WIDTH +: `HBM_CH_WIDTH] 
+        = s2_uop[i][`HBM_CHANNEL +: `HBM_CH_WIDTH];
       // stage 2 address calculation
       ddr_row_ns[i*`ROW_WIDTH +: `ROW_WIDTH] 
         = reg_vals[i*64+32 +: `ROW_WIDTH];
@@ -177,6 +186,8 @@ module ddr_pipeline(
       ddr_nop_r      <= {4{`HIGH}};
       ddr_ap_r       <= {4{`LOW}};
       ddr_half_bl_r  <= {4{`LOW}};
+      ddr_rank_r     <= {4{`LOW}};
+      hbm_ch_r       <= {4*`HBM_CH_WIDTH{`LOW}};
     end
     else begin
       reg_ids_r <= reg_ids_ns;
@@ -194,7 +205,9 @@ module ddr_pipeline(
       ddr_nop_r      <= ddr_nop_ns;
       ddr_ap_r       <= ddr_ap_ns;
       ddr_pall_r     <= ddr_pall_ns;
-      ddr_half_bl_r  <= ddr_half_bl_ns;
+      ddr_half_bl_r  <= {4{`LOW}}; // deprecated
+      ddr_rank_r     <= ddr_rank_ns;
+      hbm_ch_r       <= hbm_ch_ns;
       ddr_bg_r       <= ddr_bg_ns;
       ddr_bank_r     <= ddr_bank_ns;
       ddr_col_r      <= ddr_col_ns;

@@ -15,7 +15,7 @@ public:
   enum class IFACE {
       XDMA = 0
   };
-  BoardInterface(IFACE);
+  BoardInterface(IFACE, int dimm_select = 0);
   ~BoardInterface();
   int init();
   int sendData(void* data, const uint size);
@@ -25,6 +25,7 @@ private:
   // XDMA related constructs
   int to_card;
   int from_card;
+  int dimm_select;
   void* send_buf;
   void* recv_buf;
   int xdma_send(void* data, const uint size);

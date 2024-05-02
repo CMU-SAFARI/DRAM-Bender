@@ -25,6 +25,12 @@ module readback_engine(
   // engine <-> regfile if
   input [511:0] ddr_wdata, // to compare read data against
   
+  `ifdef HBM_BENDER
+  input hbm_temp_rd,
+  input [6:0] hbm0_temp,
+  input [6:0] hbm1_temp,
+  `endif
+
   // readback <-> XDMA if
   output [`XDMA_AXI_DATA_WIDTH-1:0]   c2h_tdata_0,  
   output                              c2h_tlast_0,
@@ -38,6 +44,9 @@ module readback_engine(
   localparam READ_MODE = 0;
   localparam DIFF_MODE = 1;
   reg mode_r, mode_ns; // Switch between diff count and read modes
+  
+  // used to ignore the reads from both ranks after a periodic read
+  reg rd_flag_r, rd_flag_ns;
   
   reg rd_valid_r;
   reg ignore_read_r, ignore_read_ns;
@@ -134,13 +143,21 @@ module readback_engine(
   wire rbf_empty, rbf_rd_valid, fifo_almost_full, fifo_valid;
   (*KEEP = "TRUE"*) wire rbf_full;
   (*KEEP = "TRUE"*) reg [19:0] dbg_rd_ctr;
+   
+  `ifdef HBM_BENDER
+  wire [15:0] hbm_temp_all = {1'b0, hbm1_temp, 1'b0, hbm0_temp};
+  wire [511:0] rdback_din = mode_r == READ_MODE ? hbm_temp_rd ? hbm_temp_all : {rd_data[0+:128], rd_data[128+:128], rd_data[256+:128], rd_data[384+:128]} : {dsr_out[255:0],dsr_out[511:256]};
+  `else
+  wire [511:0] rdback_din = mode_r == READ_MODE ? {rd_data[255:0],rd_data[511:256]} : {dsr_out[255:0],dsr_out[511:256]};
+  `endif
+  
   rdback_fifo rbf(
     .full(rbf_full),
     .prog_full(fifo_almost_full),
     .empty(rbf_empty),
-    .wr_en(mode_r == READ_MODE ? rd_valid && ~ignore_read_r: dsr_valid),
+    .wr_en(mode_r == READ_MODE ? (rd_valid | hbm_temp_rd) && ~ignore_read_r: dsr_valid),
     // shuffle data because fifo outputs them on wrong order
-    .din(mode_r == READ_MODE ? {rd_data[255:0],rd_data[511:256]} : {dsr_out[255:0],dsr_out[511:256]}),
+    .din(rdback_din),
     .rd_en(c2h_tready_0),
     .dout(c2h_tdata_0),
     .valid(fifo_valid),
@@ -159,12 +176,22 @@ module readback_engine(
     ignore_read_ns = ignore_read_r;
     ignore_flush_ns = ignore_flush_r;
     buffer_space_ns = buffer_space_r;
+    rd_flag_ns = rd_flag_r;
     if(per_rd_init || per_zq_init || per_ref_init) begin
       ignore_read_ns = per_rd_init;
       ignore_flush_ns = `HIGH;
     end
+    `ifdef DUAL_RANK_SELECT
+    if(rd_valid_r) begin
+      rd_flag_ns = ~rd_flag_ns;
+      if (~rd_flag_ns) begin
+        ignore_read_ns = `LOW;
+      end
+    end
+    `else
     if(rd_valid_r)
       ignore_read_ns = `LOW;
+    `endif
     proc_flush_ns = proc_flush_r;
     if(flush) begin
       if(ignore_flush_r)

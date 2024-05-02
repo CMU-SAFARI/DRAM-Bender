@@ -77,6 +77,7 @@ module decode_stage(
               ddr_uop_ns[i][`BAR+:4]   = ddr_insts[i][`DEC_BAR+:4];
               ddr_uop_ns[i][`DO_AP]    = ddr_insts[i][`DEC_AP];
               ddr_uop_ns[i][`IS_BL4]   = ddr_insts[i][`DEC_BL4];
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];
             end
             `READ: begin
               ddr_uop_ns[i][`IS_READ]  = `HIGH;
@@ -86,12 +87,14 @@ module decode_stage(
               ddr_uop_ns[i][`BAR+:4]   = ddr_insts[i][`DEC_BAR+:4];
               ddr_uop_ns[i][`DO_AP]    = ddr_insts[i][`DEC_AP];
               ddr_uop_ns[i][`IS_BL4]   = ddr_insts[i][`DEC_BL4];
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
             end
             `PRE: begin
               ddr_uop_ns[i][`IS_PRE]   = `HIGH;
               ddr_uop_ns[i][`PRE_ALL]  = ddr_insts[i][`DEC_PRE_ALL];
               ddr_uop_ns[i][`INC_BAR]  = ddr_insts[i][`DEC_INC_BAR];
               ddr_uop_ns[i][`BAR+:4]   = ddr_insts[i][`DEC_BAR+:4];
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
             end
             `ACT: begin
               ddr_uop_ns[i][`IS_ACT]   = `HIGH;
@@ -99,15 +102,30 @@ module decode_stage(
               ddr_uop_ns[i][`INC_BAR]  = ddr_insts[i][`DEC_INC_BAR];
               ddr_uop_ns[i][`RAR+:4]   = ddr_insts[i][`DEC_RAR+:4];
               ddr_uop_ns[i][`BAR+:4]   = ddr_insts[i][`DEC_BAR+:4];
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];
             end
+`ifndef HBM_BENDER
             `ZQ: begin
               ddr_uop_ns[i][`IS_ZQ]    = `HIGH;
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
             end
+`else
+            `SEL_CH: begin
+              // this is redundant and needs fixing
+              // we use ZQ to select channels in the HBM version
+              ddr_uop_ns[i][`IS_ZQ]          = `HIGH;
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
+              ddr_uop_ns[i][`HBM_CHANNEL +: `HBM_CH_WIDTH] = ddr_insts[i][`DEC_SEL_CH +: `HBM_CH_WIDTH];
+              ddr_uop_ns[i][`IS_SEL_CH] = `HIGH;
+            end
+`endif
             `REF: begin
               ddr_uop_ns[i][`IS_REF]   = `HIGH;
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
             end
             `NOP: begin
               ddr_uop_ns[i][`IS_NOP]   = `HIGH;
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];            
             end
           endcase
         end

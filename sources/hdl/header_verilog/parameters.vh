@@ -3,12 +3,13 @@
 `define IMEM_ADDR_WIDTH 11
 
 // Decode - Execute
-`define DDR_UOP_WIDTH 27
+`define DDR_UOP_WIDTH 31
 `define EXE_UOP_WIDTH 62
 `define BG_WIDTH       2
 `define BANK_WIDTH     2
 `define COL_WIDTH     10
 `define ROW_WIDTH     17
+`define HBM_CH_WIDTH   4
 
 //Frontend
 `define XDMA_AXI_DATA_WIDTH 256

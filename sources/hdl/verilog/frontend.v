@@ -25,6 +25,10 @@ module frontend#(parameter SIM_MEM = "false")(
   output                        valid_out,
   output [`IMEM_ADDR_WIDTH-1:0] addr_out,
   output                        ready_in,  
+  
+  `ifdef HBM_BENDER
+  output                              hbm_temp_rd,
+  `endif
 
   // frontend <-> xdma interface
   input  [`XDMA_AXI_DATA_WIDTH-1:0]   h2c_tdata_0,
@@ -37,6 +41,7 @@ module frontend#(parameter SIM_MEM = "false")(
   output                              per_rd_init,
   output                              per_zq_init,
   output                              per_ref_init
+  
   );
 
   reg[31:0] delay_fin;
@@ -125,6 +130,10 @@ module frontend#(parameter SIM_MEM = "false")(
   reg [`IMEM_RD_LATENCY-1:0] valid_out_sr;
   reg [(`IMEM_RD_LATENCY * `IMEM_ADDR_WIDTH)-1:0] addr_out_sr;
 
+  reg hbm_temp_rd_ns, hbm_temp_rd_r;
+  
+  assign hbm_temp_rd = hbm_temp_rd_r;
+
   assign user_rst     = (|rst_ctr_r);
 
   // imem <-> xdma interface
@@ -150,6 +159,9 @@ module frontend#(parameter SIM_MEM = "false")(
   always @* begin
     aref_en_valid   = `LOW;
     aref_en         = `LOW;
+    `ifdef HBM_BENDER
+    hbm_temp_rd_ns  = `LOW;
+    `endif
     state_ns        = state_r;
     xfer_ctr_ns     = xfer_ctr_r;
     rst_ctr_ns      = {5{`LOW}};
@@ -182,6 +194,12 @@ module frontend#(parameter SIM_MEM = "false")(
             aref_en       = h2c_tdata_0[0];
             state_ns      = IDLE_S;
           end
+          `ifdef HBM_BENDER
+          else if(h2c_tdata_0[`INSTR_WIDTH+4]) begin // read HBM temp
+            hbm_temp_rd_ns  = `HIGH;
+            state_ns        = IDLE_S;
+          end
+          `endif
           else begin
             xfer_ctr_ns = xfer_ctr_r + 1;
             if(h2c_tlast_0) begin
@@ -216,6 +234,9 @@ module frontend#(parameter SIM_MEM = "false")(
         rst_ctr_r <= rst_ctr_r - 1;
       else
         rst_ctr_r <= 0;
+      `ifdef HBM_BENDER
+      hbm_temp_rd_r <= 0;
+      `endif
     end
     else begin
       state_r      <= state_ns;
@@ -230,6 +251,9 @@ module frontend#(parameter SIM_MEM = "false")(
         valid_out_sr[`IMEM_RD_LATENCY-1:0] <= valid_out_sr >> 1;
         addr_out_sr[(`IMEM_RD_LATENCY-1)*`IMEM_ADDR_WIDTH-1:0] 
                          <= addr_out_sr >> `IMEM_ADDR_WIDTH; 
+      `endif      
+      `ifdef HBM_BENDER
+      hbm_temp_rd_r <= hbm_temp_rd_ns;
       `endif
     end
   end

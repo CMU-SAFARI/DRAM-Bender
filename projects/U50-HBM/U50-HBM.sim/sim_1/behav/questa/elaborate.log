@@ -1,0 +1,113 @@
+QuestaSim-64 vopt 2020.1 Compiler 2020.01 Jan 28 2020
+Start time: 17:31:23 on Aug 31,2022
+vopt -64 "+acc=npr" -L xil_defaultlib -L fifo_generator_v13_2_5 -L blk_mem_gen_v8_4_4 -L hbm_v1_0_9 -L unisims_ver -L unimacro_ver -L secureip -L xpm -work xil_defaultlib xil_defaultlib.sim_tb_top xil_defaultlib.glbl -o sim_tb_top_opt 
+
+Top level modules:
+	sim_tb_top
+	glbl
+
+Analyzing design...
+-- Loading module sim_tb_top
+-- Loading module glbl
+-- Loading module softmc_top
+-- Loading module HBM_adapter
+-- Loading module cmd_gen
+-- Loading module cmd_buf
+-- Loading module controller_top
+-- Loading module HBM_interface
+-- Loading module hbm_0
+-- Loading module hbm_v1_0_9
+-- Loading module cdc_HBM_to_rbe
+-- Loading module cdc_fifo
+-- Loading module softmc_pipeline
+-- Loading module fetch_stage
+-- Loading module pre_decode
+-- Loading module decode_stage
+-- Loading module execute_stage
+-- Loading module ddr_pipeline
+-- Loading module exe_pipeline
+-- Loading module scratchpad
+-- Loading module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4
+-- Loading module register_file
+-- Loading module frontend
+-- Loading module maintenance_controller
+-- Loading module pr_read_mem
+-- Loading module zq_calib_mem
+-- Loading module pr_ref_mem
+-- Loading module unisims_ver.IBUFDS_GTE4
+-- Loading module readback_engine
+-- Loading module diff_shift_reg
+-- Loading module rdback_fifo
+-- Loading module unisims_ver.IBUF
+-- Loading module unisims_ver.BUFG
+-- Loading module hbm_v1_0_9.hbm_top
+-- Loading package STANDARD
+-- Loading module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_mem_module
+-- Loading module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_output_stage
+-- Loading module blk_mem_gen_v8_4_4.blk_mem_gen_v8_4_4_softecc_output_reg_stage
+-- Loading module instr_blk_mem_sim
+-- Loading module pop_count4
+-- Loading module xpm.xpm_memory_spram
+-- Loading module xpm.xpm_memory_base
+-- Loading module hbm_v1_0_9.hbm_data_fetch
+-- Loading module hbm_v1_0_9.hbm_apb_mst
+-- Loading module hbm_v1_0_9.hbm_temp_rd
+-- Loading module hbm_v1_0_9.hbm_apb_arbiter
+-- Loading module unisims_ver.HBM_TWO_STACK_INTF
+-- Loading module secureip.SIP_HBM_TWO_STACK_INTF
+-- Loading module secureip.xil_hbm_two_stack_intf_mod786
+-- Loading module secureip.xil_hbm_two_stack_intf_mod1
+-- Loading module secureip.xil_hbm_two_stack_intf_mod6
+-- Loading module secureip.xil_hbm_two_stack_intf_mod2
+-- Loading module secureip.xil_hbm_two_stack_intf_mod4
+-- Loading module HBM
+-- Loading architecture FIFO36E2_V of FIFO36E2
+-- Loading package body VPKG
+Incremental compilation check found 1119 design-units (out of 1157) may be reused.
+Optimizing 38 design-units (inlining 756189/763888 module instances, 0/125778 cell instances, 155200/155200 UDP instances, 0/132 architecture instances):
+** Warning: ../../../../XUPVVH.ip_user_files/ipstatic/verif/model/HBM_questa.vp(257): (vopt-2250) Function "<protected>" has no return value assignment.
+** Warning: ../../../../XUPVVH.ip_user_files/ipstatic/verif/model/HBM_questa.vp(257): (vopt-2250) Function "<protected>" has no return value assignment.
+-- Optimizing module HBM(fast)
+-- Optimizing module hbm_v1_0_9(fast)
+-- Optimizing module rdback_fifo(fast)
+-- Optimizing module cdc_fifo(fast)
+-- Optimizing module hbm_0(fast)
+-- Optimizing module readback_engine(fast)
+** Warning: ../../../../../../sources/hdl/verilog/readback_engine.v(137): (vopt-2685) [TFMPC] - Too few port connections for 'rbf'.  Expected 13, found 10.
+** Warning: ../../../../../../sources/hdl/verilog/readback_engine.v(137): (vopt-2718) [TFMPC] - Missing connection for port 'rd_rst_busy'.
+** Warning: ../../../../../../sources/hdl/verilog/readback_engine.v(137): (vopt-2718) [TFMPC] - Missing connection for port 'wr_rst_busy'.
+** Warning: ../../../../../../sources/hdl/verilog/readback_engine.v(137): (vopt-2718) [TFMPC] - Missing connection for port 'prog_empty'.
+-- Optimizing module HBM_interface(fast)
+-- Optimizing module decode_stage(fast)
+-- Optimizing module maintenance_controller(fast)
+-- Optimizing module ddr_pipeline(fast)
+-- Optimizing module register_file(fast)
+-- Optimizing module exe_pipeline(fast)
+-- Optimizing module frontend(fast)
+-- Optimizing module cmd_gen(fast)
+-- Optimizing module softmc_top(fast)
+** Warning: ../../../../verilog/softmc_top.v(300): (vopt-2685) [TFMPC] - Too few port connections for 'pipeline'.  Expected 29, found 27.
+** Warning: ../../../../verilog/softmc_top.v(300): (vopt-2718) [TFMPC] - Missing connection for port 'ddr_srx'.
+** Warning: ../../../../verilog/softmc_top.v(300): (vopt-2718) [TFMPC] - Missing connection for port 'ddr_sre'.
+-- Optimizing module fetch_stage(fast)
+-- Optimizing module execute_stage(fast)
+-- Optimizing module controller_top(fast)
+-- Optimizing module softmc_pipeline(fast)
+-- Optimizing module scratchpad(fast)
+-- Optimizing module instr_blk_mem_sim(fast)
+-- Optimizing module pr_read_mem(fast)
+-- Optimizing module zq_calib_mem(fast)
+-- Optimizing module pr_ref_mem(fast)
+-- Optimizing module HBM_adapter(fast)
+-- Optimizing module cmd_buf(fast)
+-- Optimizing module cdc_HBM_to_rbe(fast)
+** Warning: ../../../../XUPVVH.srcs/sources_1/new/cdc_HBM_to_rbe.v(66): (vopt-2685) [TFMPC] - Too few port connections for 'cdc_fifo0'.  Expected 12, found 10.
+** Warning: ../../../../XUPVVH.srcs/sources_1/new/cdc_HBM_to_rbe.v(66): (vopt-2718) [TFMPC] - Missing connection for port 'rd_rst_busy'.
+** Warning: ../../../../XUPVVH.srcs/sources_1/new/cdc_HBM_to_rbe.v(66): (vopt-2718) [TFMPC] - Missing connection for port 'wr_rst_busy'.
+-- Optimizing module sim_tb_top(fast)
+-- Optimizing module diff_shift_reg(fast)
+-- Optimizing module pre_decode(fast)
+-- Optimizing module pop_count4(fast)
+Optimized design name is sim_tb_top_opt
+End time: 17:31:36 on Aug 31,2022, Elapsed time: 0:00:13
+Errors: 0, Warnings: 12
