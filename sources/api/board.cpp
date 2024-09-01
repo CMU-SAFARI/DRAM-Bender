@@ -62,13 +62,13 @@ int BoardInterface::init()
     }
     case IFACE::ZC706:
     {
-      to_card = fopen("/dev/softmc_cdev", "r");
+      to_card = open("/dev/softmc_cdev", O_RDWR);
       if (to_card < 0)
       {
         std::cerr << "Open to host failed!" << std::endl;
         return 1;
       }
-      from_card = fopen("/dev/softmc_cdev", "w");
+      from_card = open("/dev/softmc_cdev", O_RDWR);
       if (from_card < 0)
       {
         std::cerr << "Open to card failed!" << std::endl;
@@ -105,7 +105,7 @@ int BoardInterface::recvData(void* buf, const uint size)
       return xdma_recv(buf,size);
       break;
     case IFACE::ZC706:
-      return zc706_recv(data,size);
+      return zc706_recv(buf,size);
       break;
     default:
       std::cerr << "Unknown iface_type!" << std::endl;
@@ -152,12 +152,17 @@ int BoardInterface::xdma_recv(void* buf, const uint size)
   return count;
 }
 
-int BoardInterface::zc706_recv(void* buf, const uint size)
+int BoardInterface::zc706_send(void* data, const uint size)
 {
-	return fread(buf, sizeof(char), size, fp);
+  uint64_t count = 0;
+  while (count < size) {
+    auto rc = write(to_card, (char*) data, size);
+    count += rc;
+  }
+  return count;
 }
 
-int BoardInterface::zc706_send(void* buf, const uint size)
+int BoardInterface::zc706_recv(void* buf, const uint size)
 {
-	return fwrite(buf, sizeof(char), size, fp);
+	return read(from_card, (char*) buf, size);
 }

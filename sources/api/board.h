@@ -30,6 +30,8 @@ private:
   void* recv_buf;
   int xdma_send(void* data, const uint size);
   int xdma_recv(void* buf,  const uint size);
+  int zc706_send(void* data, const uint size);
+  int zc706_recv(void* buf,  const uint size);
   // end XDMA related constructs
 };
 
