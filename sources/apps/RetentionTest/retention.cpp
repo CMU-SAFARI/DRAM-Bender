@@ -38,12 +38,6 @@ int main(int argc, char*argv[])
   SoftMCPlatform platform;
   int err;
 
-  if(argc != 3)
-  {
-    printf("Usage: \n ./SoftMC_RETENTION <retention time in ms> <output file name>\n");
-    exit(0);
-  }
-
   if((err = platform.init()) != SOFTMC_SUCCESS){
       cerr << "Could not initialize SoftMC Platform: " << err << endl;
   }
