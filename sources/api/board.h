@@ -13,7 +13,8 @@ class BoardInterface{
   const std::string FROM_FPGA_DEFAULT = "/dev/xdma0_c2h_0";
 public:
   enum class IFACE {
-      XDMA = 0
+      XDMA = 0,
+      ZC706
   };
   BoardInterface(IFACE, int dimm_select = 0);
   ~BoardInterface();
@@ -30,6 +31,8 @@ private:
   void* recv_buf;
   int xdma_send(void* data, const uint size);
   int xdma_recv(void* buf,  const uint size);
+  int zc706_send(void* data, const uint size);
+  int zc706_recv(void* buf,  const uint size);
   // end XDMA related constructs
 };
 
