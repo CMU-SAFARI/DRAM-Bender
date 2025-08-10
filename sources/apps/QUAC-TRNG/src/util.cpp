@@ -77,7 +77,7 @@ Program genWriteRange1000(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
 
   ret.add_inst(SMC_MV(PATTERN_REG, TEMP_PATTERN_REG));
@@ -97,7 +97,7 @@ Program genWriteRange1000(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -112,7 +112,7 @@ Program genWriteRange1000(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -127,7 +127,7 @@ Program genWriteRange1000(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -165,7 +165,7 @@ Program genWriteRange1001(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
 
   ret.add_inst(SMC_MV(PATTERN_REG, TEMP_PATTERN_REG));
@@ -185,7 +185,7 @@ Program genWriteRange1001(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -200,7 +200,7 @@ Program genWriteRange1001(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -221,7 +221,7 @@ Program genWriteRange1001(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -253,7 +253,7 @@ Program genWriteRange1010(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
 
   ret.add_inst(SMC_MV(PATTERN_REG, TEMP_PATTERN_REG));
@@ -291,7 +291,7 @@ Program genWriteRange1011(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
 
   ret.add_inst(SMC_MV(PATTERN_REG, TEMP_PATTERN_REG));
@@ -311,7 +311,7 @@ Program genWriteRange1011(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -332,7 +332,7 @@ Program genWriteRange1011(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -348,7 +348,7 @@ Program genWriteRange1011(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -380,7 +380,7 @@ Program genWriteRange1100(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
 
   ret.add_inst(SMC_SLEEP(4));
@@ -397,7 +397,7 @@ Program genWriteRange1100(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -418,7 +418,7 @@ Program genWriteRange1100(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -433,7 +433,7 @@ Program genWriteRange1100(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -471,7 +471,7 @@ Program genWriteRange1101(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
 
   ret.add_inst(SMC_SLEEP(4));
@@ -488,7 +488,7 @@ Program genWriteRange1101(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -509,7 +509,7 @@ Program genWriteRange1101(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
   
@@ -530,7 +530,7 @@ Program genWriteRange1101(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -564,7 +564,7 @@ Program genWriteRange1110(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
 
   ret.add_inst(SMC_SLEEP(4));
@@ -579,7 +579,7 @@ Program genWriteRange1110(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -594,7 +594,7 @@ Program genWriteRange1110(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
   
@@ -615,7 +615,7 @@ Program genWriteRange1110(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
   ret.add_inst(SMC_SLEEP(4));
 
@@ -653,7 +653,7 @@ Program genWriteRange1111(int row_reg, int no_rows, int bank_reg)
     ret.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_WRITE(bank_reg, 0, CAR, 1, 0, 0));
     ret.add_inst(SMC_NOP(),SMC_NOP(),SMC_NOP(),SMC_NOP());
   }
-  ret.add_inst(SMC_SLEEP(4));
+  ret.add_inst(SMC_SLEEP(5));
   ret.add_inst(SMC_PRE(bank_reg, 0, 1), SMC_NOP(), SMC_NOP(), SMC_NOP());
 
   ret.add_branch(ret.BR_TYPE::BL, row_reg, INIT_LOOP, "genWriteRange:LOOP_BEGIN");

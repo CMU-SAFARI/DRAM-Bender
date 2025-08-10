@@ -106,6 +106,8 @@ int main(int argc, char*argv[])
   // & precharge the open bank
   program.add_inst(all_nops());
   program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
   program.add_inst(__pack_mininsts(
     SMC_PRE(5, 0, 0),
     SMC_NOP(), SMC_NOP(), SMC_NOP()
