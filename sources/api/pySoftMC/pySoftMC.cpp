@@ -49,8 +49,8 @@ PYBIND11_MODULE(pySoftMC, m)
   m.def("SMC_ACT",   &SMC_ACT,   py::arg("bar"),  py::arg("ibar"),   py::arg("rar"), py::arg("irar"), py::arg("rank") = 0);
   m.def("SMC_SEL_CH", &SMC_SEL_CH, py::arg("channel"), py::arg("pseudo_channel") = 0);
 
-  m.def("SMC_REF",   &SMC_REF);
-  m.def("SMC_NOP",   &SMC_NOP);
+  m.def("SMC_REF",   &SMC_REF,   py::arg("rank") = 0);
+  m.def("SMC_NOP",   &SMC_NOP,   py::arg("rank") = 0);
   m.def("SMC_SRE",   &SMC_SRE);
   m.def("SMC_SRX",   &SMC_SRX);
 
