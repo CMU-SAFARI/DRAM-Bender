@@ -12,9 +12,12 @@ make
 
 ## Building with `setup.py`
 
-A more portable alternative that works with virtual environments and pyenv:
+A more portable alternative that works with virtual environments and pyenv.
+Requires pybind11 installed in the active Python environment (`pip install pybind11`);
+does not require the pybind11 git submodule.
 
 ```
+pip install pybind11
 python3 setup.py build_ext --inplace
 ```
 

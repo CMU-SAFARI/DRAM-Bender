@@ -1,9 +1,9 @@
 from setuptools import setup, Extension
-import os
+import os, pybind11
 
 here    = os.path.dirname(os.path.abspath(__file__))
 api_dir = os.path.join(here, "..")
-pybind11_include = os.path.join(here, "../ext/pybind11/include")
+pybind11_include = pybind11.get_include()
 
 ext = Extension(
     "pySoftMC",
