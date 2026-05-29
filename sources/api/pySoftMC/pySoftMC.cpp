@@ -58,6 +58,7 @@ PYBIND11_MODULE(pySoftMC, m)
 
   py::class_<SoftMCPlatform>(m, "SoftMCPlatform")
     .def(py::init())
+    .def(py::init<int>(), py::arg("dimm_select"))
     .def("init",              &SoftMCPlatform::init)
     .def("reset_fpga",        &SoftMCPlatform::reset_fpga)
     .def("execute",           &SoftMCPlatform::execute,     py::arg("program"))
