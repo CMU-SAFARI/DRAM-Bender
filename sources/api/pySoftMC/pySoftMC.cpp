@@ -2,7 +2,7 @@
 #include "instruction.h"
 #include "prog.h"
 
-#include "ext/pybind11/include/pybind11/pybind11.h"
+#include <pybind11/pybind11.h>
 namespace py = pybind11;
 
 PYBIND11_MODULE(pySoftMC, m) 
@@ -12,7 +12,7 @@ PYBIND11_MODULE(pySoftMC, m)
       .value("READ",  PC_TYPE::READ)
       .value("PRE",   PC_TYPE::PRE)
       .value("ACT",   PC_TYPE::ACT)
-      .value("ZQ",    PC_TYPE::ZQ)
+      .value("SEL_CH", PC_TYPE::SEL_CH)
       .value("REF",   PC_TYPE::REF)
       .value("CYC",   PC_TYPE::CYC)
       .export_values();
@@ -45,12 +45,12 @@ PYBIND11_MODULE(pySoftMC, m)
 
   m.def("SMC_WRITE", &SMC_WRITE, py::arg("bar"),  py::arg("ibar"),   py::arg("car"), py::arg("icar"), py::arg("BL4"), py::arg("ap"));
   m.def("SMC_READ",  &SMC_READ,  py::arg("bar"),  py::arg("ibar"),   py::arg("car"), py::arg("icar"), py::arg("BL4"), py::arg("ap"));
-  m.def("SMC_PRE",   &SMC_PRE,   py::arg("bar"),  py::arg("ibar"),   py::arg("pall"));
-  m.def("SMC_ACT",   &SMC_ACT,   py::arg("bar"),  py::arg("ibar"),   py::arg("rar"), py::arg("irar"));
+  m.def("SMC_PRE",   &SMC_PRE,   py::arg("bar"),  py::arg("ibar"),   py::arg("pall"), py::arg("rank") = 0);
+  m.def("SMC_ACT",   &SMC_ACT,   py::arg("bar"),  py::arg("ibar"),   py::arg("rar"), py::arg("irar"), py::arg("rank") = 0);
+  m.def("SMC_SEL_CH", &SMC_SEL_CH, py::arg("channel"), py::arg("pseudo_channel") = 0);
 
-  m.def("SMC_ZQ",    &SMC_ZQ);
-  m.def("SMC_REF",   &SMC_REF);
-  m.def("SMC_NOP",   &SMC_NOP);
+  m.def("SMC_REF",   &SMC_REF,   py::arg("rank") = 0);
+  m.def("SMC_NOP",   &SMC_NOP,   py::arg("rank") = 0);
   m.def("SMC_SRE",   &SMC_SRE);
   m.def("SMC_SRX",   &SMC_SRX);
 
@@ -58,6 +58,7 @@ PYBIND11_MODULE(pySoftMC, m)
 
   py::class_<SoftMCPlatform>(m, "SoftMCPlatform")
     .def(py::init())
+    .def(py::init<int>(), py::arg("dimm_select"))
     .def("init",              &SoftMCPlatform::init)
     .def("reset_fpga",        &SoftMCPlatform::reset_fpga)
     .def("execute",           &SoftMCPlatform::execute,     py::arg("program"))

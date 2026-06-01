@@ -8,7 +8,7 @@ program_CXX_OBJS := ${program_CXX_SRCS:.cpp=.o}
 program_CXX_OBJS := ${program_CXX_OBJS:.c=.o}
 program_OBJS := $(program_CXX_OBJS)
 
-program_INCLUDE_DIRS := . .. /usr/include/python${python_version} ../ext/pybind11/include/pybind11 
+program_INCLUDE_DIRS := . .. /usr/include/python${python_version} ../ext/pybind11/include
 program_LIBRARY_DIRS :=
 program_LIBRARIES := python${python_version}
 CPPFLAGS += -g -std=c++14 -pthread -O3 -fPIC -Wall
