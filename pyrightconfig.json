@@ -1,0 +1,6 @@
+{
+  "extraPaths": ["python"],
+  "venvPath": ".",
+  "venv": ".venv",
+  "reportMissingImports": "warning"
+}

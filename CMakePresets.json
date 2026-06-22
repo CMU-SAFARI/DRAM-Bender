@@ -1,0 +1,38 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "dev-gcc12",
+      "displayName": "DRAMInspector Dev GCC 12",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/dev-gcc12",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+        "Python_EXECUTABLE": "${sourceDir}/.venv/bin/python",
+        "DRAMINSPECTOR_BUILD_PYTHON": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev-gcc12",
+      "configurePreset": "dev-gcc12"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "dev-gcc12",
+      "configurePreset": "dev-gcc12",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

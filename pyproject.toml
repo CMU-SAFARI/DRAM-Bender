@@ -1,0 +1,24 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "nanobind>=2.12"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "draminspector"
+version = "0.1.0"
+description = "Python interface for the DRAMInspector core DRAMBender API"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26"]
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+wheel.packages = ["python/draminspector"]
+install.components = ["python"]
+build.targets = ["draminspector_core"]
+
+[tool.scikit-build.cmake.define]
+BUILD_TESTING = "OFF"
+DRAMINSPECTOR_BUILD_PYTHON = "ON"
+DRAMINSPECTOR_BUILD_EXAMPLES = "OFF"
+DRAMINSPECTOR_BUILD_BOARD_TESTS = "OFF"
+DRAMINSPECTOR_BUILD_BOARD_BENCHMARKS = "OFF"

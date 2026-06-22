@@ -1,0 +1,73 @@
+"""Low-level SMC instruction factories.
+
+These construct raw Inst/Mininst values directly from the C++ encoder. For
+high-level program authoring use `draminspector.api.ProgramBuilder` instead.
+This module is primarily for tests and for advanced users who need exact
+control over individual SMC instructions.
+"""
+
+from draminspector._core.instructions import (
+    act,
+    add,
+    addi,
+    all_nops,
+    and_,
+    beq,
+    bl,
+    end,
+    info,
+    jump,
+    ld,
+    ldpc,
+    ldwd,
+    li,
+    mv,
+    nop,
+    or_,
+    pre,
+    read,
+    ref,
+    sel_ch,
+    sleep,
+    src,
+    sre,
+    srx,
+    st,
+    sub,
+    subi,
+    write,
+    xor,
+)
+
+__all__ = [
+    "act",
+    "add",
+    "addi",
+    "all_nops",
+    "and_",
+    "beq",
+    "bl",
+    "end",
+    "info",
+    "jump",
+    "ld",
+    "ldpc",
+    "ldwd",
+    "li",
+    "mv",
+    "nop",
+    "or_",
+    "pre",
+    "read",
+    "ref",
+    "sel_ch",
+    "sleep",
+    "src",
+    "sre",
+    "srx",
+    "st",
+    "sub",
+    "subi",
+    "write",
+    "xor",
+]

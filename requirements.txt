@@ -1,0 +1,23 @@
+# DRAMInspector development environment
+#
+# Set up the venv from scratch:
+#   python3.12 -m venv .venv
+#   .venv/bin/pip install -r requirements.txt
+#   .venv/bin/pip install -e "."
+#   bash build.sh debug    # optional local debug rebuild of _core.so
+#
+# Runtime dependencies (also declared in pyproject.toml [project].dependencies)
+numpy>=1.26
+
+# Python package builds (also declared in pyproject.toml [build-system]).
+scikit-build-core>=0.10
+nanobind>=2.12
+
+# Tutorial notebook at notebooks/tutorial_writing_dram_programs.ipynb
+jupyter>=1.0
+ipykernel>=6.25
+ipywidgets>=8.0
+
+# Optional: pyright CLI for the type-checker smoke pass referenced in
+# docs/codex_review_API.md. Uncomment if you want to run it locally.
+# pyright>=1.1
