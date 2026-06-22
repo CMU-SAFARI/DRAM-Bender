@@ -9,7 +9,7 @@ Scalar arguments (`int`) are patchable across calls at microsecond cost.
 
 Compare with `examples/read_write.py`, which uses the
 (already-decorated) shipped templates via
-`draminspector.builtin_programs.configure(...)`. This file shows you how to
+`drambender.builtin_programs.configure(...)`. This file shows you how to
 write one yourself.
 """
 
@@ -18,7 +18,7 @@ import sys
 
 import numpy as np
 
-from draminspector.api import (
+from drambender.api import (
     BoardType,
     FinalProgram,
     HostInterface,
@@ -26,7 +26,7 @@ from draminspector.api import (
     open_board,
     program_template,
 )
-from draminspector.api.program.instructions import *
+from drambender.api.program.instructions import *
 
 
 CACHELINES_PER_ROW  = 128

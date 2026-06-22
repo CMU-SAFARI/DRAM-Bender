@@ -6,7 +6,7 @@ usage() {
     cat <<EOF
 Usage: $(basename "$0") [debug|release]
 
-Configure and build DRAMInspector. If no argument is given and stdin is a
+Configure and build DRAMBender. If no argument is given and stdin is a
 terminal, you will be prompted to choose a configuration.
 
   Debug   -> build/dev-gcc12     (CMAKE_BUILD_TYPE=Debug)
@@ -63,8 +63,8 @@ cmake -S . -B "$BUILD_DIR" \
   -DCMAKE_C_COMPILER=/usr/bin/gcc-12 \
   -DCMAKE_CXX_COMPILER=/usr/bin/g++-12 \
   -DPython_EXECUTABLE="$(pwd)/.venv/bin/python" \
-  -DDRAMINSPECTOR_BUILD_PYTHON=ON \
-  -DDRAMINSPECTOR_PYTHON_PACKAGE_DIR="$(pwd)/python/draminspector"
+  -DDRAMBENDER_BUILD_PYTHON=ON \
+  -DDRAMBENDER_PYTHON_PACKAGE_DIR="$(pwd)/python/drambender"
 
 echo "==> Building ($CMAKE_BUILD_TYPE)"
 cmake --build "$BUILD_DIR"

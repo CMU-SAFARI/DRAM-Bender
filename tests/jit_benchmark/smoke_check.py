@@ -42,7 +42,7 @@ def configure_if_needed(build_dir: Path, python_executable: Path) -> None:
             "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
             f"-DPython_EXECUTABLE={python_executable}",
             "-DBUILD_TESTING=ON",
-            "-DDRAMINSPECTOR_BUILD_PYTHON=ON",
+            "-DDRAMBENDER_BUILD_PYTHON=ON",
         ],
         check=True,
         cwd=REPO_ROOT,
@@ -65,15 +65,15 @@ def main() -> int:
             "--build",
             str(args.build_dir),
             "--target",
-            "draminspector_jit_native_benchmark",
-            "draminspector_core",
+            "drambender_jit_native_benchmark",
+            "drambender_core",
             "-j4",
         ],
         check=True,
         cwd=REPO_ROOT,
     )
 
-    native_exe = args.build_dir / "draminspector_jit_native_benchmark"
+    native_exe = args.build_dir / "drambender_jit_native_benchmark"
     subprocess.run(
         [
             str(args.python_executable),

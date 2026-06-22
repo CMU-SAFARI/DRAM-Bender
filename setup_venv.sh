@@ -1,15 +1,15 @@
 #!/bin/bash
 #
-# One-shot setup for a fresh clone of DRAMInspector.
+# One-shot setup for a fresh clone of DRAMBender.
 #
-#   bash setup_venv.sh                  # create .venv, install deps, build + install draminspector
+#   bash setup_venv.sh                  # create .venv, install deps, build + install drambender
 #   bash setup_venv.sh --force          # wipe .venv/ first
 #   PYTHON_BIN=python3.11 bash setup_venv.sh   # use a different interpreter
 #
-# After this finishes, `import draminspector` works from the .venv. Package
+# After this finishes, `import drambender` works from the .venv. Package
 # metadata and CMake build configuration live in pyproject.toml. For iterative
 # Debug builds during development, run
-# `bash build.sh debug` afterward — it overwrites python/draminspector/_core.*.so
+# `bash build.sh debug` afterward — it overwrites python/drambender/_core.*.so
 # in place.
 
 set -euo pipefail
@@ -55,9 +55,9 @@ echo "==> Upgrading pip inside $VENV_DIR"
 echo "==> Installing requirements.txt"
 "$VENV_PIP" install --quiet -r requirements.txt
 
-echo "==> Building C++ extension and installing editable draminspector wheel"
+echo "==> Building C++ extension and installing editable drambender wheel"
 "$VENV_PIP" install -e "."
 
 echo
 echo "Done. Verify with:"
-echo "    $VENV_PYTHON -c 'import draminspector; print(draminspector.__file__)'"
+echo "    $VENV_PYTHON -c 'import drambender; print(drambender.__file__)'"

@@ -12,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from draminspector.api.jit import (  # noqa: E402
+from drambender.api.jit import (  # noqa: E402
     clear_template_caches,
     get_last_template_run_stats_dict,
     set_jit_cache_dir,

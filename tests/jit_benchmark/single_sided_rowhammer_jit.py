@@ -11,7 +11,7 @@ remaining N-1 iterations run at native speed.
 
 Compare with `examples/single_sided_rowhammer.py`, which achieves the
 same effect by calling the (already @program_template-decorated) shipped
-templates via `draminspector.builtin_programs.configure(...)`. This file shows
+templates via `drambender.builtin_programs.configure(...)`. This file shows
 you how to write one yourself.
 """
 
@@ -20,15 +20,15 @@ import sys
 
 import numpy as np
 
-import draminspector
-from draminspector.api import (
+import drambender
+from drambender.api import (
     BoardType,
     HostInterface,
     ProgramBuilder,
     open_board,
     program_template,
 )
-from draminspector.api.program.instructions import *
+from drambender.api.program.instructions import *
 
 
 CACHELINES_PER_ROW  = 128
@@ -146,12 +146,12 @@ def main() -> int:
         victim_physical = args.start_row + v
         aggressor_physical = victim_physical + 1
 
-        victim = draminspector.rows.Row(
+        victim = drambender.rows.Row(
             physical_id=victim_physical,
             row_mapping="MI1",
             data_pattern=0x00000000,
         )
-        aggressor = draminspector.rows.Row(
+        aggressor = drambender.rows.Row(
             physical_id=aggressor_physical,
             row_mapping="MI1",
             data_pattern=0xFFFFFFFF,

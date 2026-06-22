@@ -46,7 +46,7 @@ receive-side failures.
   NumPy arrays or other writable C-contiguous buffers.
 - Asynchronous receive errors are surfaced through ordinary Python exceptions
   when calling `receive_into()` or `synchronize()`.
-- The supported public generator path is `draminspector.builtin_programs` and
+- The supported public generator path is `drambender.builtin_programs` and
   `ProgramBuilder`; legacy C++ program-generator comparison code is not part of
   the public package.
 
@@ -54,5 +54,5 @@ receive-side failures.
 
 - The C++ API installs public headers, the library target, and CMake package
   metadata.
-- External consumers can use `find_package(DRAMInspector CONFIG REQUIRED)` and
-  link `DRAMInspector::DRAMInspector`.
+- External consumers can use `find_package(DRAMBender CONFIG REQUIRED)` and
+  link `DRAMBender::DRAMBender`.

@@ -1,4 +1,4 @@
-#include "draminspector/api/board/board.h"
+#include "drambender/api/board/board.h"
 
 #include <array>
 #include <cstdio>
@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "draminspector/api/board/DDR4.h"
-#include "draminspector/api/board/HBM2.h"
+#include "drambender/api/board/DDR4.h"
+#include "drambender/api/board/HBM2.h"
 
 namespace DRAMBender {
 
@@ -36,11 +36,11 @@ IBoard::~IBoard() {
     close();
   } catch (const std::exception& e) {
     std::fprintf(stderr,
-                 "[draminspector] ~IBoard: exception during shutdown: %s\n",
+                 "[drambender] ~IBoard: exception during shutdown: %s\n",
                  e.what());
   } catch (...) {
     std::fprintf(stderr,
-                 "[draminspector] ~IBoard: unknown exception during shutdown\n");
+                 "[drambender] ~IBoard: unknown exception during shutdown\n");
   }
 }
 

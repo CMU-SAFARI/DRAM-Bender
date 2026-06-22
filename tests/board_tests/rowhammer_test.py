@@ -20,7 +20,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 import numpy as np  # noqa: E402
 
-import draminspector  # noqa: E402
+import drambender  # noqa: E402
 from tests.jit_benchmark.workloads import (  # noqa: E402
     CACHELINES_PER_ROW,
     ROW_BYTES,
@@ -66,7 +66,7 @@ def main() -> int:
           f"num_victims={args.num_victims} hammer_count={args.hammer_count}")
     print(f"  victim_data=0x{args.victim_data:08x} aggressor_data=0x{args.aggressor_data:08x}")
 
-    board = draminspector.api.DDR4(args.instance_id)
+    board = drambender.api.DDR4(args.instance_id)
     board.reset_fpga()
 
     # Build template once, bind fixed args

@@ -1,5 +1,5 @@
-#ifndef DRAMINSPECTOR_SRC_UTILS_FORMATTING_INTERNAL_H
-#define DRAMINSPECTOR_SRC_UTILS_FORMATTING_INTERNAL_H
+#ifndef DRAMBENDER_SRC_UTILS_FORMATTING_INTERNAL_H
+#define DRAMBENDER_SRC_UTILS_FORMATTING_INTERNAL_H
 
 #include <algorithm>
 #include <array>
@@ -59,4 +59,4 @@ inline size_t pc_width(size_t instruction_count) {
 
 }  // namespace DRAMBender::formatting
 
-#endif  // DRAMINSPECTOR_SRC_UTILS_FORMATTING_INTERNAL_H
+#endif  // DRAMBENDER_SRC_UTILS_FORMATTING_INTERNAL_H

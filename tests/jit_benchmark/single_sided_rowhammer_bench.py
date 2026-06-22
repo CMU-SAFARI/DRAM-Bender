@@ -7,8 +7,8 @@ import time
 
 import numpy as np
 
-import draminspector
-from draminspector.api import BoardType, HostInterface, open_board
+import drambender
+from drambender.api import BoardType, HostInterface, open_board
 
 ROW_BYTES = 8192
 ROW_WORDS = ROW_BYTES // 4
@@ -50,7 +50,7 @@ def main() -> int:
     )
     board.reset_fpga()
 
-    builtin_progs = draminspector.builtin_programs.configure(
+    builtin_progs = drambender.builtin_programs.configure(
         cachelines_per_row=128,
         column_stride=8,
         words_per_cacheline=16,
@@ -77,12 +77,12 @@ def main() -> int:
         aggressor_physical = victim_physical + 1
 
         t0 = time.perf_counter()
-        victim = draminspector.rows.Row(
+        victim = drambender.rows.Row(
             physical_id=victim_physical,
             row_mapping="MI1",
             data_pattern=0x00000000,
         )
-        aggressor = draminspector.rows.Row(
+        aggressor = drambender.rows.Row(
             physical_id=aggressor_physical,
             row_mapping="MI1",
             data_pattern=0xFFFFFFFF,

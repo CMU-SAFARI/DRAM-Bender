@@ -7,9 +7,9 @@ DRAM-BenderV2 RTL and Vivado sources alongside it.
 
 - `API_IMPROVEMENTS.md`: summary of key API improvements over original
   DRAM-Bender.
-- `include`: public C++ headers for the DRAMInspector API.
+- `include`: public C++ headers for the DRAMBender API.
 - `src`: C++ implementation and Python binding sources.
-- `python`: pure Python `draminspector` package.
+- `python`: pure Python `drambender` package.
 - `examples`: user-facing host programs that talk to a configured FPGA board.
 - `tests`: board-facing validation scripts and manual JIT benchmark tools. Do
   not run `tests/board_tests` unless the host is connected to a configured FPGA
@@ -25,12 +25,12 @@ For a C++ software-only build that avoids FPGA/device access and the XDMA
 driver, and skips board-facing example binaries:
 
 ```sh
-cmake -S . -B build -DBUILD_TESTING=OFF -DDRAMINSPECTOR_BUILD_PYTHON=OFF
+cmake -S . -B build -DBUILD_TESTING=OFF -DDRAMBENDER_BUILD_PYTHON=OFF
 cmake --build build
 ```
 
 To compile the board-facing example binaries, configure with
-`-DDRAMINSPECTOR_BUILD_EXAMPLES=ON`. Do not run those examples unless the host
+`-DDRAMBENDER_BUILD_EXAMPLES=ON`. Do not run those examples unless the host
 is connected to a configured FPGA board.
 
 Install the C++ library and CMake package metadata to a prefix:
@@ -42,8 +42,8 @@ cmake --install build --prefix /path/to/prefix
 C++ consumers can then use:
 
 ```cmake
-find_package(DRAMInspector CONFIG REQUIRED)
-target_link_libraries(my_target PRIVATE DRAMInspector::DRAMInspector)
+find_package(DRAMBender CONFIG REQUIRED)
+target_link_libraries(my_target PRIVATE DRAMBender::DRAMBender)
 ```
 
 For Python development:

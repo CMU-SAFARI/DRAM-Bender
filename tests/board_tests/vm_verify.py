@@ -11,9 +11,9 @@ import time
 
 import numpy as np
 
-import draminspector
-from draminspector.api import ProgramBuilder, FinalProgram
-from draminspector.api.program.instructions import *
+import drambender
+from drambender.api import ProgramBuilder, FinalProgram
+from drambender.api.program.instructions import *
 
 CACHELINES_PER_ROW = 128
 BYTES_PER_CACHELINE = 64
@@ -125,7 +125,7 @@ def run_test(board, name: str, prog: FinalProgram):
 
 
 def main() -> int:
-    board = draminspector.api.DDR4(0)
+    board = drambender.api.DDR4(0)
     board.reset_fpga()
     print("Board reset complete.\n")
 

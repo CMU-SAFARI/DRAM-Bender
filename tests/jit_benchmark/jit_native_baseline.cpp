@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "draminspector/api/program/instruction.h"
-#include "draminspector/api/program/program.h"
+#include "drambender/api/program/instruction.h"
+#include "drambender/api/program/program.h"
 
 using namespace DRAMBender;
 

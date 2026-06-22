@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
-from draminspector.api import FinalProgram, ProgramBuilder, program_template
-from draminspector.api.program.instructions import ACT, ALIGN, NOP, PRE, RD, WR
+from drambender.api import FinalProgram, ProgramBuilder, program_template
+from drambender.api.program.instructions import ACT, ALIGN, NOP, PRE, RD, WR
 
 
 BYTES_PER_CACHELINE = 64

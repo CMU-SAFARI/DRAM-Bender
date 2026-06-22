@@ -7,14 +7,14 @@ import time
 
 import numpy as np
 
-from draminspector.api import (
+from drambender.api import (
     BoardType,
     FinalProgram,
     HostInterface,
     ProgramBuilder,
     open_board,
 )
-from draminspector.api.program.instructions import *
+from drambender.api.program.instructions import *
 
 
 CACHELINES_PER_ROW = 128

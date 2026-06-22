@@ -1,4 +1,4 @@
-#include "draminspector/api/host_interface/host_interface.h"
+#include "drambender/api/host_interface/host_interface.h"
 
 #include <cerrno>
 #include <cstdint>
@@ -252,7 +252,7 @@ class XDMA : public IHostInterface {
       // proximate cause); the restore failure is logged to stderr.
       std::fprintf(
           stderr,
-          "[draminspector] XDMA drain: fcntl(F_SETFL restore) failed: %s\n",
+          "[drambender] XDMA drain: fcntl(F_SETFL restore) failed: %s\n",
           std::strerror(errno));
     }
     if (read_error) {

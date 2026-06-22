@@ -7,7 +7,7 @@
 //   4. Read the victim back and count any bit flips.
 //
 // The physical -> logical mapping is MI1 (parity XOR of bit 0x5408 -> XOR 0x6);
-// see python/draminspector/rows/mappings/mi1.py for the Python counterpart.
+// see python/drambender/rows/mappings/mi1.py for the Python counterpart.
 
 #include <charconv>
 #include <cstddef>
@@ -18,7 +18,7 @@
 #include <string_view>
 #include <vector>
 
-#include "draminspector/api/board/board.h"
+#include "drambender/api/board/board.h"
 
 using namespace DRAMBender;
 
@@ -129,7 +129,7 @@ FinalProgram build_program(int bank,
   init_row(aggressor_row, k_aggressor_pattern);
 
   // Hammer loop — byte-for-byte equivalent of
-  // draminspector.builtin_programs.single_sided_rowhammer.
+  // drambender.builtin_programs.single_sided_rowhammer.
   p.add_inst(SMC_LI(aggressor_row, RAR));
   p.add_inst(SMC_LI(0, HAMMER_CTR));
   p.add_inst(SMC_LI(hammer_count, NUM_HAMMER));

@@ -8,7 +8,7 @@ For each victim row in [start_row, start_row + num_victims):
   3. Hammer the aggressor `hammer_count` times.
   4. Read the victim back and count any bit flips (1 bits in the readback).
 
-The physical↔logical row mapping is MI1 — see `draminspector.rows.mappings.mi1`.
+The physical↔logical row mapping is MI1 — see `drambender.rows.mappings.mi1`.
 """
 
 import argparse
@@ -16,8 +16,8 @@ import sys
 
 import numpy as np
 
-import draminspector
-from draminspector.api import BoardType, HostInterface, open_board
+import drambender
+from drambender.api import BoardType, HostInterface, open_board
 
 ROW_BYTES = 8192
 ROW_WORDS = ROW_BYTES // 4
@@ -47,7 +47,7 @@ def main() -> int:
 
     # Bind the shipped templates to a concrete DRAM geometry. Geometry values
     # are board-specific facts and must be stated explicitly — there is no default.
-    builtin_progs = draminspector.builtin_programs.configure(
+    builtin_progs = drambender.builtin_programs.configure(
         cachelines_per_row=128,
         column_stride=8,
         words_per_cacheline=16,
@@ -62,12 +62,12 @@ def main() -> int:
 
         # `Row` applies the named row mapping and carries the write pattern
         # through any bitline/DQ swizzling the DRAM module may expose.
-        victim = draminspector.rows.Row(
+        victim = drambender.rows.Row(
             physical_id=victim_physical,
             row_mapping="MI1",
             data_pattern=0x00000000,
         )
-        aggressor = draminspector.rows.Row(
+        aggressor = drambender.rows.Row(
             physical_id=aggressor_physical,
             row_mapping="MI1",
             data_pattern=0xFFFFFFFF,

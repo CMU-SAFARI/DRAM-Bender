@@ -8,7 +8,7 @@ import subprocess
 import sys
 from typing import Any
 
-from draminspector.api.jit import (
+from drambender.api.jit import (
     clear_lowering_stats,
     clear_template_caches,
     get_last_lowering_stats,
@@ -29,7 +29,7 @@ from tests.jit_benchmark.workloads import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_NATIVE_EXE = REPO_ROOT / "build" / "dev-gcc12" / "draminspector_jit_native_benchmark"
+DEFAULT_NATIVE_EXE = REPO_ROOT / "build" / "dev-gcc12" / "drambender_jit_native_benchmark"
 
 
 @dataclass(frozen=True)

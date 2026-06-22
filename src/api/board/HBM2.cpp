@@ -1,4 +1,4 @@
-#include "draminspector/api/board/HBM2.h"
+#include "drambender/api/board/HBM2.h"
 
 #include <array>
 #include <stdexcept>

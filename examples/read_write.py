@@ -12,8 +12,8 @@ import sys
 
 import numpy as np
 
-import draminspector
-from draminspector.api import BoardType, HostInterface, open_board
+import drambender
+from drambender.api import BoardType, HostInterface, open_board
 
 
 CACHELINES_PER_ROW  = 128
@@ -36,7 +36,7 @@ def main() -> int:
     )
     board.reset_fpga()
 
-    builtin_progs = draminspector.builtin_programs.configure(
+    builtin_progs = drambender.builtin_programs.configure(
         cachelines_per_row=CACHELINES_PER_ROW,
         column_stride=8,
         words_per_cacheline=WORDS_PER_CACHELINE,

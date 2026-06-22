@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-#include "draminspector/api/board/board.h"
+#include "drambender/api/board/board.h"
 
 using namespace DRAMBender;
 
@@ -177,7 +177,7 @@ FinalProgram build_single_sided_rowhammer_program(int bank,
   p.add_inst(all_nops());
 
   // --- Hammer aggressor ---
-  // Byte-for-byte equivalent of draminspector.builtin_programs.single_sided_rowhammer.
+  // Byte-for-byte equivalent of drambender.builtin_programs.single_sided_rowhammer.
   p.add_inst(SMC_LI(bank, BAR));
   p.add_inst(SMC_LI(aggressor_row, RAR));
   p.add_inst(SMC_LI(0, HAMMER_CTR));
@@ -210,7 +210,7 @@ FinalProgram build_single_sided_rowhammer_program(int bank,
   return p.conclude();
 }
 
-// MI1 row mapping — mirrors python/draminspector/rows/mappings/mi1.py.
+// MI1 row mapping — mirrors python/drambender/rows/mappings/mi1.py.
 // parity = popcount(physical_id & 0x5408) & 1; logical = physical ^ (parity * 6).
 int mi1_map(int physical_id) {
   const int parity =

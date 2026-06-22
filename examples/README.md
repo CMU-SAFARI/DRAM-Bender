@@ -2,7 +2,7 @@
 
 These examples are host-side programs that talk to a programmed FPGA board.
 
-Configure CMake with `-DDRAMINSPECTOR_BUILD_EXAMPLES=ON` to compile the C++
+Configure CMake with `-DDRAMBENDER_BUILD_EXAMPLES=ON` to compile the C++
 example binaries.
 
 They require a compatible DRAM-Bender bitstream and a loaded XDMA driver. They

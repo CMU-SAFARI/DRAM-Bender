@@ -1,4 +1,4 @@
-# DRAMInspector development environment
+# DRAMBender development environment
 #
 # Set up the venv from scratch:
 #   python3.12 -m venv .venv
@@ -13,7 +13,7 @@ numpy>=1.26
 scikit-build-core>=0.10
 nanobind>=2.12
 
-# Tutorial notebook at notebooks/tutorial_writing_dram_programs.ipynb
+# Tutorial notebook at examples/tutorial.ipynb
 jupyter>=1.0
 ipykernel>=6.25
 ipywidgets>=8.0

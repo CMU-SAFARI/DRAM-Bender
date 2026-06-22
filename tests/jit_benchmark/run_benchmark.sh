@@ -16,14 +16,14 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-CPP_BIN="$REPO_ROOT/build/release-gcc12/draminspector_board_single_sided_rowhammer_bench"
+CPP_BIN="$REPO_ROOT/build/release-gcc12/drambender_board_single_sided_rowhammer_bench"
 PYTHON="$REPO_ROOT/.venv/bin/python"
 
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 [[ -x "$CPP_BIN" ]] || die "C++ benchmark binary not found at $CPP_BIN
-       configure with: -DDRAMINSPECTOR_BUILD_BOARD_BENCHMARKS=ON
-       build with: cmake --build $REPO_ROOT/build/release-gcc12 --target draminspector_board_single_sided_rowhammer_bench"
+       configure with: -DDRAMBENDER_BUILD_BOARD_BENCHMARKS=ON
+       build with: cmake --build $REPO_ROOT/build/release-gcc12 --target drambender_board_single_sided_rowhammer_bench"
 [[ -x "$PYTHON" ]]  || die "python not found at $PYTHON"
 
 OUT_DIR="$(mktemp -d)"
@@ -35,7 +35,7 @@ hr()   { local n=${1:-72}; printf '%0.s=' $(seq 1 "$n"); echo; }
 thin() { local n=${1:-72}; printf '%0.s-' $(seq 1 "$n"); echo; }
 
 hr
-echo "DRAMInspector single_sided_rowhammer benchmark comparison"
+echo "DRAMBender single_sided_rowhammer benchmark comparison"
 hr
 printf '  %-14s %s\n' 'C++ binary:' "$CPP_BIN"
 printf '  %-14s %s\n' 'Python:'     "$PYTHON"

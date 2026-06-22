@@ -11,9 +11,9 @@ import sys
 
 import numpy as np
 
-import draminspector
-from draminspector.api import ProgramBuilder
-from draminspector.api.program.instructions import *
+import drambender
+from drambender.api import ProgramBuilder
+from drambender.api.program.instructions import *
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -27,7 +27,7 @@ TEST_DATA = np.uint32(0xDEADBEEF)
 # Program
 # ---------------------------------------------------------------------------
 
-def build_rw_program(bank: int, num_rows: int, num_cls: int) -> draminspector.api.FinalProgram:
+def build_rw_program(bank: int, num_rows: int, num_cls: int) -> drambender.api.FinalProgram:
     COL_STRIDE = 8
 
     p = ProgramBuilder()
@@ -178,7 +178,7 @@ def main() -> int:
     print(f"rw_test: instance={args.instance_id} bank={args.bank} "
           f"rows={args.num_rows} cls={args.num_cls} bytes/row={row_bytes}")
 
-    board = draminspector.api.DDR4(args.instance_id)
+    board = drambender.api.DDR4(args.instance_id)
     board.reset_fpga()
     board.execute(build_rw_program(args.bank, args.num_rows, args.num_cls))
 

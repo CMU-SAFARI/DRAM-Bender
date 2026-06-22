@@ -12,14 +12,14 @@
 #include <utility>
 #include <vector>
 
-#include "draminspector/api/board/DDR4.h"
-#include "draminspector/api/board/HBM2.h"
-#include "draminspector/api/board/board.h"
-#include "draminspector/api/host_interface/host_interface.h"
-#include "draminspector/api/program/instruction.h"
-#include "draminspector/api/program/program.h"
-#include "draminspector/utils/debug.h"
-#include "draminspector/utils/vm.h"
+#include "drambender/api/board/DDR4.h"
+#include "drambender/api/board/HBM2.h"
+#include "drambender/api/board/board.h"
+#include "drambender/api/host_interface/host_interface.h"
+#include "drambender/api/program/instruction.h"
+#include "drambender/api/program/program.h"
+#include "drambender/utils/debug.h"
+#include "drambender/utils/vm.h"
 #include "program_template_plugin.h"
 
 #include <nanobind/nanobind.h>
@@ -99,7 +99,7 @@ class NullHostInterface : public IHostInterface {
 };
 
 // Internal test hook. This is intentionally not wrapped by the public
-// draminspector package API.
+// drambender package API.
 class MockBoard : public IBoard {
  public:
   explicit MockBoard(int receive_timeout_ms = 5000)
@@ -605,8 +605,8 @@ class ProgramPlugin {
     }
 
     auto* abi_version_fn =
-        reinterpret_cast<DRAMInspectorPluginAbiVersionFn>(
-            dlsym(handle_, "draminspector_template_plugin_abi_version"));
+        reinterpret_cast<DRAMBenderPluginAbiVersionFn>(
+            dlsym(handle_, "drambender_template_plugin_abi_version"));
     if (abi_version_fn == nullptr) {
       throw std::runtime_error(
           "Program plugin is missing ABI version symbol: " + plugin_path_);
@@ -616,7 +616,7 @@ class ProgramPlugin {
           "Program plugin ABI version mismatch for " + plugin_path_ + ".");
     }
 
-    instantiate_ = reinterpret_cast<DRAMInspectorInstantiateFn>(
+    instantiate_ = reinterpret_cast<DRAMBenderInstantiateFn>(
         dlsym(handle_, "instantiate"));
     if (instantiate_ == nullptr) {
       throw std::runtime_error(
@@ -644,7 +644,7 @@ class ProgramPlugin {
     if (handle_ != nullptr) {
       if (dlclose(handle_) != 0) {
         std::fprintf(stderr,
-                     "[draminspector] ~ProgramPlugin: dlclose(%s) failed: %s\n",
+                     "[drambender] ~ProgramPlugin: dlclose(%s) failed: %s\n",
                      plugin_path_.c_str(),
                      dlerror_string_().c_str());
       }
@@ -683,7 +683,7 @@ class ProgramPlugin {
           marshal_array_(args[key], array_names_[index], array_lengths_[index]));
     }
 
-    std::vector<DRAMInspectorIntArrayArg> array_args;
+    std::vector<DRAMBenderIntArrayArg> array_args;
     array_args.reserve(array_storage.size());
     for (const auto& buffer : array_storage) {
       array_args.push_back({buffer.data(), buffer.size()});
@@ -731,7 +731,7 @@ class ProgramPlugin {
     if (dladdr(reinterpret_cast<void*>(&promote_current_module_symbols_), &info) == 0 ||
         info.dli_fname == nullptr) {
       throw std::runtime_error(
-          "Failed to locate the currently loaded draminspector._core module.");
+          "Failed to locate the currently loaded drambender._core module.");
     }
 
 #ifdef RTLD_NOLOAD
@@ -746,7 +746,7 @@ class ProgramPlugin {
 
     if (promoted == nullptr) {
       throw std::runtime_error(
-          "Failed to promote draminspector._core symbols for program plugins: " +
+          "Failed to promote drambender._core symbols for program plugins: " +
           dlerror_string_());
     }
   }
@@ -793,7 +793,7 @@ class ProgramPlugin {
   std::vector<std::string> array_names_;
   std::vector<size_t> array_lengths_;
   void* handle_ = nullptr;
-  DRAMInspectorInstantiateFn instantiate_ = nullptr;
+  DRAMBenderInstantiateFn instantiate_ = nullptr;
 };
 
 }  // namespace

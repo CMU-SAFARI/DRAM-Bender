@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-#include "draminspector/api/board/board.h"
+#include "drambender/api/board/board.h"
 
 using namespace DRAMBender;
 

@@ -1,4 +1,4 @@
-#include "draminspector/api/board/DDR4.h"
+#include "drambender/api/board/DDR4.h"
 
 namespace DRAMBender {
 

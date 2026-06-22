@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
-project(DRAMInspector VERSION 0.1.0 LANGUAGES CXX)
+project(DRAMBender VERSION 0.1.0 LANGUAGES CXX)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
 option(BUILD_TESTING "Build optional test and benchmark targets" OFF)
-option(DRAMINSPECTOR_BUILD_PYTHON "Build Python bindings" ON)
-option(DRAMINSPECTOR_BUILD_EXAMPLES "Build board-facing example binaries" OFF)
-option(DRAMINSPECTOR_BUILD_BOARD_TESTS "Build board-facing test binaries" OFF)
-option(DRAMINSPECTOR_BUILD_BOARD_BENCHMARKS "Build board-facing benchmark binaries" OFF)
-set(DRAMINSPECTOR_PYTHON_PACKAGE_DIR ""
-    CACHE PATH "Output directory for the draminspector Python package")
+option(DRAMBENDER_BUILD_PYTHON "Build Python bindings" ON)
+option(DRAMBENDER_BUILD_EXAMPLES "Build board-facing example binaries" OFF)
+option(DRAMBENDER_BUILD_BOARD_TESTS "Build board-facing test binaries" OFF)
+option(DRAMBENDER_BUILD_BOARD_BENCHMARKS "Build board-facing benchmark binaries" OFF)
+set(DRAMBENDER_PYTHON_PACKAGE_DIR ""
+    CACHE PATH "Output directory for the drambender Python package")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
@@ -26,7 +26,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(Threads REQUIRED)
 
-add_library(DRAMInspector
+add_library(DRAMBender
   src/api/host_interface/host_interface.cpp
   src/api/host_interface/xdma.cpp
   src/api/board/DDR4.cpp
@@ -38,9 +38,9 @@ add_library(DRAMInspector
   src/utils/vm.cpp
 )
 
-add_library(DRAMInspector::DRAMInspector ALIAS DRAMInspector)
+add_library(DRAMBender::DRAMBender ALIAS DRAMBender)
 
-target_include_directories(DRAMInspector
+target_include_directories(DRAMBender
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -48,12 +48,12 @@ target_include_directories(DRAMInspector
   ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(DRAMInspector
+target_link_libraries(DRAMBender
   PUBLIC
   Threads::Threads
 )
 
-target_compile_options(DRAMInspector
+target_compile_options(DRAMBender
   PRIVATE
   -Wall
   -Wextra
@@ -61,8 +61,8 @@ target_compile_options(DRAMInspector
 )
 
 install(
-  TARGETS DRAMInspector
-  EXPORT DRAMInspectorTargets
+  TARGETS DRAMBender
+  EXPORT DRAMBenderTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_COMPONENT development
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
@@ -75,75 +75,75 @@ install(
   COMPONENT development
 )
 
-set(DRAMINSPECTOR_CMAKE_INSTALL_DIR
-    "${CMAKE_INSTALL_LIBDIR}/cmake/DRAMInspector")
+set(DRAMBENDER_CMAKE_INSTALL_DIR
+    "${CMAKE_INSTALL_LIBDIR}/cmake/DRAMBender")
 
 install(
-  EXPORT DRAMInspectorTargets
-  NAMESPACE DRAMInspector::
-  DESTINATION ${DRAMINSPECTOR_CMAKE_INSTALL_DIR}
+  EXPORT DRAMBenderTargets
+  NAMESPACE DRAMBender::
+  DESTINATION ${DRAMBENDER_CMAKE_INSTALL_DIR}
   COMPONENT development
 )
 
 configure_package_config_file(
-  cmake/DRAMInspectorConfig.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/DRAMInspectorConfig.cmake"
-  INSTALL_DESTINATION ${DRAMINSPECTOR_CMAKE_INSTALL_DIR}
+  cmake/DRAMBenderConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/DRAMBenderConfig.cmake"
+  INSTALL_DESTINATION ${DRAMBENDER_CMAKE_INSTALL_DIR}
 )
 
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/DRAMInspectorConfigVersion.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/DRAMBenderConfigVersion.cmake"
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY SameMajorVersion
 )
 
 install(
   FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/DRAMInspectorConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/DRAMInspectorConfigVersion.cmake"
-  DESTINATION ${DRAMINSPECTOR_CMAKE_INSTALL_DIR}
+    "${CMAKE_CURRENT_BINARY_DIR}/DRAMBenderConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/DRAMBenderConfigVersion.cmake"
+  DESTINATION ${DRAMBENDER_CMAKE_INSTALL_DIR}
   COMPONENT development
 )
 
-if (DRAMINSPECTOR_BUILD_EXAMPLES)
-  add_executable(draminspector_example_single_sided_rowhammer
+if (DRAMBENDER_BUILD_EXAMPLES)
+  add_executable(drambender_example_single_sided_rowhammer
     examples/single_sided_rowhammer.cpp
   )
-  target_link_libraries(draminspector_example_single_sided_rowhammer PRIVATE DRAMInspector)
+  target_link_libraries(drambender_example_single_sided_rowhammer PRIVATE DRAMBender)
 
-  add_executable(draminspector_example_read_write
+  add_executable(drambender_example_read_write
     examples/read_write.cpp
   )
-  target_link_libraries(draminspector_example_read_write PRIVATE DRAMInspector)
+  target_link_libraries(drambender_example_read_write PRIVATE DRAMBender)
 endif()
 
-if (DRAMINSPECTOR_BUILD_BOARD_BENCHMARKS)
-  add_executable(draminspector_board_single_sided_rowhammer_bench
+if (DRAMBENDER_BUILD_BOARD_BENCHMARKS)
+  add_executable(drambender_board_single_sided_rowhammer_bench
     tests/jit_benchmark/single_sided_rowhammer_bench.cpp
   )
-  target_link_libraries(draminspector_board_single_sided_rowhammer_bench PRIVATE DRAMInspector)
+  target_link_libraries(drambender_board_single_sided_rowhammer_bench PRIVATE DRAMBender)
 
-  add_executable(draminspector_board_read_write_bench
+  add_executable(drambender_board_read_write_bench
     tests/jit_benchmark/read_write_bench.cpp
   )
-  target_link_libraries(draminspector_board_read_write_bench PRIVATE DRAMInspector)
+  target_link_libraries(drambender_board_read_write_bench PRIVATE DRAMBender)
 endif()
 
 if (BUILD_TESTING)
-  if (DRAMINSPECTOR_BUILD_BOARD_TESTS)
-    add_executable(draminspector_rw_test
+  if (DRAMBENDER_BUILD_BOARD_TESTS)
+    add_executable(drambender_rw_test
       tests/board_tests/rw_test.cpp
     )
-    target_link_libraries(draminspector_rw_test PRIVATE DRAMInspector)
+    target_link_libraries(drambender_rw_test PRIVATE DRAMBender)
   endif()
 
-  add_executable(draminspector_jit_native_benchmark
+  add_executable(drambender_jit_native_benchmark
     tests/jit_benchmark/jit_native_baseline.cpp
   )
-  target_link_libraries(draminspector_jit_native_benchmark PRIVATE DRAMInspector)
+  target_link_libraries(drambender_jit_native_benchmark PRIVATE DRAMBender)
 endif()
 
-if (DRAMINSPECTOR_BUILD_PYTHON)
+if (DRAMBENDER_BUILD_PYTHON)
   include(FetchContent)
 
   if (CMAKE_VERSION VERSION_LESS 3.18)
@@ -164,39 +164,39 @@ if (DRAMINSPECTOR_BUILD_PYTHON)
     FetchContent_MakeAvailable(nanobind)
   endif()
 
-  if (DRAMINSPECTOR_PYTHON_PACKAGE_DIR)
-    set(_draminspector_python_package_dir "${DRAMINSPECTOR_PYTHON_PACKAGE_DIR}")
+  if (DRAMBENDER_PYTHON_PACKAGE_DIR)
+    set(_drambender_python_package_dir "${DRAMBENDER_PYTHON_PACKAGE_DIR}")
   else()
-    set(_draminspector_python_package_dir
-        "${CMAKE_CURRENT_BINARY_DIR}/python/draminspector")
+    set(_drambender_python_package_dir
+        "${CMAKE_CURRENT_BINARY_DIR}/python/drambender")
   endif()
 
-  file(MAKE_DIRECTORY "${_draminspector_python_package_dir}")
+  file(MAKE_DIRECTORY "${_drambender_python_package_dir}")
 
-  nanobind_add_module(draminspector_core
+  nanobind_add_module(drambender_core
     src/bindings/python/_core.cpp
   )
 
-  set_target_properties(draminspector_core PROPERTIES
+  set_target_properties(drambender_core PROPERTIES
     OUTPUT_NAME "_core"
-    LIBRARY_OUTPUT_DIRECTORY "${_draminspector_python_package_dir}"
+    LIBRARY_OUTPUT_DIRECTORY "${_drambender_python_package_dir}"
   )
 
-  target_include_directories(draminspector_core
+  target_include_directories(drambender_core
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src/bindings/python
   )
 
-  target_link_libraries(draminspector_core
+  target_link_libraries(drambender_core
     PRIVATE
-    DRAMInspector
+    DRAMBender
   )
 
   install(
-    TARGETS draminspector_core
-    LIBRARY DESTINATION draminspector COMPONENT python
-    RUNTIME DESTINATION draminspector COMPONENT python
+    TARGETS drambender_core
+    LIBRARY DESTINATION drambender COMPONENT python
+    RUNTIME DESTINATION drambender COMPONENT python
   )
 
 endif()

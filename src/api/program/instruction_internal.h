@@ -1,7 +1,7 @@
-#ifndef DRAMINSPECTOR_SRC_API_PROGRAM_INSTRUCTION_INTERNAL_H
-#define DRAMINSPECTOR_SRC_API_PROGRAM_INSTRUCTION_INTERNAL_H
+#ifndef DRAMBENDER_SRC_API_PROGRAM_INSTRUCTION_INTERNAL_H
+#define DRAMBENDER_SRC_API_PROGRAM_INSTRUCTION_INTERNAL_H
 
-#include "draminspector/api/program/instruction.h"
+#include "drambender/api/program/instruction.h"
 
 namespace DRAMBender::InstrEncoding {
 
@@ -73,4 +73,4 @@ int count_ddr_reads(Inst inst);
 
 }  // namespace DRAMBender::InstrEncoding
 
-#endif  // DRAMINSPECTOR_SRC_API_PROGRAM_INSTRUCTION_INTERNAL_H
+#endif  // DRAMBENDER_SRC_API_PROGRAM_INSTRUCTION_INTERNAL_H
