@@ -23,7 +23,7 @@ constexpr int k_default_num_cls = 128;
 constexpr int k_bytes_per_cacheline = 64;
 constexpr int k_wide_register_words = 16;
 constexpr int k_column_stride = 8;
-constexpr uint32_t k_test_data = 0xdeadbeefu;
+constexpr uint32_t k_default_pattern = 0xdeadbeefu;
 constexpr size_t k_max_reported_mismatches = 32;
 constexpr int k_progress_bar_width = 40;
 
@@ -50,11 +50,13 @@ struct Options {
   int bank = k_default_bank;
   int num_rows = k_default_num_rows;
   int num_cls = k_default_num_cls;
+  uint32_t pattern = k_default_pattern;
 };
 
 void print_usage(const char* argv0) {
   std::fprintf(stderr,
-               "Usage: %s [--board-id N] [--instance-id N] [--bank N] [--num-rows N] [--num-cls N]\n",
+               "Usage: %s [--board-id N] [--instance-id N] [--bank N] "
+               "[--num-rows N] [--num-cls N] [--pattern N]\n",
                argv0);
 }
 
@@ -71,6 +73,33 @@ bool parse_non_negative_int(const char* text, int* value) {
   }
 
   *value = parsed;
+  return true;
+}
+
+bool parse_u32(const char* text, uint32_t* value) {
+  std::string_view input(text);
+  if (input.empty()) {
+    return false;
+  }
+
+  int base = 10;
+  if (input.size() > 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X')) {
+    base = 16;
+    input.remove_prefix(2);
+    if (input.empty()) {
+      return false;
+    }
+  }
+
+  uint64_t parsed = 0;
+  const auto result = std::from_chars(
+      input.data(), input.data() + input.size(), parsed, base);
+  if (result.ec != std::errc() || result.ptr != input.data() + input.size() ||
+      parsed > 0xffffffffull) {
+    return false;
+  }
+
+  *value = static_cast<uint32_t>(parsed);
   return true;
 }
 
@@ -125,6 +154,15 @@ bool parse_args(int argc, char** argv, Options* options) {
       continue;
     }
 
+    if (arg == "--pattern") {
+      if (arg_index + 1 >= argc || !parse_u32(argv[arg_index + 1], &options->pattern)) {
+        std::fprintf(stderr, "Invalid value for --pattern.\n");
+        return false;
+      }
+      ++arg_index;
+      continue;
+    }
+
     std::fprintf(stderr, "Unknown argument: %.*s\n", static_cast<int>(arg.size()), arg.data());
     return false;
   }
@@ -159,14 +197,14 @@ void print_progress(size_t completed_rows, size_t total_rows) {
   std::fflush(stdout);
 }
 
-FinalProgram build_rw_program(int bank, int num_rows, int num_cls) {
+FinalProgram build_rw_program(int bank, int num_rows, int num_cls, uint32_t pattern) {
   Program program;
 
   program.add_inst(SMC_LI(num_rows, k_num_rows_reg));
   program.add_inst(SMC_LI(bank, k_bar_reg));
   program.add_inst(SMC_LI(k_column_stride, k_casr_reg));
   program.add_inst(SMC_LI(num_cls, k_num_cols_reg));
-  program.add_inst(SMC_LI(k_test_data, k_pattern_reg));
+  program.add_inst(SMC_LI(pattern, k_pattern_reg));
 
   for (int word = 0; word < k_wide_register_words; ++word) {
     program.add_inst(SMC_LDWD(k_pattern_reg, word));
@@ -308,21 +346,24 @@ int main(int argc, char** argv) {
         BoardType::DDR4, options.board_id, options.instance_id, HostInterface::XDMA);
     board->reset_fpga();
 
-    const FinalProgram program = build_rw_program(options.bank, options.num_rows, options.num_cls);
+    const FinalProgram program = build_rw_program(
+        options.bank, options.num_rows, options.num_cls, options.pattern);
     board->execute(program);
 
     std::vector<std::byte> row_buffer(static_cast<size_t>(options.num_cls) * k_bytes_per_cacheline);
     size_t total_mismatches = 0;
     size_t reported_mismatches = 0;
-    uint32_t row_pattern = k_test_data;
+    uint32_t row_pattern = options.pattern;
     const int progress_interval = std::max(1, options.num_rows / 200);
 
-    std::printf("rw_test config: board=%d instance=%d bank=%d rows=%d cls=%d bytes-per-row=%zu\n",
+    std::printf("rw_test config: board=%d instance=%d bank=%d rows=%d cls=%d "
+                "pattern=0x%08x bytes-per-row=%zu\n",
                 options.board_id,
                 options.instance_id,
                 options.bank,
                 options.num_rows,
                 options.num_cls,
+                static_cast<unsigned int>(options.pattern),
                 row_buffer.size());
     print_progress(0, static_cast<size_t>(options.num_rows));
     for (int row = 0; row < options.num_rows; ++row) {
@@ -342,12 +383,14 @@ int main(int argc, char** argv) {
     std::printf("\n");
 
     if (total_mismatches == 0) {
-      std::printf("rw_test passed: board=%d instance=%d bank=%d rows=%d cls=%d bytes=%llu\n",
+      std::printf("rw_test passed: board=%d instance=%d bank=%d rows=%d cls=%d "
+                  "pattern=0x%08x bytes=%llu\n",
                   options.board_id,
                   options.instance_id,
                   options.bank,
                   options.num_rows,
                   options.num_cls,
+                  static_cast<unsigned int>(options.pattern),
                   static_cast<unsigned long long>(static_cast<uint64_t>(options.num_rows) *
                                                  static_cast<uint64_t>(options.num_cls) *
                                                  k_bytes_per_cacheline));
@@ -361,12 +404,14 @@ int main(int argc, char** argv) {
                    reported_mismatches);
     }
     std::fprintf(stderr,
-                 "rw_test failed: board=%d instance=%d bank=%d rows=%d cls=%d total_mismatches=%zu bytes=%llu\n",
+                 "rw_test failed: board=%d instance=%d bank=%d rows=%d cls=%d "
+                 "pattern=0x%08x total_mismatches=%zu bytes=%llu\n",
                  options.board_id,
                  options.instance_id,
                  options.bank,
                  options.num_rows,
                  options.num_cls,
+                 static_cast<unsigned int>(options.pattern),
                  total_mismatches,
                  static_cast<unsigned long long>(static_cast<uint64_t>(options.num_rows) *
                                                 static_cast<uint64_t>(options.num_cls) *

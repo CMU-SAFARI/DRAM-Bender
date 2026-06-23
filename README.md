@@ -51,6 +51,10 @@ For Python development on a fresh clone:
 bash setup_venv.sh
 ```
 
+The Python extension requires the development headers for the selected
+interpreter. With the default `python3.12` on Ubuntu/Debian, install them with
+`sudo apt install python3.12-dev`.
+
 This creates `.venv`, installs requirements, and runs the editable install. For
 iterative local C++ extension rebuilds after that setup step:
 

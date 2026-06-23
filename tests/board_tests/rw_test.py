@@ -20,14 +20,25 @@ from drambender.api.program.instructions import *
 # ---------------------------------------------------------------------------
 
 BYTES_PER_CACHELINE = 64
-TEST_DATA = np.uint32(0xDEADBEEF)
+DEFAULT_PATTERN = 0xDEADBEEF
 
 
 # ---------------------------------------------------------------------------
 # Program
 # ---------------------------------------------------------------------------
 
-def build_rw_program(bank: int, num_rows: int, num_cls: int) -> drambender.api.FinalProgram:
+def parse_u32(text: str) -> int:
+    try:
+        value = int(text, 0)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"invalid 32-bit pattern: {text!r}") from exc
+    if not 0 <= value <= 0xFFFFFFFF:
+        raise argparse.ArgumentTypeError("pattern must be in range 0..0xffffffff")
+    return value
+
+
+def build_rw_program(bank: int, num_rows: int, num_cls: int,
+                     pattern: int) -> drambender.api.FinalProgram:
     COL_STRIDE = 8
 
     p = ProgramBuilder()
@@ -41,7 +52,7 @@ def build_rw_program(bank: int, num_rows: int, num_cls: int) -> drambender.api.F
     p.LI(bank, "BAR")
     p.LI(COL_STRIDE, "CASR")
     p.LI(num_cls, "NUM_COLS_REG")
-    p.LI(TEST_DATA, "PATTERN_REG")
+    p.LI(pattern, "PATTERN_REG")
     for index in range(16):
         p.LDWD("PATTERN_REG", index)
 
@@ -172,20 +183,23 @@ def main() -> int:
     ap.add_argument("--bank", type=int, default=0)
     ap.add_argument("--num-rows", type=int, default=65536)
     ap.add_argument("--num-cls", type=int, default=128)
+    ap.add_argument("--pattern", type=parse_u32, default=DEFAULT_PATTERN,
+                    help="Initial 32-bit write pattern, decimal or 0x-prefixed hex.")
     args = ap.parse_args()
 
     row_bytes = args.num_cls * BYTES_PER_CACHELINE
     total_bytes = args.num_rows * row_bytes
     print(f"rw_test: board={args.board_id} instance={args.instance_id} bank={args.bank} "
-          f"rows={args.num_rows} cls={args.num_cls} bytes/row={row_bytes}")
+          f"rows={args.num_rows} cls={args.num_cls} pattern=0x{args.pattern:08x} "
+          f"bytes/row={row_bytes}")
 
     board = drambender.api.DDR4(args.board_id, args.instance_id)
     board.reset_fpga()
-    board.execute(build_rw_program(args.bank, args.num_rows, args.num_cls))
+    board.execute(build_rw_program(args.bank, args.num_rows, args.num_cls, args.pattern))
 
     buf = np.empty(row_bytes, dtype=np.uint8)
     total_bad = 0
-    pat = int(TEST_DATA)
+    pat = args.pattern
     step = max(1, args.num_rows // 200)
 
     for row in range(args.num_rows):

@@ -15,6 +15,11 @@ Typical use::
     my_template(...)  # first call: compiled_cold
     stats = get_last_template_run_stats()
     print(stats.mode, stats.compile_s)
+
+The native template compiler must be G++ 11 or newer with C++20 ``<span>``
+support. Set ``DRAMBENDER_JIT_CXX=/path/to/g++`` to choose a compiler
+explicitly; otherwise ``CXX`` and common ``g++`` executables on ``PATH`` are
+tried.
 """
 
 from .._jit import (

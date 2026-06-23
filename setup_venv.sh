@@ -19,6 +19,44 @@ VENV_DIR="${VENV_DIR:-.venv}"
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$REPO_ROOT"
 
+check_python_dev_headers() {
+    local python_bin="$1"
+    local report
+
+    if report="$("$python_bin" - <<'PY'
+import os
+import sys
+import sysconfig
+
+version = f"{sys.version_info.major}.{sys.version_info.minor}"
+include_dirs = []
+for key in ("INCLUDEPY", "CONFINCLUDEPY"):
+    value = sysconfig.get_config_var(key)
+    if value and value not in include_dirs:
+        include_dirs.append(value)
+
+missing = []
+for header in ("Python.h", "patchlevel.h"):
+    if not any(os.path.exists(os.path.join(include_dir, header)) for include_dir in include_dirs):
+        missing.append(header)
+
+if missing:
+    print(f"error: Python {version} development headers are missing: {', '.join(missing)}")
+    print("       Checked include directories:")
+    for include_dir in include_dirs or ["<none reported by sysconfig>"]:
+        print(f"         - {include_dir}")
+    print(f"       On Ubuntu/Debian, install them with:")
+    print(f"           sudo apt install python{version}-dev")
+    raise SystemExit(1)
+PY
+    )"; then
+        return 0
+    fi
+
+    echo "$report" >&2
+    return 1
+}
+
 FORCE=0
 for arg in "$@"; do
     case "$arg" in
@@ -28,17 +66,20 @@ for arg in "$@"; do
     esac
 done
 
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+    echo "error: $PYTHON_BIN not found on PATH." >&2
+    echo "       Set PYTHON_BIN=/path/to/python3.x if you need a different interpreter." >&2
+    exit 1
+fi
+
+echo "==> Checking Python development headers"
+check_python_dev_headers "$PYTHON_BIN"
+
 if (( FORCE )); then
     echo "==> Removing existing $VENV_DIR"
     rm -rf "$VENV_DIR"
 elif [[ -d "$VENV_DIR" ]]; then
     echo "==> $VENV_DIR already exists; reusing it (pass --force to recreate)"
-fi
-
-if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
-    echo "error: $PYTHON_BIN not found on PATH." >&2
-    echo "       Set PYTHON_BIN=/path/to/python3.x if you need a different interpreter." >&2
-    exit 1
 fi
 
 if [[ ! -d "$VENV_DIR" ]]; then

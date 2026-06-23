@@ -2,6 +2,7 @@
 """Manual smoke checks for the host-side JIT benchmark/profile tools."""
 
 import argparse
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -15,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--build-dir",
         type=Path,
-        default=REPO_ROOT / "build" / "dev-gcc12",
+        default=REPO_ROOT / "build" / "jit-smoke",
     )
     parser.add_argument(
         "--python-executable",
@@ -38,8 +39,8 @@ def configure_if_needed(build_dir: Path, python_executable: Path) -> None:
             "-B",
             str(build_dir),
             "-DCMAKE_BUILD_TYPE=Debug",
-            "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
-            "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+            f"-DCMAKE_C_COMPILER={os.environ.get('CC', 'gcc')}",
+            f"-DCMAKE_CXX_COMPILER={os.environ.get('CXX', 'g++')}",
             f"-DPython_EXECUTABLE={python_executable}",
             "-DBUILD_TESTING=ON",
             "-DDRAMBENDER_BUILD_PYTHON=ON",

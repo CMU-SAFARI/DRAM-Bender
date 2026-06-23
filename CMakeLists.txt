@@ -148,6 +148,11 @@ if (BUILD_TESTING)
       tests/board_tests/full_reset_test.cpp
     )
     target_link_libraries(drambender_full_reset_test PRIVATE DRAMBender)
+
+    add_executable(drambender_rowhammer_test
+      tests/board_tests/rowhammer_test.cpp
+    )
+    target_link_libraries(drambender_rowhammer_test PRIVATE DRAMBender)
   endif()
 
   add_executable(drambender_jit_native_benchmark
@@ -163,6 +168,50 @@ if (DRAMBENDER_BUILD_PYTHON)
     set(DEV_MODULE Development)
   else()
     set(DEV_MODULE Development.Module)
+  endif()
+
+  find_package(Python 3.9 COMPONENTS Interpreter REQUIRED)
+
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" -c
+            "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
+    OUTPUT_VARIABLE _drambender_python_version
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  execute_process(
+    COMMAND "${Python_EXECUTABLE}" -c
+            "import sysconfig; print(';'.join(dict.fromkeys(v for v in (sysconfig.get_config_var('INCLUDEPY'), sysconfig.get_config_var('CONFINCLUDEPY')) if v)))"
+    OUTPUT_VARIABLE _drambender_python_include_dirs
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  set(_drambender_missing_python_headers)
+  foreach(_drambender_python_header Python.h patchlevel.h)
+    set(_drambender_python_header_found FALSE)
+    foreach(_drambender_python_include_dir IN LISTS _drambender_python_include_dirs)
+      if (EXISTS "${_drambender_python_include_dir}/${_drambender_python_header}")
+        set(_drambender_python_header_found TRUE)
+        break()
+      endif()
+    endforeach()
+    if (NOT _drambender_python_header_found)
+      list(APPEND _drambender_missing_python_headers "${_drambender_python_header}")
+    endif()
+  endforeach()
+
+  if (_drambender_missing_python_headers)
+    string(REPLACE ";" ", " _drambender_missing_python_headers_text
+           "${_drambender_missing_python_headers}")
+    string(REPLACE ";" "\n  - " _drambender_python_include_dirs_text
+           "${_drambender_python_include_dirs}")
+    message(FATAL_ERROR
+      "Python ${_drambender_python_version} development headers are missing: "
+      "${_drambender_missing_python_headers_text}\n"
+      "Checked include directories:\n"
+      "  - ${_drambender_python_include_dirs_text}\n"
+      "On Ubuntu/Debian, install them with:\n"
+      "  sudo apt install python${_drambender_python_version}-dev"
+    )
   endif()
 
   find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)

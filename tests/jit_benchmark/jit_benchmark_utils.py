@@ -29,7 +29,7 @@ from tests.jit_benchmark.workloads import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_NATIVE_EXE = REPO_ROOT / "build" / "dev-gcc12" / "drambender_jit_native_benchmark"
+DEFAULT_NATIVE_EXE = REPO_ROOT / "build" / "jit-smoke" / "drambender_jit_native_benchmark"
 
 
 @dataclass(frozen=True)

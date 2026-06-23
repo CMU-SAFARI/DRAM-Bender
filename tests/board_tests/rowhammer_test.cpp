@@ -34,9 +34,9 @@ constexpr int k_column_stride = 8;
 
 // Default config
 constexpr int k_default_bank = 0;
-constexpr int k_default_start_row = 0;
-constexpr int k_default_num_victims = 64;
-constexpr int k_default_hammer_count = 150000;
+constexpr int k_default_start_row = 2048;
+constexpr int k_default_num_victims = 128;
+constexpr int k_default_hammer_count = 250000;
 constexpr uint32_t k_victim_data = 0x00000000;
 constexpr uint32_t k_aggressor_data = 0xFFFFFFFF;
 

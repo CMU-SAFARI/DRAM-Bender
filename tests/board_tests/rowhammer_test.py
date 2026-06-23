@@ -11,7 +11,6 @@ For each victim row in [start_row, start_row + num_victims):
 
 import argparse
 import sys
-from functools import partial
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -21,17 +20,121 @@ if str(_REPO_ROOT) not in sys.path:
 import numpy as np  # noqa: E402
 
 import drambender  # noqa: E402
-from tests.jit_benchmark.workloads import (  # noqa: E402
-    CACHELINES_PER_ROW,
-    ROW_BYTES,
-    build_rowhammer_program_compiled,
-)
+from drambender.api import FinalProgram, ProgramBuilder, program_template  # noqa: E402
+from drambender.api.program.instructions import ACT, NOP, PRE, RD, WR  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
+CACHELINES_PER_ROW = 128
+WORDS_PER_CACHELINE = 16
+BYTES_PER_CACHELINE = 64
+ROW_BYTES = CACHELINES_PER_ROW * BYTES_PER_CACHELINE
 WORDS_PER_ROW = ROW_BYTES // 4
+COLUMN_STRIDE = 8
+
+
+# ---------------------------------------------------------------------------
+# Program
+# ---------------------------------------------------------------------------
+
+def all_nops(p: ProgramBuilder) -> None:
+    p.DRAM(NOP(), NOP(), NOP(), NOP())
+
+
+@program_template
+def build_rowhammer_program(bank: int, victim_row: int, aggressor_row: int,
+                            victim_pattern: int, aggressor_pattern: int,
+                            hammer_count: int) -> FinalProgram:
+    """Build the same instruction sequence as rowhammer_test.cpp."""
+    p = ProgramBuilder()
+    p.alloc_reg("NUM_HAMMER_REG")
+    p.alloc_reg("HAMMER_CTR_REG")
+
+    p.LI(bank, "BAR")
+    p.LI(COLUMN_STRIDE, "CASR")
+    p.LI(hammer_count, "NUM_HAMMER_REG")
+    p.LI(0, "HAMMER_CTR_REG")
+
+    # Initialize victim row.
+    p.LI(victim_row, "RAR")
+    p.LI(victim_pattern, "PATTERN_REG")
+    for word in range(WORDS_PER_CACHELINE):
+        p.LDWD("PATTERN_REG", word)
+
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
+    p.LI(0, "CAR")
+    all_nops(p)
+    all_nops(p)
+    p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
+    all_nops(p)
+    all_nops(p)
+    for _ in range(CACHELINES_PER_ROW):
+        p.DRAM(WR("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
+        all_nops(p)
+    p.SLEEP(8)
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
+    all_nops(p)
+    all_nops(p)
+
+    # Initialize aggressor row.
+    p.LI(aggressor_row, "RAR")
+    p.LI(aggressor_pattern, "PATTERN_REG")
+    for word in range(WORDS_PER_CACHELINE):
+        p.LDWD("PATTERN_REG", word)
+
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
+    p.LI(0, "CAR")
+    all_nops(p)
+    all_nops(p)
+    p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
+    all_nops(p)
+    all_nops(p)
+    for _ in range(CACHELINES_PER_ROW):
+        p.DRAM(WR("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
+        all_nops(p)
+    p.SLEEP(8)
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
+    all_nops(p)
+    all_nops(p)
+
+    # Hammer aggressor.
+    p.LI(aggressor_row, "RAR")
+    p.LI(0, "HAMMER_CTR_REG")
+    p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
+    for _ in range(5):
+        all_nops(p)
+
+    p.LABEL("HAMMER")
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
+    p.ADDI("HAMMER_CTR_REG", 1, "HAMMER_CTR_REG")
+    all_nops(p)
+    p.DRAM(NOP(), NOP(), NOP(), ACT("BAR", "RAR"))
+    p.BL("HAMMER_CTR_REG", "NUM_HAMMER_REG", "HAMMER")
+
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
+    all_nops(p)
+    all_nops(p)
+
+    # Read victim row back.
+    p.LI(victim_row, "RAR")
+    p.LI(0, "CAR")
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
+    all_nops(p)
+    all_nops(p)
+    p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
+    all_nops(p)
+    all_nops(p)
+    for _ in range(CACHELINES_PER_ROW):
+        p.DRAM(RD("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
+        all_nops(p)
+    p.SLEEP(4)
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
+    all_nops(p)
+    all_nops(p)
+
+    return p.conclude()
 
 
 # ---------------------------------------------------------------------------
@@ -56,9 +159,9 @@ def main() -> int:
     ap.add_argument("--board-id", type=int, default=0)
     ap.add_argument("--instance-id", type=int, default=0)
     ap.add_argument("--bank", type=int, default=0)
-    ap.add_argument("--start-row", type=int, default=0)
-    ap.add_argument("--num-victims", type=int, default=64)
-    ap.add_argument("--hammer-count", type=int, default=150000)
+    ap.add_argument("--start-row", type=int, default=2048)
+    ap.add_argument("--num-victims", type=int, default=128)
+    ap.add_argument("--hammer-count", type=int, default=250000)
     ap.add_argument("--victim-data", type=lambda x: int(x, 0), default=0x00000000)
     ap.add_argument("--aggressor-data", type=lambda x: int(x, 0), default=0xFFFFFFFF)
     args = ap.parse_args()
@@ -71,15 +174,6 @@ def main() -> int:
     board = drambender.api.DDR4(args.board_id, args.instance_id)
     board.reset_fpga()
 
-    # Build template once, bind fixed args
-    hammer = partial(
-        build_rowhammer_program_compiled,
-        bank=args.bank,
-        victim_pattern=args.victim_data,
-        aggressor_pattern=args.aggressor_data,
-        hammer_count=args.hammer_count,
-    )
-
     row_buffer = np.empty(ROW_BYTES, dtype=np.uint8)
     total_flips = 0
     vulnerable_rows = 0
@@ -88,7 +182,14 @@ def main() -> int:
         victim_row = args.start_row + v
         aggressor_row = victim_row + 1
 
-        program = hammer(victim_row=victim_row, aggressor_row=aggressor_row)
+        program = build_rowhammer_program(
+            args.bank,
+            victim_row,
+            aggressor_row,
+            args.victim_data,
+            args.aggressor_data,
+            args.hammer_count,
+        )
         board.execute(program)
         board.receive_into(row_buffer)
         board.synchronize()

@@ -9,6 +9,7 @@ import operator
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import time
 from typing import Any
@@ -25,8 +26,17 @@ _TRACE_MODE: ContextVar[bool | None] = ContextVar(
 
 _CODEGEN_VERSION = 5
 _PLUGIN_ABI_VERSION = 1
-_COMPILER = Path("/usr/bin/g++-12")
+_MIN_GXX_MAJOR = 11
+_JIT_CXX_ENV = "DRAMBENDER_JIT_CXX"
 _COMPILE_FLAGS = ("-std=c++20", "-O3", "-fPIC", "-shared")
+_DEFAULT_COMPILER_CANDIDATES = (
+    "g++",
+    "g++-15",
+    "g++-14",
+    "g++-13",
+    "g++-12",
+    "g++-11",
+)
 
 
 class TemplateCompileError(RuntimeError):
@@ -204,6 +214,13 @@ def clear_lowering_stats() -> None:
 
 class TemplateEnvironmentError(RuntimeError):
     """Raised when the native JIT environment is unavailable."""
+
+
+@dataclass(frozen=True)
+class _CompilerInfo:
+    command: tuple[str, ...]
+    executable: str
+    version: str
 
 
 @dataclass(frozen=True)
@@ -539,13 +556,95 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _compiler_identity() -> dict[str, str]:
-    if not _COMPILER.exists():
-        raise TemplateEnvironmentError(f"Required compiler {_COMPILER} is not available.")
+def _split_compiler_command(value: str) -> tuple[str, ...]:
+    try:
+        command = tuple(shlex.split(value))
+    except ValueError as exc:
+        raise TemplateEnvironmentError(
+            f"Invalid compiler command {value!r}."
+        ) from exc
+    if not command:
+        raise TemplateEnvironmentError("Compiler command must not be empty.")
+    return command
+
+
+def _candidate_compiler_commands() -> list[tuple[str, tuple[str, ...], bool]]:
+    env_value = os.environ.get(_JIT_CXX_ENV)
+    if env_value:
+        return [(_JIT_CXX_ENV, _split_compiler_command(env_value), True)]
+
+    cxx_value = os.environ.get("CXX")
+    if cxx_value:
+        return [("CXX", _split_compiler_command(cxx_value), True)]
+
+    return [
+        ("PATH", (candidate,), False)
+        for candidate in _DEFAULT_COMPILER_CANDIDATES
+    ]
+
+
+def _resolve_executable(command: tuple[str, ...]) -> str:
+    executable = command[0]
+    if os.sep in executable:
+        path = Path(executable).expanduser()
+        if path.exists():
+            return str(path.resolve())
+        raise TemplateEnvironmentError(f"Compiler executable {executable!r} was not found.")
+
+    resolved = shutil.which(executable)
+    if resolved is None:
+        raise TemplateEnvironmentError(f"Compiler executable {executable!r} was not found on PATH.")
+    return str(Path(resolved).resolve())
+
+
+def _validate_compiler(command: tuple[str, ...], executable: str) -> str:
+    probe_source = f"""
+#if !defined(__GNUC__) || defined(__clang__)
+#error "DRAMBender JIT requires G++ {_MIN_GXX_MAJOR} or newer."
+#endif
+#if __GNUC__ < {_MIN_GXX_MAJOR}
+#error "DRAMBender JIT requires G++ {_MIN_GXX_MAJOR} or newer."
+#endif
+#include <span>
+int main() {{
+  int values[] = {{1, 2, 3}};
+  std::span<int> span(values);
+  return static_cast<int>(span.size()) == 3 ? 0 : 1;
+}}
+""".strip()
+
+    try:
+        subprocess.run(
+            [
+                *command,
+                "-std=c++20",
+                "-x",
+                "c++",
+                "-",
+                "-c",
+                "-o",
+                os.devnull,
+            ],
+            input=probe_source,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise TemplateEnvironmentError(
+            f"Compiler executable {executable!r} was not found."
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        details = (exc.stderr or exc.stdout or "").strip()
+        message = f"{' '.join(command)} is not a supported JIT compiler. "
+        message += f"DRAMBender JIT requires G++ {_MIN_GXX_MAJOR}+ with C++20 <span> support."
+        if details:
+            message += f"\nCompiler output:\n{details}"
+        raise TemplateEnvironmentError(message) from exc
 
     try:
         result = subprocess.run(
-            [str(_COMPILER), "--version"],
+            [*command, "--version"],
             check=True,
             capture_output=True,
             text=True,
@@ -553,8 +652,40 @@ def _compiler_identity() -> dict[str, str]:
     except (OSError, subprocess.CalledProcessError) as exc:
         raise TemplateEnvironmentError("Failed to query the template compiler.") from exc
 
-    first_line = result.stdout.splitlines()[0] if result.stdout else str(_COMPILER)
-    return {"path": str(_COMPILER), "version": first_line}
+    return result.stdout.splitlines()[0] if result.stdout else executable
+
+
+def _resolve_compiler() -> _CompilerInfo:
+    errors: list[str] = []
+    for source, command, explicit in _candidate_compiler_commands():
+        try:
+            executable = _resolve_executable(command)
+            version = _validate_compiler(command, executable)
+            return _CompilerInfo(command=command, executable=executable, version=version)
+        except TemplateEnvironmentError as exc:
+            if explicit:
+                raise TemplateEnvironmentError(
+                    f"{source}={os.environ.get(source)!r} is not usable for the "
+                    f"DRAMBender JIT. {exc}"
+                ) from exc
+            errors.append(f"{' '.join(command)}: {exc}")
+
+    details = "\n  - ".join(errors)
+    raise TemplateEnvironmentError(
+        f"No suitable JIT compiler found. DRAMBender JIT requires G++ "
+        f"{_MIN_GXX_MAJOR}+ with C++20 <span> support. Set {_JIT_CXX_ENV}=/path/to/g++ "
+        f"to choose one explicitly."
+        + (f"\nTried:\n  - {details}" if details else "")
+    )
+
+
+def _compiler_identity() -> dict[str, str]:
+    compiler = _resolve_compiler()
+    return {
+        "command": " ".join(compiler.command),
+        "executable": compiler.executable,
+        "version": compiler.version,
+    }
 
 
 def _core_freshness_marker() -> dict[str, int | str]:
@@ -570,8 +701,9 @@ def _core_freshness_marker() -> dict[str, int | str]:
 def _compile_plugin(source_path: Path, shared_path: Path) -> None:
     include_dir = _repo_root() / "include"
     bindings_dir = _repo_root() / "src" / "bindings" / "python"
+    compiler = _resolve_compiler()
     command = [
-        str(_COMPILER),
+        *compiler.command,
         *_COMPILE_FLAGS,
         "-I",
         str(include_dir),
@@ -585,7 +717,9 @@ def _compile_plugin(source_path: Path, shared_path: Path) -> None:
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)
     except FileNotFoundError as exc:
-        raise TemplateEnvironmentError(f"Template compiler {_COMPILER} was not found.") from exc
+        raise TemplateEnvironmentError(
+            f"Template compiler {compiler.executable} was not found."
+        ) from exc
     except subprocess.CalledProcessError as exc:
         raise TemplateEnvironmentError(
             "Failed to compile the native program template plugin.\n"
