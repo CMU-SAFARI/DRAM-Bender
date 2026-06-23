@@ -116,6 +116,29 @@ static inline void xdma_dma_unmap_sg(struct pci_dev *pdev,
 	dma_unmap_sg(&pdev->dev, sg, nents, dir);
 }
 
+static inline dma_addr_t xdma_dma_map_page(struct pci_dev *pdev,
+					   struct page *page,
+					   size_t offset,
+					   size_t size,
+					   enum dma_data_direction dir)
+{
+	return dma_map_page(&pdev->dev, page, offset, size, dir);
+}
+
+static inline void xdma_dma_unmap_page(struct pci_dev *pdev,
+				       dma_addr_t addr,
+				       size_t size,
+				       enum dma_data_direction dir)
+{
+	dma_unmap_page(&pdev->dev, addr, size, dir);
+}
+
+static inline int xdma_dma_mapping_error(struct pci_dev *pdev,
+					 dma_addr_t addr)
+{
+	return dma_mapping_error(&pdev->dev, addr);
+}
+
 static inline int xdma_set_dma_mask(struct pci_dev *pdev, u64 mask)
 {
 	return dma_set_mask(&pdev->dev, mask);

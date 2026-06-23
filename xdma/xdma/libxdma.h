@@ -459,7 +459,7 @@ struct xdma_request_cb {
 
 	unsigned int sw_desc_idx;
 	unsigned int sw_desc_cnt;
-	struct sw_desc sdesc[0];
+	struct sw_desc sdesc[];
 };
 
 struct xdma_engine {

@@ -143,6 +143,11 @@ if (BUILD_TESTING)
       tests/board_tests/rw_test.cpp
     )
     target_link_libraries(drambender_rw_test PRIVATE DRAMBender)
+
+    add_executable(drambender_full_reset_test
+      tests/board_tests/full_reset_test.cpp
+    )
+    target_link_libraries(drambender_full_reset_test PRIVATE DRAMBender)
   endif()
 
   add_executable(drambender_jit_native_benchmark

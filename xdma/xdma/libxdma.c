@@ -3585,7 +3585,7 @@ static void sgt_free_with_pages(struct sg_table *sgt, int dir,
 
 		if (pg) {
 			if (pdev)
-				pci_unmap_page(pdev, bus, PAGE_SIZE, dir);
+				xdma_dma_unmap_page(pdev, bus, PAGE_SIZE, dir);
 			__free_page(pg);
 		} else {
 			break;
@@ -3616,9 +3616,9 @@ static int sgt_alloc_with_pages(struct sg_table *sgt, unsigned int npages,
 		}
 
 		if (pdev) {
-			dma_addr_t bus = pci_map_page(pdev, pg, 0, PAGE_SIZE,
-						      dir);
-			if (unlikely(pci_dma_mapping_error(pdev, bus))) {
+			dma_addr_t bus = xdma_dma_map_page(pdev, pg, 0,
+							   PAGE_SIZE, dir);
+			if (unlikely(xdma_dma_mapping_error(pdev, bus))) {
 				pr_info("%d/%u, page 0x%p map err.\n",
 					i, npages, pg);
 				__free_page(pg);
