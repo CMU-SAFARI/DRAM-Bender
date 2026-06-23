@@ -246,53 +246,53 @@ FinalProgram build_hbm2_rw_program(int channel,
 
   program.add_inst(SMC_LI(0, CAR));
   program.add_inst(SMC_PRE(BAR, 0, 0, pseudo_channel), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
   program.add_inst(SMC_ACT(BAR, 0, RAR, 0, pseudo_channel), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
 
   for (int column = 0; column < k_num_columns; ++column) {
     program.add_inst(SMC_WRITE(BAR, 0, CAR, 1, pseudo_channel, 0),
                      SMC_NOP(),
                      SMC_NOP(),
                      SMC_NOP());
-    program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+    program.add_inst(all_nops());
   }
 
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
   program.add_inst(SMC_PRE(BAR, 0, 0, pseudo_channel), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
 
   program.add_inst(SMC_LI(0, CAR));
   program.add_inst(SMC_ACT(BAR, 0, RAR, 0, pseudo_channel), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
 
   for (int column = 0; column < k_num_columns; ++column) {
     program.add_inst(SMC_READ(BAR, 0, CAR, 1, pseudo_channel, 0),
                      SMC_NOP(),
                      SMC_NOP(),
                      SMC_NOP());
-    program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+    program.add_inst(all_nops());
   }
 
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
   program.add_inst(SMC_PRE(BAR, 0, 0, pseudo_channel), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
-  program.add_inst(SMC_NOP(), SMC_NOP(), SMC_NOP(), SMC_NOP());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
+  program.add_inst(all_nops());
 
   return program.conclude();
 }

@@ -35,14 +35,6 @@ WORDS_PER_ROW = ROW_BYTES // 4
 COLUMN_STRIDE = 8
 
 
-# ---------------------------------------------------------------------------
-# Program
-# ---------------------------------------------------------------------------
-
-def all_nops(p: ProgramBuilder) -> None:
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-
-
 @program_template
 def build_rowhammer_program(bank: int, victim_row: int, aggressor_row: int,
                             victim_pattern: int, aggressor_pattern: int,
@@ -65,18 +57,15 @@ def build_rowhammer_program(bank: int, victim_row: int, aggressor_row: int,
 
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.LI(0, "CAR")
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
     p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
     for _ in range(CACHELINES_PER_ROW):
         p.DRAM(WR("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
-        all_nops(p)
+        p.SLEEP(1)
     p.SLEEP(8)
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
 
     # Initialize aggressor row.
     p.LI(aggressor_row, "RAR")
@@ -86,53 +75,45 @@ def build_rowhammer_program(bank: int, victim_row: int, aggressor_row: int,
 
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.LI(0, "CAR")
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
     p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
     for _ in range(CACHELINES_PER_ROW):
         p.DRAM(WR("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
-        all_nops(p)
+        p.SLEEP(1)
     p.SLEEP(8)
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
 
     # Hammer aggressor.
     p.LI(aggressor_row, "RAR")
     p.LI(0, "HAMMER_CTR_REG")
     p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
-    for _ in range(5):
-        all_nops(p)
+    p.SLEEP(5)
 
     p.LABEL("HAMMER")
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.ADDI("HAMMER_CTR_REG", 1, "HAMMER_CTR_REG")
-    all_nops(p)
+    p.SLEEP(1)
     p.DRAM(NOP(), NOP(), NOP(), ACT("BAR", "RAR"))
     p.BL("HAMMER_CTR_REG", "NUM_HAMMER_REG", "HAMMER")
 
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
 
     # Read victim row back.
     p.LI(victim_row, "RAR")
     p.LI(0, "CAR")
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
     p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
     for _ in range(CACHELINES_PER_ROW):
         p.DRAM(RD("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
-        all_nops(p)
+        p.SLEEP(1)
     p.SLEEP(4)
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
-    all_nops(p)
-    all_nops(p)
+    p.SLEEP(2)
 
     return p.conclude()
 

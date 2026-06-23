@@ -57,45 +57,29 @@ def build_hbm2_rw_program(
 
     p.LI(0, "CAR")
     p.DRAM(PRE("BAR", rank=pseudo_channel), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
+    p.SLEEP(3)
     p.DRAM(ACT("BAR", "RAR", rank=pseudo_channel), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
+    p.SLEEP(3)
 
     for _ in range(NUM_COLUMNS):
         p.DRAM(WR("BAR", "CAR", rank=pseudo_channel, icar=1), NOP(), NOP(), NOP())
-        p.DRAM(NOP(), NOP(), NOP(), NOP())
+        p.SLEEP(1)
 
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
+    p.SLEEP(3)
     p.DRAM(PRE("BAR", rank=pseudo_channel), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
+    p.SLEEP(5)
 
     p.LI(0, "CAR")
     p.DRAM(ACT("BAR", "RAR", rank=pseudo_channel), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
+    p.SLEEP(3)
 
     for _ in range(NUM_COLUMNS):
         p.DRAM(RD("BAR", "CAR", rank=pseudo_channel, icar=1), NOP(), NOP(), NOP())
-        p.DRAM(NOP(), NOP(), NOP(), NOP())
+        p.SLEEP(1)
 
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
+    p.SLEEP(3)
     p.DRAM(PRE("BAR", rank=pseudo_channel), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
-    p.DRAM(NOP(), NOP(), NOP(), NOP())
+    p.SLEEP(3)
     return p.conclude()
 
 
