@@ -556,6 +556,41 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def _packaged_jit_include_dir() -> Path:
+    return Path(__file__).resolve().parent / "include"
+
+
+def _has_packaged_jit_headers(include_dir: Path) -> bool:
+    return (
+        (include_dir / "drambender" / "api" / "program" / "program.h").is_file()
+        and (include_dir / "drambender" / "api" / "program" / "instruction.h").is_file()
+        and (include_dir / "program_template_plugin.h").is_file()
+    )
+
+
+def _jit_include_dirs() -> tuple[Path, ...]:
+    packaged_include_dir = _packaged_jit_include_dir()
+    if _has_packaged_jit_headers(packaged_include_dir):
+        return (packaged_include_dir,)
+
+    repo_root = _repo_root()
+    source_include_dir = repo_root / "include"
+    source_bindings_dir = repo_root / "src" / "bindings" / "python"
+    if (
+        (source_include_dir / "drambender" / "api" / "program" / "program.h").is_file()
+        and (source_include_dir / "drambender" / "api" / "program" / "instruction.h").is_file()
+        and (source_bindings_dir / "program_template_plugin.h").is_file()
+    ):
+        return (source_include_dir, source_bindings_dir)
+
+    raise TemplateEnvironmentError(
+        "DRAMBender JIT headers are unavailable. Expected packaged headers at "
+        f"{packaged_include_dir} or source-tree headers under {source_include_dir} "
+        f"and {source_bindings_dir}. Reinstall the drambender wheel or run from a "
+        "complete source checkout."
+    )
+
+
 def _split_compiler_command(value: str) -> tuple[str, ...]:
     try:
         command = tuple(shlex.split(value))
@@ -699,20 +734,14 @@ def _core_freshness_marker() -> dict[str, int | str]:
 
 
 def _compile_plugin(source_path: Path, shared_path: Path) -> None:
-    include_dir = _repo_root() / "include"
-    bindings_dir = _repo_root() / "src" / "bindings" / "python"
     compiler = _resolve_compiler()
     command = [
         *compiler.command,
         *_COMPILE_FLAGS,
-        "-I",
-        str(include_dir),
-        "-I",
-        str(bindings_dir),
-        str(source_path),
-        "-o",
-        str(shared_path),
     ]
+    for include_dir in _jit_include_dirs():
+        command.extend(("-I", str(include_dir)))
+    command.extend((str(source_path), "-o", str(shared_path)))
 
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)

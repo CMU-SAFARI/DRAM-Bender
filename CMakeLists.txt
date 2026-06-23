@@ -53,6 +53,11 @@ target_link_libraries(DRAMBender
   Threads::Threads
 )
 
+target_compile_features(DRAMBender
+  PUBLIC
+  cxx_std_20
+)
+
 target_compile_options(DRAMBender
   PRIVATE
   -Wall
@@ -265,6 +270,18 @@ if (DRAMBENDER_BUILD_PYTHON)
     TARGETS drambender_core
     LIBRARY DESTINATION drambender COMPONENT python
     RUNTIME DESTINATION drambender COMPONENT python
+  )
+
+  install(
+    DIRECTORY include/
+    DESTINATION drambender/include
+    COMPONENT python
+  )
+
+  install(
+    FILES src/bindings/python/program_template_plugin.h
+    DESTINATION drambender/include
+    COMPONENT python
   )
 
 endif()

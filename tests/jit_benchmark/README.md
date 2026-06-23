@@ -9,8 +9,10 @@ board. Configure with `-DBUILD_TESTING=ON` and build
 `smoke_check.py`.
 
 The Python `@program_template` JIT needs G++ 11 or newer with C++20 `<span>`
-support. Set `DRAMBENDER_JIT_CXX=/path/to/g++` to choose a compiler explicitly;
-otherwise `CXX` and common `g++` executables on `PATH` are tried.
+support. Wheels ship the C++ headers needed by generated template plugins;
+editable/source-tree installs use the repository headers. Set
+`DRAMBENDER_JIT_CXX=/path/to/g++` to choose a compiler explicitly; otherwise
+`CXX` and common `g++` executables on `PATH` are tried.
 
 The `*_jit.py`, `*_bench.{py,cpp}`, and `run_benchmark.sh` rowhammer/read-write
 programs are board-facing lab tools. They open XDMA devices, reset FPGA-side
