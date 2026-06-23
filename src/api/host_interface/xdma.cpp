@@ -1,5 +1,6 @@
 #include "drambender/api/host_interface/host_interface.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
@@ -20,6 +21,9 @@ namespace {
 
 inline constexpr size_t max_zero_write_retries = 1'000'000;
 inline constexpr size_t max_drain_reads = 16'384;
+inline constexpr size_t c2h_read_quantum = 4096;
+inline constexpr int drain_quiet_poll_ms = 1;
+inline constexpr int drain_required_quiet_polls = 500;
 
 struct FreeDeleter {
   void operator()(std::byte* ptr) const noexcept {
@@ -63,12 +67,7 @@ class XDMA : public IHostInterface {
                               "Failed to open XDMA host-to-card device " + to_fpga_file);
     }
 
-    const std::string from_fpga_file = devicePath_("c2h");
-    m_from_card_fd_ = ::open(from_fpga_file.c_str(), O_RDWR | O_CLOEXEC);
-    if (m_from_card_fd_ < 0) {
-      throw std::system_error(errno, std::generic_category(),
-                              "Failed to open XDMA card-to-host device " + from_fpga_file);
-    }
+    openFromCard_();
 
     if (m_cancel_fd_ < 0) {
       m_cancel_fd_ = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
@@ -135,57 +134,43 @@ class XDMA : public IHostInterface {
       throw std::invalid_argument("XDMA receive request exceeds the aligned receive buffer size.");
     }
 
-    pollfd fds[2] = {
-        {.fd = m_from_card_fd_, .events = POLLIN, .revents = 0},
-        {.fd = m_cancel_fd_, .events = POLLIN, .revents = 0},
-    };
-
-    while (true) {
-      const int poll_rc = ::poll(fds, 2, -1);
-      if (poll_rc < 0) {
-        if (errno == EINTR) {
-          continue;
+    size_t total_read = 0;
+    while (total_read < dst.size()) {
+      const size_t request_size = std::min(c2h_read_quantum, dst.size() - total_read);
+      ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get() + total_read, request_size);
+      if (rc < 0 && errno == EINTR) {
+        continue;
+      }
+      if (rc < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        if (!waitForReceiveReady_()) {
+          return 0;
         }
-        throw std::system_error(errno, std::generic_category(), "XDMA receive poll failed");
+        continue;
+      }
+      if (rc < 0) {
+        throw std::system_error(errno, std::generic_category(), "XDMA read failed");
+      }
+      if (rc == 0) {
+        throw std::runtime_error("XDMA read made no forward progress.");
       }
 
-      if ((fds[1].revents & POLLIN) != 0) {
-        clearCancelEvent_();
-        return 0;
+      const size_t recv_count = static_cast<size_t>(rc);
+      if (recv_count > request_size) {
+        throw std::runtime_error("XDMA read exceeded the requested receive size.");
       }
-      if ((fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-        throw std::runtime_error("XDMA receive cancel eventfd reported an invalid poll state.");
-      }
-      if ((fds[0].revents & POLLNVAL) != 0) {
-        throw std::runtime_error("XDMA receive fd reported POLLNVAL.");
-      }
-      if ((fds[0].revents & (POLLIN | POLLERR | POLLHUP)) != 0) {
+
+      total_read += recv_count;
+      if (recv_count < request_size) {
         break;
       }
     }
 
-    ssize_t rc = 0;
-    while (true) {
-      rc = ::read(m_from_card_fd_, m_recv_buf_.get(), dst.size());
-      if (rc < 0 && errno == EINTR) {
-        continue;
-      }
-      break;
-    }
-    if (rc < 0) {
-      throw std::system_error(errno, std::generic_category(), "XDMA read failed");
-    }
-    if (rc == 0) {
+    if (total_read == 0) {
       throw std::runtime_error("XDMA read made no forward progress.");
     }
 
-    const size_t recv_count = static_cast<size_t>(rc);
-    if (recv_count > dst.size()) {
-      throw std::runtime_error("XDMA read exceeded the requested receive size.");
-    }
-
-    std::memcpy(dst.data(), m_recv_buf_.get(), recv_count);
-    return recv_count;
+    std::memcpy(dst.data(), m_recv_buf_.get(), total_read);
+    return total_read;
   }
 
   void cancel_receive() override {
@@ -217,67 +202,110 @@ class XDMA : public IHostInterface {
     if (m_from_card_fd_ < 0) {
       return;
     }
-    // Temporarily set the FD to non-blocking, read and discard all available
-    // data, then restore blocking mode. fcntl() failures must not be silent —
-    // a user whose FD is in the wrong mode after drain gets very confusing
-    // downstream errors. Real read errors (EIO, EBADF, …) are likewise
-    // distinguished from EAGAIN.
-    const int old_flags = ::fcntl(m_from_card_fd_, F_GETFL);
-    if (old_flags == -1) {
-      throw std::system_error(errno, std::system_category(),
-                              "XDMA drain: fcntl(F_GETFL) failed");
-    }
-    if (::fcntl(m_from_card_fd_, F_SETFL, old_flags | O_NONBLOCK) == -1) {
-      throw std::system_error(errno, std::system_category(),
-                              "XDMA drain: fcntl(F_SETFL, O_NONBLOCK) failed");
-    }
-
-    std::exception_ptr read_error;
     size_t drain_reads = 0;
+    int quiet_polls = 0;
     while (true) {
       const ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get(), recv_buffer_size_);
       if (rc > 0) {
+        quiet_polls = 0;
         ++drain_reads;
         if (drain_reads >= max_drain_reads) {
-          read_error = std::make_exception_ptr(std::runtime_error(
+          throw std::runtime_error(
               "XDMA drain did not quiesce after 16384 reads; hardware may still be "
-              "producing readback data."));
-          break;
+              "producing readback data.");
         }
         continue;
       }
       if (rc == 0) {
         break;  // EOF
       }
-      // rc < 0 — distinguish "no data right now" from a real error.
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        break;  // drained
+      if (rc < 0 && errno == EINTR) {
+        continue;
       }
-      read_error = std::make_exception_ptr(std::system_error(
-          errno, std::system_category(), "XDMA drain: read() failed"));
-      break;
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        pollfd fd = {.fd = m_from_card_fd_, .events = POLLIN, .revents = 0};
+        const int poll_rc = ::poll(&fd, 1, drain_quiet_poll_ms);
+        if (poll_rc < 0) {
+          if (errno == EINTR) {
+            continue;
+          }
+          throw std::system_error(errno, std::system_category(),
+                                  "XDMA drain: poll() failed");
+        }
+        if (poll_rc == 0) {
+          ++quiet_polls;
+          if (quiet_polls >= drain_required_quiet_polls) {
+            break;  // drained
+          }
+          continue;
+        }
+        if ((fd.revents & POLLNVAL) != 0) {
+          throw std::runtime_error("XDMA drain: receive fd reported POLLNVAL.");
+        }
+        if ((fd.revents & (POLLIN | POLLERR | POLLHUP)) != 0) {
+          quiet_polls = 0;
+          continue;
+        }
+        continue;
+      }
+      throw std::system_error(errno, std::system_category(), "XDMA drain: read() failed");
     }
 
-    // Restore blocking mode even on read error, so the FD is left in a
-    // known-good state; then propagate the error.
-    if (::fcntl(m_from_card_fd_, F_SETFL, old_flags) == -1) {
-      if (!read_error) {
-        throw std::system_error(errno, std::system_category(),
-                                "XDMA drain: fcntl(F_SETFL restore) failed");
-      }
-      // If we already have a read error, prefer it (read errors are the
-      // proximate cause); the restore failure is logged to stderr.
-      std::fprintf(
-          stderr,
-          "[drambender] XDMA drain: fcntl(F_SETFL restore) failed: %s\n",
-          std::strerror(errno));
-    }
-    if (read_error) {
-      std::rethrow_exception(read_error);
-    }
+    reopenFromCard_();
   }
 
  private:
+  void openFromCard_() {
+    const std::string from_fpga_file = devicePath_("c2h");
+    m_from_card_fd_ = ::open(from_fpga_file.c_str(), O_RDWR | O_CLOEXEC | O_NONBLOCK);
+    if (m_from_card_fd_ < 0) {
+      throw std::system_error(errno, std::generic_category(),
+                              "Failed to open XDMA card-to-host device " + from_fpga_file);
+    }
+  }
+
+  void reopenFromCard_() {
+    if (m_from_card_fd_ >= 0) {
+      if (::close(m_from_card_fd_) != 0) {
+        throw std::system_error(errno, std::generic_category(),
+                                "Failed to close XDMA card-to-host device during drain");
+      }
+      m_from_card_fd_ = -1;
+    }
+    openFromCard_();
+  }
+
+  bool waitForReceiveReady_() {
+    while (true) {
+      pollfd fds[2] = {
+          {.fd = m_from_card_fd_, .events = POLLIN, .revents = 0},
+          {.fd = m_cancel_fd_, .events = POLLIN, .revents = 0},
+      };
+
+      const int poll_rc = ::poll(fds, 2, -1);
+      if (poll_rc < 0) {
+        if (errno == EINTR) {
+          continue;
+        }
+        throw std::system_error(errno, std::generic_category(), "XDMA receive poll failed");
+      }
+
+      if ((fds[1].revents & POLLIN) != 0) {
+        clearCancelEvent_();
+        return false;
+      }
+      if ((fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
+        throw std::runtime_error("XDMA receive cancel eventfd reported an invalid poll state.");
+      }
+      if ((fds[0].revents & POLLNVAL) != 0) {
+        throw std::runtime_error("XDMA receive fd reported POLLNVAL.");
+      }
+      if ((fds[0].revents & (POLLIN | POLLERR | POLLHUP)) != 0) {
+        return true;
+      }
+    }
+  }
+
   static std::unique_ptr<std::byte, FreeDeleter> allocateAlignedBuffer_(size_t size) {
     void* raw_ptr = nullptr;
     const size_t aligned_size = ((size + 4095U) / 4096U) * 4096U;

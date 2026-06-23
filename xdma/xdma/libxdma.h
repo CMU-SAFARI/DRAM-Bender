@@ -510,6 +510,7 @@ struct xdma_engine {
 	int rx_head;
 	int rx_overrun;
 	unsigned int user_buffer_index;
+	wait_queue_head_t cyclic_poll_wq;
 
 	u8 *perf_buf_virt;
 	dma_addr_t perf_buf_bus; /* bus address */
@@ -676,7 +677,7 @@ void get_perf_stats(struct xdma_engine *engine);
 int xdma_cyclic_transfer_setup(struct xdma_engine *engine);
 int xdma_cyclic_transfer_teardown(struct xdma_engine *engine);
 ssize_t xdma_engine_read_cyclic(struct xdma_engine *engine, char __user *buf,
-			size_t count, int timeout_ms);
+			size_t count, int timeout_ms, int nonblock);
 int engine_addrmode_set(struct xdma_engine *engine, unsigned long arg);
 int engine_service_poll(struct xdma_engine *engine, u32 expected_desc_count);
 

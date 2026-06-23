@@ -23,6 +23,7 @@
 #include <asm/cacheflush.h>
 #include <linux/slab.h>
 #include <linux/aio.h>
+#include <linux/poll.h>
 #include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/kthread.h>
@@ -420,10 +421,39 @@ static ssize_t char_sgdma_read(struct file *file, char __user *buf,
 		if (rv < 0 && rv != -EBUSY)
 			return rv;
 
-		return xdma_engine_read_cyclic(engine, buf, count, 600000);
+		return xdma_engine_read_cyclic(engine, buf, count, 600000,
+					       !!(file->f_flags & O_NONBLOCK));
 	}
 
 	return char_sgdma_read_write(file, buf, count, pos, 0);
+}
+
+static unsigned int char_sgdma_poll(struct file *file, poll_table *wait)
+{
+	struct xdma_cdev *xcdev = (struct xdma_cdev *)file->private_data;
+	struct xdma_engine *engine;
+	unsigned long flags;
+	unsigned int mask = 0;
+	int rv;
+
+	rv = xcdev_check(__func__, xcdev, 1);
+	if (rv < 0)
+		return rv;
+
+	engine = xcdev->engine;
+	if (!engine->streaming || engine->dir != DMA_FROM_DEVICE)
+		return 0;
+
+	poll_wait(file, &engine->cyclic_poll_wq, wait);
+
+	spin_lock_irqsave(&engine->lock, flags);
+	if (engine->cyclic_req &&
+	    (engine->rx_head != engine->rx_tail ||
+	     engine->rx_overrun || engine->eop_found))
+		mask = POLLIN | POLLRDNORM;
+	spin_unlock_irqrestore(&engine->lock, flags);
+
+	return mask;
 }
 
 static ssize_t cdev_aio_write(struct kiocb *iocb, const struct iovec *io,
@@ -919,6 +949,7 @@ static const struct file_operations sgdma_fops = {
 	.aio_read = cdev_aio_read,
 #endif
 	.unlocked_ioctl = char_sgdma_ioctl,
+	.poll = char_sgdma_poll,
 	.llseek = char_sgdma_llseek,
 };
 

@@ -3268,7 +3268,8 @@ static unsigned int cyclic_credit_grant_locked(struct xdma_engine *engine,
 }
 
 static int transfer_monitor_cyclic(struct xdma_engine *engine,
-			struct xdma_transfer *transfer, int timeout_ms)
+			struct xdma_transfer *transfer, int timeout_ms,
+			int nonblock)
 {
 	int rc = 0;
 
@@ -3284,8 +3285,9 @@ static int transfer_monitor_cyclic(struct xdma_engine *engine,
 
 	if (poll_mode) {
 		int i;
+		int tries = nonblock ? 1 : 5;
 
-		for (i = 0; i < 5; i++) {
+		for (i = 0; i < tries; i++) {
 			rc = engine_service_poll(engine, 0);
 			if (rc) {
 				pr_info("%s service_poll failed %d.\n",
@@ -3294,9 +3296,18 @@ static int transfer_monitor_cyclic(struct xdma_engine *engine,
 			}
 			if (engine->cyclic_result[engine->rx_head].status)
 				return 0;
-			schedule();
+			if (!nonblock)
+				schedule();
 		}
-		return -ETIMEDOUT;
+		return nonblock ? -EAGAIN : -ETIMEDOUT;
+	}
+
+	if (nonblock) {
+		if (engine->rx_head != engine->rx_tail ||
+		    engine->rx_overrun ||
+		    (!enable_st_c2h_credit && engine->eop_found))
+			return 0;
+		return -EAGAIN;
 	}
 
 	dbg_tfr("%s: rx_head=%d, rx_tail=%d, wait ...\n",
@@ -3412,8 +3423,10 @@ static int complete_cyclic(struct xdma_engine *engine, char __user *buf,
 	unsigned int head;
 	unsigned int num_credit = 0;
 	unsigned int grant = 0;
+	unsigned int remaining;
 	int fault = 0;
 	int eop = 0;
+	int error = 0;
 	int rc = 0;
 	unsigned long flags;
 
@@ -3431,8 +3444,11 @@ static int complete_cyclic(struct xdma_engine *engine, char __user *buf,
 	spin_lock_irqsave(&engine->lock, flags);
 
 	head = engine->rx_head;
+	remaining = count - engine->user_buffer_index;
 
 	while (engine->rx_head != engine->rx_tail || engine->rx_overrun) {
+		unsigned int length;
+
 		WARN_ON(result[engine->rx_head].status == 0);
 
 		dbg_tfr("%s, result[%d].status = 0x%x length = 0x%x.\n",
@@ -3456,7 +3472,17 @@ static int complete_cyclic(struct xdma_engine *engine, char __user *buf,
 				result[engine->rx_head].length);
 			fault = 1;
 		} else {
-			pkt_length += result[engine->rx_head].length;
+			length = result[engine->rx_head].length;
+			if (pkt_length + length > remaining) {
+				if (!pkt_length) {
+					pr_info("%s user buffer %zu too small for cyclic result length %u.\n",
+						engine->name, count, length);
+					error = -EINVAL;
+				}
+				break;
+			}
+
+			pkt_length += length;
 			num_credit++;
 			if (result[engine->rx_head].status & RX_STATUS_EOP) {
 				eop = 1;
@@ -3484,6 +3510,8 @@ static int complete_cyclic(struct xdma_engine *engine, char __user *buf,
 
 	if (fault)
 		return -EIO;
+	if (error)
+		return error;
 
 	rc = copy_cyclic_to_user(engine, pkt_length, head, buf, count);
 	if (rc > 0) {
@@ -3499,7 +3527,7 @@ static int complete_cyclic(struct xdma_engine *engine, char __user *buf,
 }
 
 ssize_t xdma_engine_read_cyclic(struct xdma_engine *engine, char __user *buf,
-				size_t count, int timeout_ms)
+				size_t count, int timeout_ms, int nonblock)
 {
 	int i = 0;
 	int rc = 0;
@@ -3524,7 +3552,8 @@ ssize_t xdma_engine_read_cyclic(struct xdma_engine *engine, char __user *buf,
 	engine->user_buffer_index = 0;
 
 	do {
-		rc = transfer_monitor_cyclic(engine, transfer, timeout_ms);
+		rc = transfer_monitor_cyclic(engine, transfer, timeout_ms,
+					     nonblock);
 		if (rc < 0)
 			return rc_len ? rc_len : rc;
 
@@ -3986,12 +4015,15 @@ static int engine_service_cyclic_interrupt(struct xdma_engine *engine)
 	xfer = &engine->cyclic_req->tfer[0];
 	if (enable_st_c2h_credit) {
 		if (eop_count > 0 || engine->rx_head != engine->rx_tail ||
-		    engine->rx_overrun)
+		    engine->rx_overrun) {
 			xlx_wake_up(&xfer->wq);
+			wake_up_interruptible(&engine->cyclic_poll_wq);
+		}
 	} else if (eop_count > 0) {
 		dbg_tfr("wake up due to %d EOP's\n", eop_count);
 		engine->eop_found = 1;
 		xlx_wake_up(&xfer->wq);
+		wake_up_interruptible(&engine->cyclic_poll_wq);
 	}
 
 	if ((engine->running) && !(engine->status & XDMA_STAT_BUSY)) {
@@ -5001,6 +5033,7 @@ static struct xdma_dev *alloc_dev_instance(struct pci_dev *pdev)
 		spin_lock_init(&engine->lock);
 		mutex_init(&engine->desc_lock);
 		INIT_LIST_HEAD(&engine->transfer_list);
+		init_waitqueue_head(&engine->cyclic_poll_wq);
 #if HAS_SWAKE_UP
 		init_swait_queue_head(&engine->shutdown_wq);
 		init_swait_queue_head(&engine->xdma_perf_wq);
@@ -5015,6 +5048,7 @@ static struct xdma_dev *alloc_dev_instance(struct pci_dev *pdev)
 		spin_lock_init(&engine->lock);
 		mutex_init(&engine->desc_lock);
 		INIT_LIST_HEAD(&engine->transfer_list);
+		init_waitqueue_head(&engine->cyclic_poll_wq);
 #if HAS_SWAKE_UP
 		init_swait_queue_head(&engine->shutdown_wq);
 		init_swait_queue_head(&engine->xdma_perf_wq);

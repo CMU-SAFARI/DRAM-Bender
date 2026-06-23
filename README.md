@@ -21,12 +21,11 @@ DRAM-BenderV2 RTL and Vivado sources alongside it.
 
 ## Software Build
 
-For a C++ software-only build that avoids FPGA/device access and the XDMA
-driver, and skips board-facing example binaries:
+For a C++ software-only build that avoids FPGA/device access, Python bindings,
+and the XDMA driver:
 
 ```sh
-cmake -S . -B build -DBUILD_TESTING=OFF -DDRAMBENDER_BUILD_PYTHON=OFF
-cmake --build build
+bash build.sh --cxx-only release
 ```
 
 To compile the board-facing example binaries, configure with
@@ -46,14 +45,22 @@ find_package(DRAMBender CONFIG REQUIRED)
 target_link_libraries(my_target PRIVATE DRAMBender::DRAMBender)
 ```
 
-For Python development:
+For Python development on a fresh clone:
 
 ```sh
-python -m pip install -e "."
+bash setup_venv.sh
 ```
 
-On first clone, `setup_venv.sh` can create the virtual environment and run the
-editable install.
+This creates `.venv`, installs requirements, and runs the editable install. For
+iterative local C++ extension rebuilds after that setup step:
+
+```sh
+bash build.sh debug
+```
+
+`setup_venv.sh` is the environment/bootstrap script. `build.sh` is the local
+build helper; by default it expects `.venv/bin/python`, while
+`build.sh --cxx-only ...` does not use Python.
 
 ## Hardware Sources
 
