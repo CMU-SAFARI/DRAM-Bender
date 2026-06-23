@@ -7,8 +7,34 @@ from .._core import (
     HBM2,
     HBMTemperature,
     HostInterface,
-    open_board,
+    open_board as _native_open_board,
 )
+from .program.targets import DDR4Target, HBM2Target
+
+
+def _resolve_board_type(target_or_type) -> BoardType:
+    if isinstance(target_or_type, BoardType):
+        return target_or_type
+    if isinstance(target_or_type, DDR4Target):
+        return BoardType.DDR4
+    if isinstance(target_or_type, HBM2Target):
+        return BoardType.HBM2
+    raise TypeError("open_board expects a DDR4Target, HBM2Target, or BoardType.")
+
+
+def open_board(
+    target_or_type,
+    board_id: int,
+    instance_id: int,
+    host_interface: HostInterface = HostInterface.XDMA,
+) -> Board:
+    """Open a DRAM Bender board from a memory target or low-level board type."""
+    return _native_open_board(
+        _resolve_board_type(target_or_type),
+        board_id,
+        instance_id,
+        host_interface,
+    )
 
 __all__ = [
     "Board",

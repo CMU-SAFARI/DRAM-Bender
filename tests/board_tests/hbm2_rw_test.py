@@ -12,12 +12,11 @@ import sys
 
 import numpy as np
 
-from drambender.api import FinalProgram, HBM2, ProgramBuilder
+from drambender.api import FinalProgram, HBM2, HBM2Target, ProgramBuilder
 from drambender.api.program.instructions import ACT, NOP, PRE, RD, SEL_CH, WR
 
 
 NUM_COLUMNS = 32
-WORDS_PER_CACHELINE = 16
 BYTES_PER_HBM_COLUMN_PAIR = 64
 BYTES_PER_PSEUDO_CHANNEL_CHUNK = 32
 DEFAULT_PATTERN = 0xDEADBEEF
@@ -35,50 +34,49 @@ def parse_u32(text: str) -> int:
 
 def build_hbm2_rw_program(
     *,
-    channel: int,
-    pseudo_channel: int,
-    physical_bank: int,
+    target: HBM2Target,
+    bank: int,
     row: int,
     pattern: int,
 ) -> FinalProgram:
-    p = ProgramBuilder()
-    p.LI(physical_bank, "BAR")
+    p = ProgramBuilder(target=target)
+    p.LI(target.physical_bank(bank), "BAR")
     p.LI(row, "RAR")
-    p.LI(1, "CASR")
+    p.LI(target.column_stride, "CASR")
     p.LI(1, "BASR")
     p.LI(1, "RASR")
 
     p.LI(pattern, "PATTERN_REG")
-    for index in range(WORDS_PER_CACHELINE):
+    for index in range(target.words_per_cacheline):
         p.LDWD("PATTERN_REG", index)
 
-    p.DRAM(SEL_CH(channel, pseudo_channel=pseudo_channel), NOP(), NOP(), NOP())
+    p.DRAM(SEL_CH(target), NOP(), NOP(), NOP())
     p.SLEEP(10)
 
     p.LI(0, "CAR")
-    p.DRAM(PRE("BAR", rank=pseudo_channel), NOP(), NOP(), NOP())
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.SLEEP(3)
-    p.DRAM(ACT("BAR", "RAR", rank=pseudo_channel), NOP(), NOP(), NOP())
+    p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
     p.SLEEP(3)
 
-    for _ in range(NUM_COLUMNS):
-        p.DRAM(WR("BAR", "CAR", rank=pseudo_channel, icar=1), NOP(), NOP(), NOP())
+    for _ in range(target.columns_per_row):
+        p.DRAM(WR("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
         p.SLEEP(1)
 
     p.SLEEP(3)
-    p.DRAM(PRE("BAR", rank=pseudo_channel), NOP(), NOP(), NOP())
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.SLEEP(5)
 
     p.LI(0, "CAR")
-    p.DRAM(ACT("BAR", "RAR", rank=pseudo_channel), NOP(), NOP(), NOP())
+    p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
     p.SLEEP(3)
 
-    for _ in range(NUM_COLUMNS):
-        p.DRAM(RD("BAR", "CAR", rank=pseudo_channel, icar=1), NOP(), NOP(), NOP())
+    for _ in range(target.columns_per_row):
+        p.DRAM(RD("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
         p.SLEEP(1)
 
     p.SLEEP(3)
-    p.DRAM(PRE("BAR", rank=pseudo_channel), NOP(), NOP(), NOP())
+    p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.SLEEP(3)
     return p.conclude()
 
@@ -86,8 +84,7 @@ def build_hbm2_rw_program(
 def verify_static_trace(
     program: FinalProgram,
     *,
-    channel: int,
-    pseudo_channel: int,
+    target: HBM2Target,
     physical_bank: int,
     quiet: bool = False,
 ) -> None:
@@ -106,20 +103,20 @@ def verify_static_trace(
     if len(sel_events) != 1:
         errors.append(f"expected 1 SEL_CH event, saw {len(sel_events)}")
     elif (
-        sel_events[0].channel != channel
-        or sel_events[0].pseudo_channel != pseudo_channel
+        sel_events[0].channel != target.channel
+        or sel_events[0].pseudo_channel != target.pseudo_channel
     ):
         errors.append(
             "SEL_CH mismatch: "
             f"channel={sel_events[0].channel} pch={sel_events[0].pseudo_channel}"
         )
 
-    if len(wr_events) != NUM_COLUMNS:
-        errors.append(f"expected {NUM_COLUMNS} WR events, saw {len(wr_events)}")
-    if len(rd_events) != NUM_COLUMNS:
-        errors.append(f"expected {NUM_COLUMNS} RD events, saw {len(rd_events)}")
+    if len(wr_events) != target.columns_per_row:
+        errors.append(f"expected {target.columns_per_row} WR events, saw {len(wr_events)}")
+    if len(rd_events) != target.columns_per_row:
+        errors.append(f"expected {target.columns_per_row} RD events, saw {len(rd_events)}")
 
-    expected_columns = list(range(NUM_COLUMNS))
+    expected_columns = list(range(target.columns_per_row))
     wr_columns = [event.column for event in wr_events]
     rd_columns = [event.column for event in rd_events]
     if wr_columns != expected_columns:
@@ -127,7 +124,7 @@ def verify_static_trace(
     if rd_columns != expected_columns:
         errors.append(f"RD columns are {rd_columns}, expected {expected_columns}")
 
-    if any(event.rank != pseudo_channel for event in wr_events + rd_events):
+    if any(event.rank != target.pseudo_channel for event in wr_events + rd_events):
         errors.append("at least one WR/RD event used the wrong pseudo-channel rank")
     if any(event.bank != physical_bank for event in row_events):
         errors.append(
@@ -141,34 +138,38 @@ def verify_static_trace(
     if not quiet:
         print(
             "PASS: static trace "
-            f"SEL_CH channel={channel} pch={pseudo_channel}, "
+            f"SEL_CH channel={target.channel} pch={target.pseudo_channel}, "
             f"physical_bar={physical_bank}, "
             f"{len(wr_events)} WR, {len(rd_events)} RD, CASR=1 inferred from columns"
         )
 
 
-def expected_useful_bytes(pattern: int) -> np.ndarray:
+def expected_useful_bytes(pattern: int, *, columns_per_row: int) -> np.ndarray:
     words_per_half = BYTES_PER_PSEUDO_CHANNEL_CHUNK // np.dtype(np.uint32).itemsize
     return np.full(
-        NUM_COLUMNS * words_per_half,
+        columns_per_row * words_per_half,
         np.uint32(pattern),
         dtype=np.uint32,
     ).view(np.uint8)
 
 
-def extract_useful_bytes(readback: np.ndarray, pseudo_channel: int) -> np.ndarray:
+def extract_useful_bytes(
+    readback: np.ndarray,
+    *,
+    target: HBM2Target,
+) -> np.ndarray:
     chunks = []
-    offset = pseudo_channel * BYTES_PER_PSEUDO_CHANNEL_CHUNK
-    for column in range(NUM_COLUMNS):
+    offset = target.pseudo_channel * BYTES_PER_PSEUDO_CHANNEL_CHUNK
+    for column in range(target.columns_per_row):
         start = column * BYTES_PER_HBM_COLUMN_PAIR + offset
         stop = start + BYTES_PER_PSEUDO_CHANNEL_CHUNK
         chunks.append(readback[start:stop])
     return np.concatenate(chunks)
 
 
-def verify_readback(readback: np.ndarray, *, pseudo_channel: int, pattern: int) -> None:
-    useful = extract_useful_bytes(readback, pseudo_channel)
-    expected = expected_useful_bytes(pattern)
+def verify_readback(readback: np.ndarray, *, target: HBM2Target, pattern: int) -> None:
+    useful = extract_useful_bytes(readback, target=target)
+    expected = expected_useful_bytes(pattern, columns_per_row=target.columns_per_row)
     mismatches = np.flatnonzero(useful != expected)
     if mismatches.size == 0:
         return
@@ -178,7 +179,7 @@ def verify_readback(readback: np.ndarray, *, pseudo_channel: int, pattern: int) 
     byte_in_column = first % BYTES_PER_PSEUDO_CHANNEL_CHUNK
     raw_offset = (
         column * BYTES_PER_HBM_COLUMN_PAIR
-        + pseudo_channel * BYTES_PER_PSEUDO_CHANNEL_CHUNK
+        + target.pseudo_channel * BYTES_PER_PSEUDO_CHANNEL_CHUNK
         + byte_in_column
     )
     raise AssertionError(
@@ -193,7 +194,7 @@ def run_once(
     program: FinalProgram,
     *,
     receive_bytes: int,
-    pseudo_channel: int,
+    target: HBM2Target,
     pattern: int,
     iteration: int,
     quiet: bool = False,
@@ -204,7 +205,7 @@ def run_once(
     readback = np.empty(receive_bytes, dtype=np.uint8)
     board.receive_into(readback)
     board.synchronize()
-    verify_readback(readback, pseudo_channel=pseudo_channel, pattern=pattern)
+    verify_readback(readback, target=target, pattern=pattern)
     if not quiet:
         print(f"PASS: iteration {iteration}: {receive_bytes} readback bytes verified")
 
@@ -214,22 +215,21 @@ def execute_and_verify(
     program: FinalProgram,
     *,
     receive_bytes: int,
-    pseudo_channel: int,
+    target: HBM2Target,
     pattern: int,
 ) -> None:
     board.execute(program)
     readback = np.empty(receive_bytes, dtype=np.uint8)
     board.receive_into(readback)
     board.synchronize()
-    verify_readback(readback, pseudo_channel=pseudo_channel, pattern=pattern)
+    verify_readback(readback, target=target, pattern=pattern)
 
 
 def run_row_sweep(
     board: HBM2,
     *,
-    channel: int,
-    pseudo_channel: int,
-    physical_bank: int,
+    target: HBM2Target,
+    bank: int,
     start_row: int,
     row_count: int,
     pattern: int,
@@ -242,25 +242,23 @@ def run_row_sweep(
     for row_offset in range(row_count):
         row = start_row + row_offset
         program = build_hbm2_rw_program(
-            channel=channel,
-            pseudo_channel=pseudo_channel,
-            physical_bank=physical_bank,
+            target=target,
+            bank=bank,
             row=row,
             pattern=pattern,
         )
         if row_offset == 0:
             verify_static_trace(
                 program,
-                channel=channel,
-                pseudo_channel=pseudo_channel,
-                physical_bank=physical_bank,
+                target=target,
+                physical_bank=target.physical_bank(bank),
             )
 
         execute_and_verify(
             board,
             program,
             receive_bytes=receive_bytes,
-            pseudo_channel=pseudo_channel,
+            target=target,
             pattern=pattern,
         )
 
@@ -339,18 +337,21 @@ def main() -> int:
         print("iterations must be greater than 0", file=sys.stderr)
         return 2
 
-    physical_bank = args.bank + 16 * args.sid
-    program = build_hbm2_rw_program(
+    target = HBM2Target(
         channel=args.channel,
         pseudo_channel=args.pseudo_channel,
-        physical_bank=physical_bank,
+        sid=args.sid,
+    )
+    physical_bank = target.physical_bank(args.bank)
+    program = build_hbm2_rw_program(
+        target=target,
+        bank=args.bank,
         row=args.row,
         pattern=args.pattern,
     )
     verify_static_trace(
         program,
-        channel=args.channel,
-        pseudo_channel=args.pseudo_channel,
+        target=target,
         physical_bank=physical_bank,
         quiet=args.row_count > 1,
     )
@@ -385,16 +386,15 @@ def main() -> int:
                         board,
                         program,
                         receive_bytes=args.receive_bytes,
-                        pseudo_channel=args.pseudo_channel,
+                        target=target,
                         pattern=args.pattern,
                         iteration=iteration,
                     )
             else:
                 run_row_sweep(
                     board,
-                    channel=args.channel,
-                    pseudo_channel=args.pseudo_channel,
-                    physical_bank=physical_bank,
+                    target=target,
+                    bank=args.bank,
                     start_row=args.row,
                     row_count=args.row_count,
                     pattern=args.pattern,

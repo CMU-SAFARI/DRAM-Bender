@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from drambender.api import FinalProgram, ProgramBuilder, program_template
+from drambender.api import DDR4Target, FinalProgram, ProgramBuilder, program_template
 from drambender.api.program.instructions import ACT, ALIGN, NOP, PRE, RD, WR
 
 
@@ -8,10 +8,15 @@ BYTES_PER_CACHELINE = 64
 CACHELINES_PER_ROW = 128
 ROW_BYTES = BYTES_PER_CACHELINE * CACHELINES_PER_ROW
 WORDS_PER_ROW = ROW_BYTES // 4
+DDR4_TARGET = DDR4Target(
+    cachelines_per_row=CACHELINES_PER_ROW,
+    column_stride=8,
+    words_per_cacheline=16,
+)
 
 
 def build_tiny_scalar_program_plain(bank: int, row: int, delay: int) -> FinalProgram:
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     # After the ACT, SLEEP(6) = 36 ns meets tRAS before the closing PRE; the
     # closing PRE is then followed by SLEEP(3) = 18 ns for tRP so any program
     # submitted back-to-back sees the bank fully precharged.
@@ -45,7 +50,7 @@ def tiny_scalar_cases(count: int) -> list[dict[str, int]]:
 
 
 def build_pattern_program_plain(pattern_words: Sequence[int]) -> FinalProgram:
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.alloc_reg("PATTERN_REG")
     for index, value in enumerate(pattern_words):
         p.LI(value, "PATTERN_REG")
@@ -75,19 +80,19 @@ def build_rowhammer_program_plain(
     aggressor_pattern: int,
     hammer_count: int,
 ) -> FinalProgram:
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.alloc_reg("PATTERN_REG")
     p.alloc_reg("NUM_HAMMER_REG")
     p.alloc_reg("HAMMER_CTR_REG")
 
     p.LI(bank, "BAR")
-    p.LI(8, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
     p.LI(hammer_count, "NUM_HAMMER_REG")
     p.LI(0, "HAMMER_CTR_REG")
 
     p.LI(victim_row, "RAR")
     p.LI(victim_pattern, "PATTERN_REG")
-    for index in range(16):
+    for index in range(DDR4_TARGET.words_per_cacheline):
         p.LDWD("PATTERN_REG", index)
     p.DRAMSEQ(PRE("BAR", delay=11), ACT("BAR", "RAR", delay=11), ALIGN())
     p.LI(0, "CAR")
@@ -100,7 +105,7 @@ def build_rowhammer_program_plain(
 
     p.LI(aggressor_row, "RAR")
     p.LI(aggressor_pattern, "PATTERN_REG")
-    for index in range(16):
+    for index in range(DDR4_TARGET.words_per_cacheline):
         p.LDWD("PATTERN_REG", index)
     p.DRAMSEQ(PRE("BAR", delay=11), ACT("BAR", "RAR", delay=11), ALIGN())
     p.LI(0, "CAR")

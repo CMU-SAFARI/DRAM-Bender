@@ -1,14 +1,18 @@
-from ..api.program import ProgramBuilder
+from ..api.program import HBM2Target, ProgramBuilder
 from ..api.program.instructions import *
 from ._meta import program_template
 
 
 @program_template
-def read_row(bank: int, row: int):
-    p = ProgramBuilder()
-    p.LI(bank, "BAR")
+def read_row(target, bank: int, row: int):
+    p = ProgramBuilder(target=target)
+    p.LI(target.physical_bank(bank), "BAR")
     p.LI(row, "RAR")
-    p.LI(p.meta.column_stride, "CASR")
+    p.LI(target.column_stride, "CASR")
+
+    if isinstance(target, HBM2Target):
+        p.DRAM(SEL_CH(target), NOP(), NOP(), NOP())
+        p.SLEEP(10)
 
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.LI(0, "CAR")
@@ -17,7 +21,7 @@ def read_row(bank: int, row: int):
     p.DRAM(ACT("BAR", "RAR"), NOP(), NOP(), NOP())
 
     p.SLEEP(2)
-    for _ in range(p.meta.cachelines_per_row):
+    for _ in range(target.columns_per_row):
         p.DRAM(RD("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
         p.SLEEP(1)
     p.SLEEP(4)

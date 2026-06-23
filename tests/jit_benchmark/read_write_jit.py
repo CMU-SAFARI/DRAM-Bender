@@ -9,7 +9,7 @@ Scalar arguments (`int`) are patchable across calls at microsecond cost.
 
 Compare with `examples/read_write.py`, which uses the
 (already-decorated) shipped templates via
-`drambender.builtin_programs.configure(...)`. This file shows you how to
+`drambender.builtin_programs.configure(target=...)`. This file shows you how to
 write one yourself.
 """
 
@@ -19,7 +19,7 @@ import sys
 import numpy as np
 
 from drambender.api import (
-    BoardType,
+    DDR4Target,
     FinalProgram,
     HostInterface,
     ProgramBuilder,
@@ -32,14 +32,19 @@ from drambender.api.program.instructions import *
 CACHELINES_PER_ROW  = 128
 WORDS_PER_CACHELINE = 16
 COLUMN_STRIDE       = 8
+DDR4_TARGET = DDR4Target(
+    cachelines_per_row=CACHELINES_PER_ROW,
+    column_stride=COLUMN_STRIDE,
+    words_per_cacheline=WORDS_PER_CACHELINE,
+)
 
 
 @program_template
 def build_write_program(bank: int, row: int, pattern: int) -> FinalProgram:
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.LI(bank, "BAR")
     p.LI(row, "RAR")
-    p.LI(COLUMN_STRIDE, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
 
     # Broadcast the scalar pattern word into every lane of the wide register.
     for index in range(WORDS_PER_CACHELINE):
@@ -62,10 +67,10 @@ def build_write_program(bank: int, row: int, pattern: int) -> FinalProgram:
 
 @program_template
 def build_read_program(bank: int, row: int) -> FinalProgram:
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.LI(bank, "BAR")
     p.LI(row, "RAR")
-    p.LI(COLUMN_STRIDE, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
 
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.LI(0, "CAR")
@@ -91,7 +96,7 @@ def main() -> int:
     args = parser.parse_args()
 
     board = open_board(
-        BoardType.DDR4,
+        DDR4_TARGET,
         board_id=args.board_id,
         instance_id=args.instance_id,
         host_interface=HostInterface.XDMA,

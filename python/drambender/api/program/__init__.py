@@ -2,7 +2,7 @@
 
 Typical imports:
 
-    from drambender.api.program import ProgramBuilder, program_template
+    from drambender.api.program import DDR4Target, ProgramBuilder, program_template
     from drambender.api.program.instructions import *
 
 The `instructions` submodule holds the DRAM command factories (ACT, NOP,
@@ -15,9 +15,12 @@ from drambender._core import FinalProgram, Program
 from drambender._jit import program_template
 
 from .builder import ProgramBuilder
+from .targets import DDR4Target, HBM2Target
 
 __all__ = [
+    "DDR4Target",
     "FinalProgram",
+    "HBM2Target",
     "Program",
     "ProgramBuilder",
     "program_template",

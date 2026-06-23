@@ -13,7 +13,7 @@ import sys
 import numpy as np
 
 import drambender
-from drambender.api import BoardType, HostInterface, open_board
+from drambender.api import DDR4Target, HostInterface, open_board
 
 
 CACHELINES_PER_ROW  = 128
@@ -30,19 +30,20 @@ def main() -> int:
                         help="32-bit data word to write and verify (decimal or 0x-hex).")
     args = parser.parse_args()
 
+    target = DDR4Target(
+        cachelines_per_row=CACHELINES_PER_ROW,
+        column_stride=8,
+        words_per_cacheline=WORDS_PER_CACHELINE,
+    )
+    builtin_progs = drambender.builtin_programs.configure(target=target)
+
     board = open_board(
-        BoardType.DDR4,
+        target,
         board_id=args.board_id,
         instance_id=args.instance_id,
         host_interface=HostInterface.XDMA,
     )
     board.reset_fpga()
-
-    builtin_progs = drambender.builtin_programs.configure(
-        cachelines_per_row=CACHELINES_PER_ROW,
-        column_stride=8,
-        words_per_cacheline=WORDS_PER_CACHELINE,
-    )
 
     # Broadcast the scalar pattern to every word of a single cacheline; the
     # write_row template loads this wide register and writes every cacheline

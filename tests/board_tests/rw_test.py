@@ -12,7 +12,7 @@ import sys
 import numpy as np
 
 import drambender
-from drambender.api import ProgramBuilder
+from drambender.api import DDR4Target, ProgramBuilder
 from drambender.api.program.instructions import *
 
 # ---------------------------------------------------------------------------
@@ -39,9 +39,9 @@ def parse_u32(text: str) -> int:
 
 def build_rw_program(bank: int, num_rows: int, num_cls: int,
                      pattern: int) -> drambender.api.FinalProgram:
-    COL_STRIDE = 8
+    target = DDR4Target(cachelines_per_row=num_cls, column_stride=8)
 
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=target)
     p.alloc_reg("PATTERN_REG")
     p.alloc_reg("NUM_ROWS_REG")
     p.alloc_reg("NUM_COLS_REG")
@@ -50,10 +50,10 @@ def build_rw_program(bank: int, num_rows: int, num_cls: int,
 
     p.LI(num_rows, "NUM_ROWS_REG")
     p.LI(bank, "BAR")
-    p.LI(COL_STRIDE, "CASR")
+    p.LI(target.column_stride, "CASR")
     p.LI(num_cls, "NUM_COLS_REG")
     p.LI(pattern, "PATTERN_REG")
-    for index in range(16):
+    for index in range(target.words_per_cacheline):
         p.LDWD("PATTERN_REG", index)
 
     p.LI(0, "RAR")
@@ -68,7 +68,7 @@ def build_rw_program(bank: int, num_rows: int, num_cls: int,
     p.LABEL("WRITE_BEGIN")
     p.DRAM(WR("BAR", "CAR", icar=1), NOP(), NOP(), NOP())
     p.SRC("PATTERN_REG", "PATTERN_REG")
-    for index in range(16):
+    for index in range(target.words_per_cacheline):
         p.LDWD("PATTERN_REG", index)
     p.ADDI("LOOP_COLS_REG", 1, "LOOP_COLS_REG")
     p.BL("LOOP_COLS_REG", "NUM_COLS_REG", "WRITE_BEGIN")
@@ -77,7 +77,7 @@ def build_rw_program(bank: int, num_rows: int, num_cls: int,
     p.MV("PATTERN_REG", "TEMP_PATTERN_REG")
     p.ADD("PATTERN_REG", "TEMP_PATTERN_REG", "PATTERN_REG")
     p.ADD("PATTERN_REG", "TEMP_PATTERN_REG", "PATTERN_REG")
-    for index in range(16):
+    for index in range(target.words_per_cacheline):
         p.LDWD("PATTERN_REG", index)
 
     p.SLEEP(1)

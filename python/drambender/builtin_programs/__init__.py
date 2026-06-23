@@ -3,17 +3,13 @@ import pkgutil
 from collections.abc import Callable
 
 from ..api.program import FinalProgram
-from ._meta import _MetaBoundTemplate, normalize_programs_meta
+from ..api.program.targets import normalize_target
+from ._meta import _TargetBoundTemplate
 
 
-def _load_templates() -> tuple[list[str], list[str], dict]:
-    """Discover every ``programs/<name>.py`` module; split into meta-free
-    (directly callable, exposed at module level) and meta-dependent
-    (accessible only via ``configure(...)``).
-    """
-    meta_free_names: list[str] = []
-    meta_dependent_names: list[str] = []
-    templates: dict = {}
+def _load_templates() -> dict[str, _TargetBoundTemplate]:
+    """Discover and validate every shipped builtin program template."""
+    templates: dict[str, _TargetBoundTemplate] = {}
     seen_names: set[str] = set()
 
     for module_info in sorted(pkgutil.iter_modules(__path__), key=lambda item: item.name):
@@ -36,72 +32,39 @@ def _load_templates() -> tuple[list[str], list[str], dict]:
                 f"drambender.builtin_programs module {module_name!r} must define a top-level callable "
                 f"named {module_name!r}."
             )
-        if not callable(template) and not isinstance(template, _MetaBoundTemplate):
+        if not isinstance(template, _TargetBoundTemplate):
             raise TypeError(
-                f"drambender.builtin_programs symbol {module_name!r} must be callable, got "
-                f"{type(template).__name__}."
+                f"drambender.builtin_programs symbol {module_name!r} must be decorated "
+                "with drambender.builtin_programs._meta.program_template."
             )
 
         templates[module_name] = template
         seen_names.add(module_name)
-        if isinstance(template, _MetaBoundTemplate):
-            meta_dependent_names.append(module_name)
-            # Do NOT expose at module level — importing the submodule shadowed
-            # the package attribute; remove it so direct access fails loudly.
-            globals().pop(module_name, None)
-        else:
-            meta_free_names.append(module_name)
-            # Meta-free templates need no DRAM geometry → expose at module level.
-            globals()[module_name] = template
+        globals().pop(module_name, None)
 
-    return meta_free_names, meta_dependent_names, templates
+    return templates
 
 
-_META_FREE_NAMES, _META_DEPENDENT_NAMES, _TEMPLATES = _load_templates()
+_TEMPLATES = _load_templates()
 
 
 class _ConfiguredPrograms:
-    """Bundle of program templates bound to a specific ``_ProgramsMeta``."""
+    """Bundle of shipped program templates bound to one memory target."""
 
-    # Shipped templates; runtime binding happens in __init__ via setattr.
     single_sided_rowhammer: Callable[..., FinalProgram]
     double_sided_rowhammer: Callable[..., FinalProgram]
     write_row: Callable[..., FinalProgram]
     read_row: Callable[..., FinalProgram]
 
-    def __init__(
-        self,
-        *,
-        cachelines_per_row: int,
-        column_stride: int,
-        words_per_cacheline: int,
-    ) -> None:
-        meta = normalize_programs_meta(
-            cachelines_per_row=cachelines_per_row,
-            column_stride=column_stride,
-            words_per_cacheline=words_per_cacheline,
-        )
+    def __init__(self, *, target) -> None:
+        self.target = normalize_target(target)
         for name, template in _TEMPLATES.items():
-            if isinstance(template, _MetaBoundTemplate):
-                setattr(self, name, template.bind_meta(meta))
-            else:
-                setattr(self, name, template)
+            setattr(self, name, template.bind_target(self.target))
 
 
-def configure(*, cachelines_per_row: int, column_stride: int, words_per_cacheline: int):
-    """Bind every program template to an explicit DRAM geometry.
-
-    Required for every meta-dependent template (``write_row``, ``read_row``);
-    the returned bundle also carries meta-free templates
-    (``single_sided_rowhammer``, ``double_sided_rowhammer``) for one-stop
-    access. Parameters are keyword-only and have NO defaults — the caller
-    must state the geometry explicitly.
-    """
-    return _ConfiguredPrograms(
-        cachelines_per_row=cachelines_per_row,
-        column_stride=column_stride,
-        words_per_cacheline=words_per_cacheline,
-    )
+def configure(*, target):
+    """Bind every shipped program template to an explicit memory target."""
+    return _ConfiguredPrograms(target=target)
 
 
-__all__ = ["configure", *_META_FREE_NAMES]
+__all__ = ["configure"]

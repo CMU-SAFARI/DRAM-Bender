@@ -20,7 +20,7 @@ if str(_REPO_ROOT) not in sys.path:
 import numpy as np  # noqa: E402
 
 import drambender  # noqa: E402
-from drambender.api import FinalProgram, ProgramBuilder, program_template  # noqa: E402
+from drambender.api import DDR4Target, FinalProgram, ProgramBuilder, program_template  # noqa: E402
 from drambender.api.program.instructions import ACT, NOP, PRE, RD, WR  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -33,6 +33,11 @@ BYTES_PER_CACHELINE = 64
 ROW_BYTES = CACHELINES_PER_ROW * BYTES_PER_CACHELINE
 WORDS_PER_ROW = ROW_BYTES // 4
 COLUMN_STRIDE = 8
+DDR4_TARGET = DDR4Target(
+    cachelines_per_row=CACHELINES_PER_ROW,
+    column_stride=COLUMN_STRIDE,
+    words_per_cacheline=WORDS_PER_CACHELINE,
+)
 
 
 @program_template
@@ -40,12 +45,12 @@ def build_rowhammer_program(bank: int, victim_row: int, aggressor_row: int,
                             victim_pattern: int, aggressor_pattern: int,
                             hammer_count: int) -> FinalProgram:
     """Build the same instruction sequence as rowhammer_test.cpp."""
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.alloc_reg("NUM_HAMMER_REG")
     p.alloc_reg("HAMMER_CTR_REG")
 
     p.LI(bank, "BAR")
-    p.LI(COLUMN_STRIDE, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
     p.LI(hammer_count, "NUM_HAMMER_REG")
     p.LI(0, "HAMMER_CTR_REG")
 

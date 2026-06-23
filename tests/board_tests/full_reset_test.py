@@ -12,7 +12,7 @@ import numpy as np
 
 from drambender.api import (
     Board,
-    BoardType,
+    DDR4Target,
     FinalProgram,
     HostInterface,
     ProgramBuilder,
@@ -26,6 +26,11 @@ WORDS_PER_CACHELINE = 16
 COLUMN_STRIDE = 8
 ROW_WORDS = CACHELINES_PER_ROW * WORDS_PER_CACHELINE
 DEFAULT_PATTERN = 0x13579BDF
+DDR4_TARGET = DDR4Target(
+    cachelines_per_row=CACHELINES_PER_ROW,
+    column_stride=COLUMN_STRIDE,
+    words_per_cacheline=WORDS_PER_CACHELINE,
+)
 
 
 def parse_u32(text: str) -> int:
@@ -39,16 +44,16 @@ def parse_u32(text: str) -> int:
 
 
 def build_long_no_read_program() -> FinalProgram:
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.SLEEP(100000000)
     return p.conclude()
 
 
 def build_write_program(bank: int, row: int, pattern: int) -> FinalProgram:
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.LI(bank, "BAR")
     p.LI(row, "RAR")
-    p.LI(COLUMN_STRIDE, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
 
     for word in range(WORDS_PER_CACHELINE):
         p.LI(pattern, "PATTERN_REG")
@@ -70,10 +75,10 @@ def build_write_program(bank: int, row: int, pattern: int) -> FinalProgram:
 
 
 def build_read_program(bank: int, row: int) -> FinalProgram:
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.LI(bank, "BAR")
     p.LI(row, "RAR")
-    p.LI(COLUMN_STRIDE, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
 
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())
     p.LI(0, "CAR")
@@ -127,7 +132,7 @@ def main() -> int:
 
     try:
         with open_board(
-            BoardType.DDR4,
+            DDR4_TARGET,
             board_id=args.board_id,
             instance_id=args.instance_id,
             host_interface=HostInterface.XDMA,

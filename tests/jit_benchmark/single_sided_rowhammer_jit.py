@@ -11,7 +11,7 @@ remaining N-1 iterations run at native speed.
 
 Compare with `examples/single_sided_rowhammer.py`, which achieves the
 same effect by calling the (already @program_template-decorated) shipped
-templates via `drambender.builtin_programs.configure(...)`. This file shows
+templates via `drambender.builtin_programs.configure(target=...)`. This file shows
 you how to write one yourself.
 """
 
@@ -22,7 +22,7 @@ import numpy as np
 
 import drambender
 from drambender.api import (
-    BoardType,
+    DDR4Target,
     HostInterface,
     ProgramBuilder,
     open_board,
@@ -36,6 +36,11 @@ WORDS_PER_CACHELINE = 16
 COLUMN_STRIDE       = 8
 ROW_BYTES           = 8192
 ROW_WORDS           = ROW_BYTES // 4
+DDR4_TARGET = DDR4Target(
+    cachelines_per_row=CACHELINES_PER_ROW,
+    column_stride=COLUMN_STRIDE,
+    words_per_cacheline=WORDS_PER_CACHELINE,
+)
 
 
 def count_bitflips(mask: np.ndarray) -> int:
@@ -55,12 +60,12 @@ def build_rowhammer_program(
     aggressor_pattern: int,
     hammer_count: int,
 ):
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.alloc_reg("NUM_HMR")
     p.alloc_reg("HMR_COUNTER")
 
     p.LI(bank, "BAR")
-    p.LI(COLUMN_STRIDE, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
 
     # --- Initialize victim row ---
     p.LI(victim_row, "RAR")
@@ -131,7 +136,7 @@ def main() -> int:
     args = parser.parse_args()
 
     board = open_board(
-        BoardType.DDR4,
+        DDR4_TARGET,
         board_id=args.board_id,
         instance_id=args.instance_id,
         host_interface=HostInterface.XDMA,

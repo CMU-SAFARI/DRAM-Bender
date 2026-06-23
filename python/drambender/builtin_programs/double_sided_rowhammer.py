@@ -1,22 +1,28 @@
-from ..api.program import ProgramBuilder, program_template
+from ..api.program import HBM2Target, ProgramBuilder
 from ..api.program.instructions import *
+from ._meta import program_template
 
 
 @program_template
 def double_sided_rowhammer(
+    target,
     bank: int,
     aggressor_row_1: int,
     aggressor_row_2: int,
     hammer_count: int,
 ):
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=target)
     p.alloc_reg("NUM_HMR")
     p.alloc_reg("HMR_COUNTER")
 
-    p.LI(bank, "BAR")
+    p.LI(target.physical_bank(bank), "BAR")
     p.LI(aggressor_row_1, "RAR")
     p.LI(0, "HMR_COUNTER")
     p.LI(hammer_count, "NUM_HMR")
+
+    if isinstance(target, HBM2Target):
+        p.DRAM(SEL_CH(target), NOP(), NOP(), NOP())
+        p.SLEEP(10)
 
     p.LABEL("HMR_BEGIN")
     p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())

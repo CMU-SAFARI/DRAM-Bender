@@ -8,7 +8,7 @@ import time
 import numpy as np
 
 import drambender
-from drambender.api import BoardType, HostInterface, open_board
+from drambender.api import DDR4Target, HostInterface, open_board
 
 ROW_BYTES = 8192
 ROW_WORDS = ROW_BYTES // 4
@@ -44,19 +44,20 @@ def main() -> int:
     parser.add_argument("--hammer-count", type=int, default=500000)
     args = parser.parse_args()
 
+    target = DDR4Target(
+        cachelines_per_row=128,
+        column_stride=8,
+        words_per_cacheline=16,
+    )
+    builtin_progs = drambender.builtin_programs.configure(target=target)
+
     board = open_board(
-        BoardType.DDR4,
+        target,
         board_id=args.board_id,
         instance_id=args.instance_id,
         host_interface=HostInterface.XDMA,
     )
     board.reset_fpga()
-
-    builtin_progs = drambender.builtin_programs.configure(
-        cachelines_per_row=128,
-        column_stride=8,
-        words_per_cacheline=16,
-    )
 
     print(
         f"single_sided_rowhammer: board={args.board_id} instance={args.instance_id} bank={args.bank} "

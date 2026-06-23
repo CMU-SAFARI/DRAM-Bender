@@ -12,23 +12,24 @@ import time
 import numpy as np
 
 import drambender
-from drambender.api import ProgramBuilder, FinalProgram
+from drambender.api import DDR4Target, FinalProgram, ProgramBuilder
 from drambender.api.program.instructions import *
 
 CACHELINES_PER_ROW = 128
 BYTES_PER_CACHELINE = 64
 ROW_BYTES = CACHELINES_PER_ROW * BYTES_PER_CACHELINE
+DDR4_TARGET = DDR4Target(cachelines_per_row=CACHELINES_PER_ROW, column_stride=8)
 
 
 def make_write_read_row(bank: int, row: int, pattern: int) -> FinalProgram:
     """Write a pattern to a row, then read it back."""
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.alloc_reg("PATTERN_REG")
     p.LI(bank, "BAR")
     p.LI(row, "RAR")
-    p.LI(8, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
     p.LI(pattern, "PATTERN_REG")
-    for index in range(16):
+    for index in range(DDR4_TARGET.words_per_cacheline):
         p.LDWD("PATTERN_REG", index)
 
     # Write
@@ -57,17 +58,17 @@ def make_write_read_row(bank: int, row: int, pattern: int) -> FinalProgram:
 
 def make_hammer_read(bank: int, hammer_count: int) -> FinalProgram:
     """Init victim, hammer aggressor, read victim back."""
-    p = ProgramBuilder()
+    p = ProgramBuilder(target=DDR4_TARGET)
     p.alloc_reg("PATTERN_REG")
     p.alloc_reg("CTR")
     p.alloc_reg("LIMIT")
     p.LI(bank, "BAR")
-    p.LI(8, "CASR")
+    p.LI(DDR4_TARGET.column_stride, "CASR")
 
     # Init victim row 0
     p.LI(0, "RAR")
     p.LI(0x00000000, "PATTERN_REG")
-    for index in range(16):
+    for index in range(DDR4_TARGET.words_per_cacheline):
         p.LDWD("PATTERN_REG", index)
     p.LI(0, "CAR")
     p.DRAMSEQ(PRE("BAR", delay=11), ACT("BAR", "RAR", delay=11), ALIGN())

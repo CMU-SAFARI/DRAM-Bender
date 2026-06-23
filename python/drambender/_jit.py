@@ -24,7 +24,7 @@ _TRACE_MODE: ContextVar[bool | None] = ContextVar(
 )
 
 
-_CODEGEN_VERSION = 5
+_CODEGEN_VERSION = 6
 _PLUGIN_ABI_VERSION = 1
 _DEFAULT_COMPILER = "g++"
 _MIN_GXX_MAJOR = 11
@@ -38,6 +38,13 @@ class TemplateCompileError(RuntimeError):
 @dataclass(frozen=True)
 class ScalarParamRef:
     name: str
+
+
+@dataclass(frozen=True)
+class ScalarAffineRef:
+    name: str
+    multiplier: int = 1
+    offset: int = 0
 
 
 @dataclass(frozen=True)
@@ -535,6 +542,13 @@ def _specialization_metadata(*, function, trace_ops, scalar_names) -> dict[str, 
 
 
 def _serialize(value):
+    if isinstance(value, ScalarAffineRef):
+        return {
+            "kind": "scalar_affine",
+            "name": value.name,
+            "multiplier": value.multiplier,
+            "offset": value.offset,
+        }
     if isinstance(value, ScalarParamRef):
         return {"kind": "scalar_param", "name": value.name}
     if isinstance(value, tuple):
@@ -796,6 +810,21 @@ def _render_plugin_source(trace_ops, scalar_names) -> str:
 
 
 def _render_cpp_value(value, scalar_indices) -> str:
+    if isinstance(value, ScalarAffineRef):
+        base = f"static_cast<int>(scalars[{scalar_indices[value.name]}])"
+        if value.multiplier == 0:
+            expr = "0"
+        elif value.multiplier == 1:
+            expr = base
+        elif value.multiplier == -1:
+            expr = f"(-{base})"
+        else:
+            expr = f"({value.multiplier} * {base})"
+        if value.offset > 0:
+            expr = f"({expr} + {value.offset})"
+        elif value.offset < 0:
+            expr = f"({expr} - {-value.offset})"
+        return expr
     if isinstance(value, ScalarParamRef):
         return f"static_cast<int>(scalars[{scalar_indices[value.name]}])"
     if isinstance(value, str):
@@ -1138,6 +1167,8 @@ def _indent_cpp(source: str, prefix: str) -> str:
 
 
 __all__ = [
+    "ScalarAffineRef",
+    "ScalarParamRef",
     "TemplateCompileError",
     "TemplateRunStats",
     "LoweringStats",

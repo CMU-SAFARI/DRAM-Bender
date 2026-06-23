@@ -2,7 +2,7 @@
 
 The user-facing API lives under `drambender.api`:
 
-    from drambender.api import open_board, ProgramBuilder, program_template
+    from drambender.api import DDR4Target, ProgramBuilder, open_board, program_template
     from drambender.api.program.instructions import *
     from drambender.api.jit import get_last_template_run_stats
 

@@ -4,9 +4,9 @@ Submodules:
 
   - api.board      — Board classes, BoardType, HostInterface, open_board, ...
   - api.execution  — VM / trace types: ExecutionResult, DRAMCommandTrace, ...
-  - api.program    — ProgramBuilder, program_template; DRAM command factories
-                     in `api.program.instructions`; raw SMC factories in
-                     `api.program.raw_instructions`.
+  - api.program    — ProgramBuilder, DDR4Target, HBM2Target, program_template;
+                     DRAM command factories in `api.program.instructions`;
+                     raw SMC factories in `api.program.raw_instructions`.
 
 To receive readback data after `board.execute(...)`, allocate a numpy buffer
 and call `board.receive_into(buf)` followed by `board.synchronize()` to wait
@@ -36,7 +36,9 @@ from .execution import (
     TimingSummary,
 )
 from .program import (
+    DDR4Target,
     FinalProgram,
+    HBM2Target,
     Program,
     ProgramBuilder,
     program_template,
@@ -47,11 +49,13 @@ __all__ = [
     "BoardType",
     "BranchType",
     "DDR4",
+    "DDR4Target",
     "DRAMCommandEvent",
     "DRAMCommandTrace",
     "ExecutionResult",
     "FinalProgram",
     "HBM2",
+    "HBM2Target",
     "HBMTemperature",
     "HostInterface",
     "PCType",

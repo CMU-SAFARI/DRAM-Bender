@@ -4,7 +4,6 @@ The DRAM command factories (ACT/NOP/PRE/RD/WR/REF/SEL_CH/ALIGN) live in
 `drambender.api.program.instructions` — import them there.
 """
 
-from contextvars import ContextVar
 import operator
 import time
 from typing import Any
@@ -13,12 +12,14 @@ from typing import TYPE_CHECKING, cast
 
 from drambender import _core
 from drambender._jit import (
+    ScalarAffineRef,
     ScalarParamRef,
     ScalarSentinel,
     TemplateCompileError,
     in_trace_mode,
     record_lowering_stats,
 )
+from .targets import normalize_target
 
 if TYPE_CHECKING:
     from drambender._core import FinalProgram
@@ -44,20 +45,6 @@ _RESERVED_REGISTERS = {
     "RAR": 5,
     "PATTERN_REG": 6,
 }
-
-
-_PROGRAM_BUILDER_META: ContextVar[Any | None] = ContextVar(
-    "drambender_program_builder_meta",
-    default=None,
-)
-
-
-def _set_program_builder_meta(meta: Any):
-    return _PROGRAM_BUILDER_META.set(meta)
-
-
-def _reset_program_builder_meta(token) -> None:
-    _PROGRAM_BUILDER_META.reset(token)
 
 
 class _RegisterFile:
@@ -121,7 +108,7 @@ class ProgramBuilder:
 
     Typical lifecycle::
 
-        p = ProgramBuilder()
+        p = ProgramBuilder(target=DDR4Target())
         p.LI(0, "BAR")                       # load-immediate into a register
         p.DRAM(PRE("BAR"), NOP(), NOP(), NOP())   # one 4-slot DRAM word
         p.SLEEP(3)
@@ -131,15 +118,26 @@ class ProgramBuilder:
     accept a name string (auto-allocated on first use, see :meth:`alloc_reg`)
     or an integer id (0–15).
 
+    ``target=`` is required. Pass ``DDR4Target(...)`` or ``HBM2Target(...)`` to
+    make omitted ranks and HBM channel selection target-aware while keeping
+    every DRAM command explicit.
+
     Scalar arithmetic and control-flow instructions take one fabric cycle
-    (6 ns on the default DDR4 variant). DRAM mini-operations live inside
+    (6 ns on the supported FPGA variants). DRAM mini-operations live inside
     :meth:`DRAM` (exact 4-slot packing) or :meth:`DRAMSEQ` (timed sequence);
     see the module docstring of
     ``drambender.api.program.instructions`` for the command factories.
     """
 
-    def __init__(self) -> None:
-        self.meta = _PROGRAM_BUILDER_META.get()
+    _TARGET_UNSET = object()
+
+    def __init__(self, *, target=_TARGET_UNSET) -> None:
+        if target is self._TARGET_UNSET or target is None:
+            raise TypeError(
+                "ProgramBuilder requires an explicit target=DDR4Target(...) "
+                "or target=HBM2Target(...)."
+            )
+        self.target = normalize_target(target)
         self._registers = _RegisterFile()
         self._ops: list[tuple[Any, ...]] = []
 
@@ -233,7 +231,7 @@ class ProgramBuilder:
         single ``SMC_SLEEP`` scalar instruction.
         """
         normalized = self._normalize_int(cycles)
-        if isinstance(normalized, ScalarParamRef):
+        if isinstance(normalized, (ScalarParamRef, ScalarAffineRef)):
             return self._emit("SLEEP", normalized)
         if normalized < 1:
             raise ValueError("SLEEP cycles must be at least 1.")
@@ -357,9 +355,14 @@ class ProgramBuilder:
     def _normalize_int(self, value):
         if isinstance(value, ScalarSentinel):
             return ScalarParamRef(value.name)
-        if isinstance(value, ScalarParamRef):
+        if isinstance(value, (ScalarParamRef, ScalarAffineRef)):
             return value
         return _coerce_python_int(value, name="operand")
+
+    def _normalize_rank(self, value):
+        if value is None:
+            value = self.target.rank
+        return self._normalize_int(value)
 
     def _normalize_label(self, value):
         if not isinstance(value, str):
@@ -390,7 +393,7 @@ class ProgramBuilder:
                 self._resolve_reg(operands[0]),
                 self._normalize_int(operands[1]),
                 self._normalize_int(operands[2]),
-                self._normalize_int(operands[3]),
+                self._normalize_rank(operands[3]),
             )
         if opcode == "ACT":
             return (
@@ -399,7 +402,7 @@ class ProgramBuilder:
                 self._normalize_int(operands[1]),
                 self._resolve_reg(operands[2]),
                 self._normalize_int(operands[3]),
-                self._normalize_int(operands[4]),
+                self._normalize_rank(operands[4]),
             )
         if opcode == "RD":
             return (
@@ -408,7 +411,7 @@ class ProgramBuilder:
                 self._normalize_int(operands[1]),
                 self._resolve_reg(operands[2]),
                 self._normalize_int(operands[3]),
-                self._normalize_int(operands[4]),
+                self._normalize_rank(operands[4]),
                 self._normalize_int(operands[5]),
             )
         if opcode == "WR":
@@ -418,11 +421,11 @@ class ProgramBuilder:
                 self._normalize_int(operands[1]),
                 self._resolve_reg(operands[2]),
                 self._normalize_int(operands[3]),
-                self._normalize_int(operands[4]),
+                self._normalize_rank(operands[4]),
                 self._normalize_int(operands[5]),
             )
         if opcode == "REF":
-            return ("REF", self._normalize_int(operands[0]))
+            return ("REF", self._normalize_rank(operands[0]))
         if opcode == "SEL_CH":
             return (
                 "SEL_CH",
@@ -447,7 +450,7 @@ class ProgramBuilder:
             )
 
         delay = self._normalize_int(value.delay)
-        if not isinstance(delay, ScalarParamRef) and delay < 1:
+        if not isinstance(delay, (ScalarParamRef, ScalarAffineRef)) and delay < 1:
             raise ValueError("DRAM sequence delay values must be at least one slot.")
 
         exact = self._normalize_dram_exact_op(
@@ -473,7 +476,7 @@ class ProgramBuilder:
         expanded: list[tuple[Any, ...]] = []
         for item in body:
             delay = item[-1]
-            if isinstance(delay, ScalarParamRef):
+            if isinstance(delay, (ScalarParamRef, ScalarAffineRef)):
                 raise TemplateCompileError(
                     "Symbolic delay= values inside DRAMSEQ(...) require template trace mode."
                 )

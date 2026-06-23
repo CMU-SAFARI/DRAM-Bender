@@ -17,7 +17,7 @@ import sys
 import numpy as np
 
 import drambender
-from drambender.api import BoardType, HostInterface, open_board
+from drambender.api import DDR4Target, HostInterface, open_board
 
 ROW_BYTES = 8192
 ROW_WORDS = ROW_BYTES // 4
@@ -39,21 +39,22 @@ def main() -> int:
     parser.add_argument("--hammer-count", type=int, default=500000)
     args = parser.parse_args()
 
+    # Bind the shipped templates to an explicit target. Geometry values are
+    # board-specific facts and must be stated explicitly.
+    target = DDR4Target(
+        cachelines_per_row=128,
+        column_stride=8,
+        words_per_cacheline=16,
+    )
+    builtin_progs = drambender.builtin_programs.configure(target=target)
+
     board = open_board(
-        BoardType.DDR4,
+        target,
         board_id=args.board_id,
         instance_id=args.instance_id,
         host_interface=HostInterface.XDMA,
     )
     board.reset_fpga()
-
-    # Bind the shipped templates to a concrete DRAM geometry. Geometry values
-    # are board-specific facts and must be stated explicitly — there is no default.
-    builtin_progs = drambender.builtin_programs.configure(
-        cachelines_per_row=128,
-        column_stride=8,
-        words_per_cacheline=16,
-    )
 
     total_vulnerable = 0
     total_bitflips = 0
