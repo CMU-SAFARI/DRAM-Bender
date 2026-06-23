@@ -5,8 +5,6 @@ DRAM-BenderV2 RTL and Vivado sources alongside it.
 
 ## Layout
 
-- `API_IMPROVEMENTS.md`: summary of key API improvements over original
-  DRAM-Bender.
 - `include`: public C++ headers for the DRAMBender API.
 - `src`: C++ implementation and Python binding sources.
 - `python`: pure Python `drambender` package.

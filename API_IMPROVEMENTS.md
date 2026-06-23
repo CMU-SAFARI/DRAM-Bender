@@ -1,5 +1,8 @@
 # API Improvements Over Original DRAM-Bender
 
+Internal development note: this file records implementation context and release
+planning details. It is not part of the public user documentation.
+
 pyDRAMBender keeps the low-level DRAM-Bender execution model, but wraps it in a
 cleaner C++ and Python API that is easier to use from scripts, notebooks, and
 external CMake projects.

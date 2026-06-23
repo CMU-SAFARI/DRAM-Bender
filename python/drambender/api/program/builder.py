@@ -320,7 +320,7 @@ class ProgramBuilder:
         return self._emit("BEQ", self._resolve_reg(rs1), self._resolve_reg(rs2), self._normalize_label(target))
 
     def JMP(self, target: str):
-        """Unconditional jump to ``target``. 6 cycles (pipeline flush)."""
+        """Unconditional jump to ``target``. 6 branch-resolution cycles."""
         return self._emit("JMP", self._normalize_label(target))
 
     JUMP = JMP
@@ -329,10 +329,9 @@ class ProgramBuilder:
         """Lower the accumulated builder ops to a :class:`FinalProgram`.
 
         Ready to submit via ``board.execute(program)`` or inspect via
-        ``program.trace_dram_commands()``. Inside an ``@program_template``
-        trace (a JIT-internal mode) conclude returns the raw op list instead;
-        that return is not user-visible so the annotation pretends it's
-        always a ``FinalProgram``.
+        ``program.trace_dram_commands()``. During ``@program_template`` tracing,
+        conclude returns the raw op list instead; that return is not
+        user-visible, so the annotation pretends it's always a ``FinalProgram``.
         """
         ops = list(self._ops)
         if in_trace_mode():
