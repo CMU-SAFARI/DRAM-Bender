@@ -138,6 +138,12 @@ if (BUILD_TESTING)
   target_link_libraries(drambender_program_metadata_test PRIVATE DRAMBender)
   add_test(NAME drambender_program_metadata_test COMMAND drambender_program_metadata_test)
 
+  add_executable(drambender_vm_timing_test
+    tests/vm_timing_test.cpp
+  )
+  target_link_libraries(drambender_vm_timing_test PRIVATE DRAMBender)
+  add_test(NAME drambender_vm_timing_test COMMAND drambender_vm_timing_test)
+
   if (DRAMBENDER_BUILD_BOARD_TESTS)
     add_executable(drambender_rw_test
       tests/board_tests/rw_test.cpp

@@ -19,7 +19,7 @@ inline constexpr uint64_t k_mask16 = 0xffff;
 inline constexpr uint32_t k_mask32 = 0xffffffffu;
 inline constexpr uint64_t k_branch_mask = 0x7ffff;
 inline constexpr uint64_t k_jump_mask = 0x7ffffff;
-inline constexpr uint64_t k_taken_branch_cycles = 6;
+inline constexpr uint64_t k_branch_resolve_cycles = 6;
 
 inline constexpr uint32_t k_casr_register = 0;
 inline constexpr uint32_t k_basr_register = 1;
@@ -318,26 +318,24 @@ ExecutionResult run_program(const FinalProgram& program,
       if (fc == k_sleep) {
         advance_cycles(state, sleep_amount(inst));
       } else if (fc == k_jump) {
-        advance_cycles(state, k_taken_branch_cycles);
+        advance_cycles(state, k_branch_resolve_cycles);
         ++state.branches_taken;
         pc = jump_target(inst);
         continue;
       } else if (fc == k_bl) {
+        advance_cycles(state, k_branch_resolve_cycles);
         if (state.registers[rs1(inst)] < state.registers[rs2(inst)]) {
-          advance_cycles(state, k_taken_branch_cycles);
           ++state.branches_taken;
           pc = branch_target(inst);
           continue;
         }
-        advance_cycles(state, 1);
       } else if (fc == k_beq) {
+        advance_cycles(state, k_branch_resolve_cycles);
         if (state.registers[rs1(inst)] == state.registers[rs2(inst)]) {
-          advance_cycles(state, k_taken_branch_cycles);
           ++state.branches_taken;
           pc = branch_target(inst);
           continue;
         }
-        advance_cycles(state, 1);
       } else {
         advance_cycles(state, 1);
       }

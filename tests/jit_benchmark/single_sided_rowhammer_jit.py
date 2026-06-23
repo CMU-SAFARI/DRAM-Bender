@@ -103,9 +103,6 @@ def build_rowhammer_program(
     p.ADDI("HMR_COUNTER", 1, "HMR_COUNTER")
     p.DRAM(NOP(), NOP(), NOP(), ACT("BAR", "RAR"))
     p.BL("HMR_COUNTER", "NUM_HMR", "HMR_BEGIN")
-    # tRAS for the last aggressor ACT — BL-not-taken (loop exit) is only
-    # 1 cycle, versus 6 cycles on BL-taken.
-    p.SLEEP(5)
 
     # --- Read the victim row back ---
     p.LI(victim_row, "RAR")

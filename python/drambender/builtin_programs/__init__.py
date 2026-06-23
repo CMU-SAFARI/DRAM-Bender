@@ -67,15 +67,7 @@ class _ConfiguredPrograms:
     single_sided_rowhammer: Callable[..., FinalProgram]
     double_sided_rowhammer: Callable[..., FinalProgram]
     write_row: Callable[..., FinalProgram]
-    write_row_range: Callable[..., FinalProgram]
     read_row: Callable[..., FinalProgram]
-    read_row_range: Callable[..., FinalProgram]
-    write_cachelines: Callable[..., FinalProgram]
-    write_comb_cachelines: Callable[..., FinalProgram]
-    write_row_ordered: Callable[..., FinalProgram]
-    short_tras_read_row: Callable[..., FinalProgram]
-    multipulse_short_tras_read_row: Callable[..., FinalProgram]
-    double_act_precharge: Callable[..., FinalProgram]
 
     def __init__(
         self,

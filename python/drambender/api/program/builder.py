@@ -312,11 +312,11 @@ class ProgramBuilder:
         return self._emit("LABEL", name)
 
     def BL(self, rs1, rs2, target: str):
-        """Branch to ``target`` if ``rs1 < rs2`` (unsigned). Taken = 6 cycles; fall-through = 1 cycle."""
+        """Branch to ``target`` if ``rs1 < rs2`` (unsigned). Both paths resolve in 6 cycles."""
         return self._emit("BL", self._resolve_reg(rs1), self._resolve_reg(rs2), self._normalize_label(target))
 
     def BEQ(self, rs1, rs2, target: str):
-        """Branch to ``target`` if ``rs1 == rs2``. Taken = 6 cycles; fall-through = 1 cycle."""
+        """Branch to ``target`` if ``rs1 == rs2``. Both paths resolve in 6 cycles."""
         return self._emit("BEQ", self._resolve_reg(rs1), self._resolve_reg(rs2), self._normalize_label(target))
 
     def JMP(self, target: str):
