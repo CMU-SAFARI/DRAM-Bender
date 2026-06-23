@@ -2,11 +2,11 @@
 `include "encoding.vh"
 
 module ddr_pipeline(
-  
+
   // common signals
   input clk,
   input rst,
-  
+
   // execute_stage <-> ddr_pipeline if
   input                         ddr_valid,
   input [`DDR_UOP_WIDTH*4-1:0]  ddr_uop,
@@ -25,20 +25,21 @@ module ddr_pipeline(
   output [3:0]                  ddr_pall,
   output [3:0]                  ddr_half_bl,
   output [3:0]                  ddr_rank,
-  output [4*`HBM_CH_WIDTH-1:0]  hbm_ch, 
-  output [4*`BG_WIDTH-1:0]      ddr_bg, 
+  output [4*`HBM_CH_WIDTH-1:0]  hbm_ch,
+  output [4*`BG_WIDTH-1:0]      ddr_bg,
   output [4*`BANK_WIDTH-1:0]    ddr_bank,
   output [4*`COL_WIDTH-1:0]     ddr_col,
   output [4*`ROW_WIDTH-1:0]     ddr_row,
   output [511:0]                ddr_wdata,
+  output [3:0]                  hbm_sid,
 
   // ddr_pipeline <-> regfile interface
   input  [511:0]                        wide_reg,
   output [7:0]                          update_en,
   output [4*8-1:0]                      update_ids,
-  output [32*8-1:0]                     update_vals,   
+  output [32*8-1:0]                     update_vals,
   input  [`COL_WIDTH-1:0]               casr,
-  input  [`BANK_WIDTH+`BG_WIDTH-1:0]    basr,
+  input  [`BANK_WIDTH+`BG_WIDTH:0]      basr,
   input  [`ROW_WIDTH-1:0]               rasr,
   output [4*8-1:0]                      reg_ids, // registers we need to read
   input  [32*8-1:0]                     reg_vals // register values
@@ -51,7 +52,7 @@ module ddr_pipeline(
     for(uops = 0 ; uops < 4 ; uops = uops + 1) begin: split_uops
       assign uop[uops] = ddr_uop[`DDR_UOP_WIDTH*uops +: `DDR_UOP_WIDTH];
     end
-  endgenerate 
+  endgenerate
 
   // Figure out reg ids in the bubble cycle
   reg [4*8-1:0] reg_ids_ns, reg_ids_r;
@@ -59,10 +60,10 @@ module ddr_pipeline(
   reg s2_valid;
   reg [`DDR_UOP_WIDTH-1:0] s2_uop [3:0];
   reg [7:0] s2_update_en; // which registers will we update
-  reg [8*32-1:0] s2_update_val; 
+  reg [8*32-1:0] s2_update_val;
 
   reg [3:0]                   ddr_write_ns, ddr_write_r;
-  reg [3:0]                   ddr_read_ns, ddr_read_r; 
+  reg [3:0]                   ddr_read_ns, ddr_read_r;
   reg [3:0]                   ddr_pre_ns, ddr_pre_r;
   reg [3:0]                   ddr_act_ns, ddr_act_r;
   reg [3:0]                   ddr_ref_ns, ddr_ref_r;
@@ -80,6 +81,8 @@ module ddr_pipeline(
   reg [4*`COL_WIDTH-1:0]      ddr_col_ns, ddr_col_r;
   reg [4*`ROW_WIDTH-1:0]      ddr_row_ns, ddr_row_r;
   reg [511:0]                 ddr_data_r;
+  reg [3:0]                   hbm_sid_ns, hbm_sid_r;
+
 
   assign update_vals  = s2_update_val;
   assign update_en    = s2_update_en;
@@ -106,6 +109,7 @@ module ddr_pipeline(
   assign ddr_col      = ddr_col_r;
   assign ddr_row      = ddr_row_r;
   assign ddr_wdata    = ddr_data_r;
+  assign hbm_sid      = hbm_sid_r;
 
   integer i;
   always @* begin
@@ -140,12 +144,13 @@ module ddr_pipeline(
       ddr_rank_ns[i]    = s2_uop[i][`IS_RANK];
       ddr_half_bl_ns[i] = s2_uop[i][`IS_BL4] & (s2_uop[i][`IS_WRITE] | s2_uop[i][`IS_READ]);
       ddr_nop_ns[i]     = s2_valid ? s2_uop[i][`IS_NOP] : {4{`HIGH}};
-      hbm_ch_ns[i*`HBM_CH_WIDTH +: `HBM_CH_WIDTH] 
+      hbm_ch_ns[i*`HBM_CH_WIDTH +: `HBM_CH_WIDTH]
         = s2_uop[i][`HBM_CHANNEL +: `HBM_CH_WIDTH];
+      hbm_sid_ns[i] = reg_vals[i*64 + `BANK_WIDTH + `BG_WIDTH];
       // stage 2 address calculation
-      ddr_row_ns[i*`ROW_WIDTH +: `ROW_WIDTH] 
+      ddr_row_ns[i*`ROW_WIDTH +: `ROW_WIDTH]
         = reg_vals[i*64+32 +: `ROW_WIDTH];
-      ddr_bank_ns[i*`BANK_WIDTH +: `BANK_WIDTH] 
+      ddr_bank_ns[i*`BANK_WIDTH +: `BANK_WIDTH]
         = reg_vals[i*64 +: `BANK_WIDTH];
       ddr_bg_ns[i*`BG_WIDTH +: `BG_WIDTH]
         = reg_vals[i*64+`BANK_WIDTH +: `BG_WIDTH];
@@ -156,7 +161,7 @@ module ddr_pipeline(
         s2_update_en[i*2+1] = `HIGH;
         s2_update_val[i*64+32 +: 32] = reg_vals[i*64+32 +: `COL_WIDTH]
             + casr;
-      end 
+      end
       else if(s2_uop[i][`INC_RAR] & (s2_uop[i][`IS_ACT])) begin
         s2_update_en[i*2+1] = `HIGH;
         s2_update_val[i*64+32 +: 32] = reg_vals[i*64+32 +: `ROW_WIDTH]
@@ -164,7 +169,7 @@ module ddr_pipeline(
       end
       if(s2_uop[i][`INC_BAR]) begin
         s2_update_en[i*2] = `HIGH;
-        s2_update_val[i*64 +: 32] = reg_vals[i*64 +: `BANK_WIDTH+`BG_WIDTH]
+        s2_update_val[i*64 +: 32] = reg_vals[i*64 +: `BANK_WIDTH + `BG_WIDTH + 1]
             + basr;
       end
     end // for
@@ -187,7 +192,8 @@ module ddr_pipeline(
       ddr_ap_r       <= {4{`LOW}};
       ddr_half_bl_r  <= {4{`LOW}};
       ddr_rank_r     <= {4{`LOW}};
-      hbm_ch_r       <= {4*`HBM_CH_WIDTH{`LOW}};
+      hbm_ch_r       <= {4*`HBM_CH_WIDTH{`HIGH}};
+      hbm_sid_r      <= {4{`LOW}};
     end
     else begin
       reg_ids_r <= reg_ids_ns;
@@ -208,6 +214,7 @@ module ddr_pipeline(
       ddr_half_bl_r  <= {4{`LOW}}; // deprecated
       ddr_rank_r     <= ddr_rank_ns;
       hbm_ch_r       <= hbm_ch_ns;
+      hbm_sid_r      <= hbm_sid_ns;
       ddr_bg_r       <= ddr_bg_ns;
       ddr_bank_r     <= ddr_bank_ns;
       ddr_col_r      <= ddr_col_ns;

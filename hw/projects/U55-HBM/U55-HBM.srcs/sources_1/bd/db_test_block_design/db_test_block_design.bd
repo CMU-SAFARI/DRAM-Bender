@@ -1,0 +1,14 @@
+{
+  "design": {
+    "design_info": {
+      "boundary_crc": "0x0",
+      "device": "xcu55c-fsvh2892-2L-e",
+      "gen_directory": "../../../../U55-HBM.gen/sources_1/bd/db_test_block_design",
+      "name": "db_test_block_design",
+      "rev_ctrl_bd_flag": "RevCtrlBdOff",
+      "synth_flow_mode": "Hierarchical",
+      "tool_version": "2024.2"
+    },
+    "design_tree": {}
+  }
+}

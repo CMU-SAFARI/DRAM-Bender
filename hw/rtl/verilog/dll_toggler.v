@@ -4,36 +4,36 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
 										DATA_BUF_ADDR_WIDTH = 5, DBUF_WIDTH = 4, DQ_BURST = 8)
 
 (
-  
+
   input                                             clk,
   input                                             rst,
   input                                             toggle_valid,
-  output reg                                        dllt_done,  
-  
+  output reg                                        dllt_done,
+
   // ----------  DDR4 Signals  ----------
   output [7:0]                                      mc_ACT_n,  // DRAM ACT_n command signal for four DRAM clock cycles.
   output [17*8-1:0]                                 mc_ADR,    // DRAM address. There are 8 bits in the fabric interface for each address bit on the DRAM bus.
   output [`BANK_WIDTH*8-1:0]                        mc_BA,     // DRAM bank address. 8 bits for each DRAM bank address.
   output [`BG_WIDTH*8-1:0]                          mc_BG,     // DRAM bank group address.
   output [`CS_WIDTH*8-1:0]                          mc_CS_n,   // DRAM CS_n
-  
+
   // NOTE: CKE is transmitted within another clock domain that is 4x faster than fabric clock.
   output [`CKE_WIDTH*8-1:0]                         mc_CKE,
   output                                            clk_sel
-  
+
   );
-    
-  wire [13:0] MR1_CONF = 14'b00001100000000;  
-    
+
+  wire [13:0] MR1_CONF = 14'b00001100000000;
+
   reg [17*8-1:0]       ADR_ns, ADR_r;
   reg [`BANK_WIDTH*8-1:0]       BA_ns, BA_r;
   reg [`BG_WIDTH*8-1:0]         BG_ns, BG_r;
   reg [`CS_WIDTH*8-1:0]         CS_n_ns, CS_n_r;
   reg [`ODT_WIDTH*8-1:0]        ODT_ns, ODT_r;
   reg [`CKE_WIDTH*8-1:0]        CKE_ns, CKE_r;
-  
+
   reg                           clk_sel_ns, clk_sel_r;
-  
+
   assign mc_ACT_n   = {8{`HIGH}};
   assign mc_ADR     = ADR_r;
   assign mc_BA      = BA_r;
@@ -41,8 +41,8 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
   assign mc_CS_n    = CS_n_r;
   assign mc_CKE     = CKE_r;
   assign clk_sel    = clk_sel_r;
-  
-  
+
+
   // TODO we need to implement the following routine (TO TURN DLL OFF ONLY)
   // 1 - Precharge all banks (IDLE STATE)
   // 2 - Set MR1 A0 to 1 (DISABLE DLL), wait tMOD
@@ -54,8 +54,8 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
   //     ODT signal must be LOW.
   // 7 - Wait tXS and set mode registers to appropriate values
   //     (UG says that CL, CWL and WR may need to be updated),
-  //     wait for another tMOD 
-  
+  //     wait for another tMOD
+
   localparam IDLE_S                 = 0;
   localparam IDLE_WAIT_S            = 1;
   localparam SET_MR_1_S             = 2;
@@ -66,20 +66,20 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
   localparam WAIT_CHANGE_CLK_FREQ_S = 7;
   localparam EXIT_SELF_REF_S        = 8;
   localparam WAIT_EXIT_SELF_REF_S   = 9;
-  
+
   localparam T_PRECHARGE      = 5;    // in terms of MC cycles (which is 4x less frequent than the DDR4)
   localparam T_MOD            = 24;   // Max(24CK,15ns)
   localparam T_CKSRE          = 300;  // Max(5CK,10ns)
   localparam T_CKSRX          = 300;  // Max(5CK, 10ns) + additional room for clock to stabilize;
   localparam T_XS             = 1000;
-  
-  
+
+
   reg[3:0] state_r, state_ns;
-  
+
   reg[9:0] wait_r, wait_ns;
-  
+
   integer adr_bit_i;
-  
+
   always @* begin
     // Set bank and bank group signals
     dllt_done  = `LOW;
@@ -143,7 +143,7 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
         if(wait_r > 0)
           wait_ns = wait_r - 1'b1;
         else begin
-          state_ns = CHANGE_CLK_FREQ_S;            
+          state_ns = CHANGE_CLK_FREQ_S;
         end
       end
       CHANGE_CLK_FREQ_S: begin
@@ -173,13 +173,13 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
           wait_ns = wait_r - 1'b1;
         else begin
           state_ns  = IDLE_S;
-          dllt_done = `HIGH;           
+          dllt_done = `HIGH;
         end
       end
-    endcase 
-  
+    endcase
+
   end
-  
+
   always @(posedge clk) begin
     if(rst) begin
       state_r   <= IDLE_S;
@@ -202,5 +202,5 @@ module dll_toggler #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRA
       CS_n_r <= CS_n_ns;
     end
   end
-  
+
 endmodule

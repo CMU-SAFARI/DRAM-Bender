@@ -22,8 +22,8 @@ module exe_pipeline(
   output [7:0]                  rf_raddr,
   output [3:0]                  rf_waddr,
   input  [2*32-1:0]             rf_rdata,
-  input  [32*7-1:0]             ddr_stat, 
-    
+  input  [32*7-1:0]             ddr_stat,
+
   // exe_pipeline <-> scratchpad
   output                        mem_wen,
   output                        mem_ren,
@@ -61,7 +61,7 @@ module exe_pipeline(
   assign wide_wen       = s2_wide_wen;
   assign rf_wdata       = s3_wen ? mem_rdata : s2_wdata;
   assign rf_wen         = s2_wen || s3_wen;
-  assign rf_raddr[0+:4] = s2_rs1; 
+  assign rf_raddr[0+:4] = s2_rs1;
   assign rf_raddr[4+:4] = s2_rs2;
   assign rf_waddr       = s3_wen ? s3_rt : s2_rt;
 
@@ -69,12 +69,12 @@ module exe_pipeline(
   assign s2_rs2_data = rf_rdata[32+:32];
   assign br_resolve  = s3_br_resolve;
   assign br_target   = s3_br_target;
-  
+
   assign mem_addr    = s2_rs1_data + s2_imd_r;
   assign mem_wen     = s2_mem_wen;
   assign mem_ren     = s2_mem_ren;
   assign mem_wdata   = s2_mem_wdata;
-  
+
   always @* begin
     // stage one, decode immediate value
     s2_mem_wen  = `LOW;
@@ -89,7 +89,7 @@ module exe_pipeline(
     end
     if(exe_uop[`IS_LI]) begin
       s2_imd_ns[31:16] = exe_uop[`IMD2 +: 16];
-    end 
+    end
     if(exe_uop[`IS_BL] | exe_uop[`IS_BEQ]) begin
       s2_imd_ns[31:0]  = exe_uop[`IMD +: 19];
     end
@@ -161,7 +161,7 @@ module exe_pipeline(
       // not implemented
       // frontent/fetch handles api sleeps
     end
-    
+
   end
 
   always @(posedge clk) begin
@@ -180,7 +180,7 @@ module exe_pipeline(
                   exe_uop[`IS_XOR] || exe_uop[`IS_LDPC];
     s2_wide_wen <= exe_uop[`IS_LDWD];
     // stage two, delayed branch signals
-    s3_br_resolve <= s2_valid && (s2_uop[`IS_BL] || 
+    s3_br_resolve <= s2_valid && (s2_uop[`IS_BL] ||
                         s2_uop[`IS_BEQ] ||
                         s2_uop[`IS_JUMP]);
     s3_br_target  <= fetch_pc;

@@ -18,22 +18,22 @@ module pre_decode(
   output                   is_sleep
   );
 
-  // When an instruction is non_ddr and has 
+  // When an instruction is non_ddr and has
   // is_branch flag set
   assign is_branch = instruction[`BRANCH_OFFSET]
                         && ~instruction[`DDR_OFFSET];
-                        
+
   assign is_end    = &(~instruction);
-  
+
   // encountered a ddr command segments
   assign is_ddr_start = instruction[`INFO_OFFSET]
                         && ~instruction[`DDR_OFFSET];
-  
+
   assign read_size    = instruction[9:0];
   // if there are more reads than we can buffer
-  assign need_flush   = is_ddr_start && (read_size > buffer_space);    
-       
-  assign is_sleep     = instruction[`BRANCH_OFFSET] && 
+  assign need_flush   = is_ddr_start && (read_size > buffer_space);
+
+  assign is_sleep     = instruction[`BRANCH_OFFSET] &&
                             instruction[`FU_CODE_OFFSET +: 8] == `SLEEP;
-                        
+
 endmodule

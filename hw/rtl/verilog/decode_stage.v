@@ -2,16 +2,16 @@
 `include "encoding.vh"
 
 module decode_stage(
- 
+
   input clk,
-  input rst,   
+  input rst,
 
   // fetch stage <-> decode stage interface
   input  [`INSTR_WIDTH-1:0]     instr,
   input  [`IMEM_ADDR_WIDTH-1:0] instr_pc,
   input                         instr_valid,
- 
-  // decode stage <-> execute stage interface 
+
+  // decode stage <-> execute stage interface
   output                        ddr_valid,
   output                        exe_valid,
   output [`DDR_UOP_WIDTH*4-1:0] ddr_uop,
@@ -48,18 +48,18 @@ module decode_stage(
   assign exe_pc    = exe_pc_r;
   assign ddr_valid = ddr_valid_r;
   assign exe_valid = exe_valid_r;
-  assign ddr_stat = {ddr_stat_r[6], ddr_stat_r[5], 
-                     ddr_stat_r[4], ddr_stat_r[3], 
-                     ddr_stat_r[2], ddr_stat_r[1], 
+  assign ddr_stat = {ddr_stat_r[6], ddr_stat_r[5],
+                     ddr_stat_r[4], ddr_stat_r[3],
+                     ddr_stat_r[2], ddr_stat_r[1],
                      ddr_stat_r[0]};
-  
+
   reg is_started = 0;
   reg[26:0] imd;
   integer i;
-  
+
   always @* begin
     ddr_valid_ns = `LOW;
-    exe_valid_ns = `LOW; 
+    exe_valid_ns = `LOW;
     exe_uop_ns = {`EXE_UOP_WIDTH{`LOW}};
     for(i = 0 ; i < 4 ; i = i + 1)
       ddr_uop_ns[i] = {`DDR_UOP_WIDTH{`LOW}};
@@ -87,14 +87,14 @@ module decode_stage(
               ddr_uop_ns[i][`BAR+:4]   = ddr_insts[i][`DEC_BAR+:4];
               ddr_uop_ns[i][`DO_AP]    = ddr_insts[i][`DEC_AP];
               ddr_uop_ns[i][`IS_BL4]   = ddr_insts[i][`DEC_BL4];
-              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];
             end
             `PRE: begin
               ddr_uop_ns[i][`IS_PRE]   = `HIGH;
               ddr_uop_ns[i][`PRE_ALL]  = ddr_insts[i][`DEC_PRE_ALL];
               ddr_uop_ns[i][`INC_BAR]  = ddr_insts[i][`DEC_INC_BAR];
               ddr_uop_ns[i][`BAR+:4]   = ddr_insts[i][`DEC_BAR+:4];
-              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];
             end
             `ACT: begin
               ddr_uop_ns[i][`IS_ACT]   = `HIGH;
@@ -107,25 +107,25 @@ module decode_stage(
 `ifndef HBM_BENDER
             `ZQ: begin
               ddr_uop_ns[i][`IS_ZQ]    = `HIGH;
-              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];
             end
 `else
             `SEL_CH: begin
               // this is redundant and needs fixing
               // we use ZQ to select channels in the HBM version
               ddr_uop_ns[i][`IS_ZQ]          = `HIGH;
-              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];
               ddr_uop_ns[i][`HBM_CHANNEL +: `HBM_CH_WIDTH] = ddr_insts[i][`DEC_SEL_CH +: `HBM_CH_WIDTH];
               ddr_uop_ns[i][`IS_SEL_CH] = `HIGH;
             end
 `endif
             `REF: begin
               ddr_uop_ns[i][`IS_REF]   = `HIGH;
-              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];              
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];
             end
             `NOP: begin
               ddr_uop_ns[i][`IS_NOP]   = `HIGH;
-              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];            
+              ddr_uop_ns[i][`IS_RANK]  = ddr_insts[i][`DEC_RANK];
             end
           endcase
         end
@@ -138,13 +138,13 @@ module decode_stage(
             ddr_uop_ns[1][`IS_NOP] = `HIGH;
             ddr_uop_ns[2][`IS_NOP] = `HIGH;
             ddr_uop_ns[3][`IS_NOP] = `HIGH;
-          end   
+          end
           `SRX: begin
             ddr_uop_ns[0][`IS_SRX] = `HIGH;
             ddr_uop_ns[1][`IS_NOP] = `HIGH;
             ddr_uop_ns[2][`IS_NOP] = `HIGH;
             ddr_uop_ns[3][`IS_NOP] = `HIGH;
-          end   
+          end
         endcase
       end
       else begin
@@ -171,7 +171,7 @@ module decode_stage(
             `SLEEP: begin
               exe_uop_ns[`IS_SLEEP]    = `HIGH;
               exe_uop_ns[`IMD +: 27]   = instr[`DEC_SLEEP_OFFSET +: 27];
-            end        
+            end
           endcase
         end
         else if(instr[`MEM_OFFSET]) begin
@@ -191,7 +191,7 @@ module decode_stage(
               exe_uop_ns[`IS_MEM]      = `HIGH;
               exe_uop_ns[`IS_ST]       = `HIGH;
               exe_uop_ns[`HAS_IMD]     = `HIGH;
-            end        
+            end
           endcase
         end
         else if(instr[`BW_OFFSET]) begin
@@ -207,13 +207,13 @@ module decode_stage(
               exe_uop_ns[`RS2 +: 4]    = instr[`DEC_RS2 +: 4];
               exe_uop_ns[`RT +: 4]   = instr[`DEC_RT  +: 4];
               exe_uop_ns[`IS_OR]      = `HIGH;
-            end      
+            end
             `XOR: begin
               exe_uop_ns[`RS1 +: 4]    = instr[`DEC_RS1 +: 4];
               exe_uop_ns[`RS2 +: 4]    = instr[`DEC_RS2 +: 4];
               exe_uop_ns[`RT +: 4]   = instr[`DEC_RT  +: 4];
               exe_uop_ns[`IS_XOR]      = `HIGH;
-            end   
+            end
           endcase
         end
         // Decoding a normal instruction
@@ -267,12 +267,12 @@ module decode_stage(
               // used to select word offset in wide write data register
               exe_uop_ns[`RT +: 4]   = instr[`DEC_WO  +: 4];
               exe_uop_ns[`IS_LDWD]   = `HIGH;
-            end   
+            end
             `LDPC: begin
               exe_uop_ns[`RS1 +: 4]  = instr[`DEC_RS1 +: 4];
               exe_uop_ns[`RT +: 4]   = instr[`DEC_RT  +: 4];
               exe_uop_ns[`IS_LDPC]   = `HIGH;
-            end       
+            end
           endcase
         end
       end
@@ -280,7 +280,7 @@ module decode_stage(
   end
 
   always @(posedge clk) begin
-    
+
     if(rst) begin
       exe_pc_r <= {`IMEM_ADDR_WIDTH{`LOW}};
       exe_uop_r <= {`EXE_UOP_WIDTH{`LOW}};
@@ -298,10 +298,10 @@ module decode_stage(
         ddr_uop_r[i] <= ddr_uop_ns[i];
       exe_pc_r <= instr_pc;
     end
-  
+
     if(~is_started) begin
       for(i = 0 ; i < 7 ; i = i + 1) begin
-        ddr_stat_r[i] <= 0;   
+        ddr_stat_r[i] <= 0;
       end
       if(instr_pc == 1)
         is_started <= 1;
@@ -312,17 +312,17 @@ module decode_stage(
         if(instr[`DDR_OFFSET]) begin
           for(i = 0 ; i < 4 ; i = i + 1) begin
             case(ddr_insts[i][`DDR_CODE_OFFSET +: 3])
-              `WRITE: 
+              `WRITE:
                 ddr_stat_r[0] <= ddr_stat_r[0] + 1;
-              `READ: 
+              `READ:
                 ddr_stat_r[1] <= ddr_stat_r[1] + 1;
-              `PRE: 
+              `PRE:
                 ddr_stat_r[2] <= ddr_stat_r[2] + 1;
-              `ACT: 
+              `ACT:
                 ddr_stat_r[3] <= ddr_stat_r[3] + 1;
-              `ZQ: 
+              `ZQ:
                 ddr_stat_r[4] <= ddr_stat_r[4] + 1;
-              `REF: 
+              `REF:
                 ddr_stat_r[5] <= ddr_stat_r[5] + 1;
             endcase
           end
@@ -330,7 +330,7 @@ module decode_stage(
       end
     end
   end
-  
-  
+
+
 
 endmodule

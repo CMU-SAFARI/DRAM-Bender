@@ -16,7 +16,11 @@ set script_path [ file dirname [ file normalize [ info script ] ] ]
 puts $script_path
 
 set_property PROGRAM.FILE "${BIT_FILE}" [get_hw_devices *]
-set_property PROBES.FILE "${PROBES_FILE}" [get_hw_devices *]
+if {[file exists "${PROBES_FILE}"]} {
+    set_property PROBES.FILE "${PROBES_FILE}" [get_hw_devices *]
+} else {
+    puts "No probes file found at ${PROBES_FILE}; programming without probes."
+}
 
 program_hw_devices [lindex [get_hw_devices] 0]
 #get_property REGISTER.IR.BIT5_DONE [lindex [get_hw_devices] 0]

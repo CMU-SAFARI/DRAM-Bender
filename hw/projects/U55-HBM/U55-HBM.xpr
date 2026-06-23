@@ -206,7 +206,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/verilog/project.vh">
+      <File Path="$PPRDIR/../U50-HBM/verilog/project.vh">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/verilog/project.vh"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -215,16 +215,16 @@
           <Attr Name="IsVisible" Val="1"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/header_verilog/parameters.vh">
+      <File Path="$PPRDIR/../../rtl/header_verilog/parameters.vh">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/header_verilog/parameters.vh"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/header_verilog/parameters.vh"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
           <Attr Name="IsVisible" Val="1"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/verilog/HBM_adapter.v">
+      <File Path="$PPRDIR/../U50-HBM/verilog/HBM_adapter.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/verilog/HBM_adapter.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -233,7 +233,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/verilog/HBM_interface.v">
+      <File Path="$PPRDIR/../U50-HBM/verilog/HBM_interface.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/verilog/HBM_interface.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -242,7 +242,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/verilog/cdc_HBM_to_rbe.v">
+      <File Path="$PPRDIR/../U50-HBM/verilog/cdc_HBM_to_rbe.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/verilog/cdc_HBM_to_rbe.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -251,7 +251,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/verilog/channel_selector.v">
+      <File Path="$PPRDIR/../U50-HBM/verilog/channel_selector.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/verilog/channel_selector.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -260,7 +260,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/verilog/cmd_gen.v">
+      <File Path="$PPRDIR/../U50-HBM/verilog/cmd_gen.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/verilog/cmd_gen.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -269,7 +269,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/verilog/controller_top.v">
+      <File Path="$PPRDIR/../U50-HBM/verilog/controller_top.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/verilog/controller_top.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -278,115 +278,115 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/header_verilog/encoding.vh">
+      <File Path="$PPRDIR/../../rtl/header_verilog/encoding.vh">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/header_verilog/encoding.vh"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/header_verilog/encoding.vh"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
           <Attr Name="IsVisible" Val="1"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/ddr_pipeline.v">
+      <File Path="$PPRDIR/../../rtl/verilog/ddr_pipeline.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/ddr_pipeline.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/ddr_pipeline.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/decode_stage.v">
+      <File Path="$PPRDIR/../../rtl/verilog/decode_stage.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/decode_stage.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/decode_stage.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/exe_pipeline.v">
+      <File Path="$PPRDIR/../../rtl/verilog/exe_pipeline.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/exe_pipeline.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/exe_pipeline.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/execute_stage.v">
+      <File Path="$PPRDIR/../../rtl/verilog/execute_stage.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/execute_stage.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/execute_stage.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/fetch_stage.v">
+      <File Path="$PPRDIR/../../rtl/verilog/fetch_stage.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/fetch_stage.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/fetch_stage.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/frontend.v">
+      <File Path="$PPRDIR/../../rtl/verilog/frontend.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/frontend.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/frontend.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/maintenance_controller.v">
+      <File Path="$PPRDIR/../../rtl/verilog/maintenance_controller.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/maintenance_controller.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/maintenance_controller.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/pre_decode.v">
+      <File Path="$PPRDIR/../../rtl/verilog/pre_decode.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/pre_decode.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/pre_decode.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/readback_engine.v">
+      <File Path="$PPRDIR/../../rtl/verilog/readback_engine.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/readback_engine.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/readback_engine.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/register_file.v">
+      <File Path="$PPRDIR/../../rtl/verilog/register_file.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/register_file.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/register_file.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/softmc_pipeline.v">
+      <File Path="$PPRDIR/../../rtl/verilog/softmc_pipeline.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/softmc_pipeline.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/softmc_pipeline.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/verilog/softmc_top.v">
+      <File Path="$PPRDIR/../U50-HBM/verilog/softmc_top.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/verilog/softmc_top.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -395,25 +395,25 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/diff_shift_reg.v">
+      <File Path="$PPRDIR/../../rtl/verilog/diff_shift_reg.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/diff_shift_reg.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/diff_shift_reg.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/sources/hdl/verilog/pop_count4.v">
+      <File Path="$PPRDIR/../../rtl/verilog/pop_count4.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/verilog/pop_count4.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/pop_count4.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/coe/program.coe">
+      <File Path="$PPRDIR/../U50-HBM/coe/program.coe">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/coe/program.coe"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -421,7 +421,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/coe/read.coe">
+      <File Path="$PPRDIR/../U50-HBM/coe/read.coe">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/coe/read.coe"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -429,7 +429,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/coe/zq.coe">
+      <File Path="$PPRDIR/../U50-HBM/coe/zq.coe">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/coe/zq.coe"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -437,7 +437,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/DRAM-Bender/projects/U50-HBM/coe/ref.coe">
+      <File Path="$PPRDIR/../U50-HBM/coe/ref.coe">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../U50-HBM/coe/ref.coe"/>
           <Attr Name="ImportTime" Val="1693987037"/>
@@ -453,16 +453,16 @@
     </FileSet>
     <FileSet Name="constrs_1" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1" RelGenDir="$PGENDIR/constrs_1">
       <Filter Type="Constrs"/>
-      <File Path="$PSRCDIR/constrs_1/imports/constraints/HBM.xdc">
+      <File Path="$PPRDIR/constraints/HBM.xdc">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/U55-HBM/constraints/HBM.xdc"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/constraints/HBM.xdc"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
         </FileInfo>
       </File>
       <Config>
-        <Option Name="TargetConstrsFile" Val="$PSRCDIR/constrs_1/imports/constraints/HBM.xdc"/>
+        <Option Name="TargetConstrsFile" Val="$PPRDIR/constraints/HBM.xdc"/>
         <Option Name="ConstrsType" Val="XDC"/>
       </Config>
     </FileSet>
@@ -477,50 +477,50 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sim_1/imports/sim_verilog/tb_decode_stage.v">
+      <File Path="$PPRDIR/../../sim/tb_decode_stage.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/sim_verilog/tb_decode_stage.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../sim/tb_decode_stage.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sim_1/imports/sim_verilog/tb_softmc_top.v">
+      <File Path="$PPRDIR/../../sim/tb_softmc_top.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/sim_verilog/tb_softmc_top.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../sim/tb_softmc_top.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sim_1/imports/sim_verilog/tb_frontend.v">
+      <File Path="$PPRDIR/../../sim/tb_frontend.v">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/sim_verilog/tb_frontend.v"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../sim/tb_frontend.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sim_1/imports/sim_verilog/example_top.sv">
+      <File Path="$PPRDIR/../../sim/example_top.sv">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../sources/hdl/sim_verilog/example_top.sv"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../sim/example_top.sv"/>
           <Attr Name="ImportTime" Val="1693987037"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/sim_verilog/tb_cmd_gen.v">
+      <File Path="$PPRDIR/../../sim/tb_cmd_gen.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/sim_verilog/tb_channel_selector.v">
+      <File Path="$PPRDIR/../../sim/tb_channel_selector.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>

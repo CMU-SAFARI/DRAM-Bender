@@ -1,6 +1,6 @@
 // SoftMC instructions
 `define FU_CODE_OFFSET    48
-`define BRANCH_OFFSET     62 
+`define BRANCH_OFFSET     62
 `define DDR_OFFSET        63
 `define INFO_OFFSET       61
 `define MEM_OFFSET        60
@@ -71,13 +71,13 @@
 `define CAR               6  // column address register identifier
 `define RAR               10 // row address register identifier
 `define BAR               14 // bank address register identifier
-`define PRE_ALL           18  
+`define PRE_ALL           18
 `define INC_CAR           19 // increment CAR after executing this
 `define INC_RAR           20
 `define INC_BAR           21
 `define IS_NOP            22
 `define IS_BL4            23 // deprecated
-`define IS_RANK           23 
+`define IS_RANK           23
 `define DO_AP             24
 `define IS_SRE            25
 `define IS_SRX            26

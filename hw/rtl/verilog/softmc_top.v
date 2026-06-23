@@ -16,7 +16,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   input c0_sys_clk_p,
   input c0_sys_clk_n,
   input sys_rst_l,
-  
+
   // iob <> ddr4 sdram ip signals
   output             c0_ddr4_act_n,
   output [16:0]      c0_ddr4_adr,
@@ -32,19 +32,19 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   inout  [17:0]      c0_ddr4_dqs_c,
   inout  [17:0]      c0_ddr4_dqs_t,
   inout  [71:0]      c0_ddr4_dq,
-  output             c0_ddr4_parity, 
+  output             c0_ddr4_parity,
   `elsif XUPP3R_x8
   inout  [8:0]       c0_ddr4_dm_dbi_n,
   inout  [71:0]      c0_ddr4_dq,
   inout  [8:0]       c0_ddr4_dqs_c,
-  inout  [8:0]       c0_ddr4_dqs_t, 
+  inout  [8:0]       c0_ddr4_dqs_t,
   output             c0_ddr4_parity,
   `else
   inout  [7:0]       c0_ddr4_dm_dbi_n,
   inout  [63:0]      c0_ddr4_dq,
   inout  [7:0]       c0_ddr4_dqs_c,
   inout  [7:0]       c0_ddr4_dqs_t,
-  `endif  
+  `endif
   // xdma signals
   input clk_ref_p,
   input clk_ref_n,
@@ -55,11 +55,11 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   input   [7:0]    pci_exp_rxn
 
   );
-    
+
   // Frontend control signals
   wire softmc_fin;
-  wire user_rst;  
-  
+  wire user_rst;
+
   // Frontend <-> Fetch signals
   wire [`IMEM_ADDR_WIDTH-1:0] fr_addr_in;
   wire                        fr_valid_in;
@@ -73,7 +73,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   wire                        per_zq_init;
   wire                        per_ref_init;
   wire                        rbe_switch_mode;
-  wire                        toggle_dll;  
+  wire                        toggle_dll;
 
   // AXI streaming ports
   wire [`XDMA_AXI_DATA_WIDTH-1:0]   m_axis_h2c_tdata_0,xdma_h2c_tdata_0;
@@ -81,12 +81,12 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   wire                              m_axis_h2c_tvalid_0, xdma_h2c_tvalid_0;
   wire                              m_axis_h2c_tready_0, xdma_h2c_tready_0;
   wire [`XDMA_AXI_DATA_WIDTH/8-1:0] m_axis_h2c_tkeep_0, xdma_h2c_tkeep_0;
-  wire [`XDMA_AXI_DATA_WIDTH-1:0]   s_axis_c2h_tdata_0, xdma_c2h_tdata_0; 
+  wire [`XDMA_AXI_DATA_WIDTH-1:0]   s_axis_c2h_tdata_0, xdma_c2h_tdata_0;
   wire                              s_axis_c2h_tlast_0, xdma_c2h_tlast_0;
   wire                              s_axis_c2h_tvalid_0, xdma_c2h_tvalid_0;
   wire                              s_axis_c2h_tready_0, xdma_c2h_tready_0;
   wire [`XDMA_AXI_DATA_WIDTH/8-1:0] s_axis_c2h_tkeep_0, xdma_c2h_tkeep_0;
- 
+
   // ddr_pipeline <-> outer module if
   wire [3:0]                ddr_write;
   wire [3:0]                ddr_read;
@@ -105,10 +105,10 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   wire [4*`COL_WIDTH-1:0]   ddr_col;
   wire [4*`ROW_WIDTH-1:0]   ddr_row;
   wire [511:0]              ddr_wdata;
- 
+
   // periodic maintenance signals
   wire                      ddr_maint_read;
- 
+
   // phy <-> ddr adapter and xdma app signals
   // dlltoggler
   wire                      clk_sel = 0;
@@ -119,7 +119,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   wire [7:0]                dllt_mc_CKE;
   wire [7:0]                dllt_mc_CS_n;
   wire                      dllt_done;
-  // ddr adapter 
+  // ddr adapter
   wire [4:0]                dBufAdr;
   wire [`DQ_WIDTH*8-1:0]    wrData;
   wire [`DQ_WIDTH-1:0]      wrDataMask;
@@ -151,31 +151,31 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   wire                      c0_ddr4_dll_off_clk;
   wire                      ddr4_ui_clk;
   wire                      c0_ddr4_rst;
-  wire [511:0]              dbg_bus;        
+  wire [511:0]              dbg_bus;
   wire [1:0]                mcCasSlot;
   wire                      mcCasSlot2;
   wire                      gt_data_ready;
-  
+
   wire         read_seq_incoming; // next few instructions will read from DRAM
   wire [11:0]  incoming_reads;    // how many reads next few instructions will issue
   wire [11:0]  buffer_space;      // remaining buffer size
- 
+
   wire sys_rst = ~sys_rst_l; // low active signal
   wire c0_init_calib_complete;
-  
+
   // There is a possibility that these signals are on
-  // the critical path as observed in 
+  // the critical path as observed in
   // the previous iteration of SoftMC
   reg c0_init_calib_complete_r, sys_rst_r;
   wire iq_full, processing_iseq, rdback_fifo_empty;
-  
+
   always @(posedge c0_ddr4_clk) begin
     c0_init_calib_complete_r <= c0_init_calib_complete;
-    sys_rst_r <= sys_rst;  
+    sys_rst_r <= sys_rst;
   end
-  
+
   reg dllt_active = 1'b0;
-  
+
   `ifdef ENABLE_DLL_TOGGLER
   always @(posedge c0_ddr4_clk) begin
     if(toggle_dll) begin
@@ -217,7 +217,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .c0_ddr4_dq               (c0_ddr4_dq),
     .c0_ddr4_dqs_c            (c0_ddr4_dqs_c),
     .c0_ddr4_dqs_t            (c0_ddr4_dqs_t),
-    
+
     .dBufAdr                  (dBufAdr),
     .wrData                   (wrData),
     .rdData                   (rdData),
@@ -228,7 +228,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .rmw_rd_done              (rmw_rd_done),
     .wrDataAddr               (wrDataAddr),
     .wrDataEn                 (wrDataEn),
-    
+
     .mc_ACT_n                 (dllt_active ? dllt_mc_ACT_n : mc_ACT_n),
     .mc_ADR                   (dllt_active ? dllt_mc_ADR : mc_ADR),
     .mc_BA                    (dllt_active ? dllt_mc_BA : mc_BA),
@@ -238,7 +238,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .mc_ODT                   (mc_ODT),
     // CAS command slot select. Slot0 is enabled for example design.
     .mcCasSlot                (dllt_active ? 2'b0 : mcCasSlot),
-    // CAS slot 2 select.  mcCasSlot2 serves a similar purpose as the mcCasSlot[1:0] signal, but mcCasSlot2 is used in timing 
+    // CAS slot 2 select.  mcCasSlot2 serves a similar purpose as the mcCasSlot[1:0] signal, but mcCasSlot2 is used in timing
     // critical logic in the Phy. Slot0 is enabled for example design.
     .mcCasSlot2               (dllt_active ? 1'b0 : mcCasSlot2),
     .mcRdCAS                  (dllt_active ? 1'b0 : mcRdCAS),
@@ -255,14 +255,14 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .winRank                  (winRank),
     .tCWL                     (tCWL),
     // Debug Port
-    .dbg_bus                  (dbg_bus)                                    
+    .dbg_bus                  (dbg_bus)
   );
   `elsif XUPP3R_x4
   phy_ddr4 phy_ddr4_i(
     .sys_rst                  (sys_rst),
     .c0_sys_clk_p             (c0_sys_clk_p),
     .c0_sys_clk_n             (c0_sys_clk_n),
-    
+
     `ifdef ENABLE_DLL_TOGGLER
     .c0_ddr4_ui_clk           (ddr4_ui_clk),
     .addn_ui_clkout1          (c0_ddr4_dll_off_clk),
@@ -286,7 +286,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .c0_ddr4_dq               (c0_ddr4_dq),
     .c0_ddr4_dqs_c            (c0_ddr4_dqs_c),
     .c0_ddr4_dqs_t            (c0_ddr4_dqs_t),
-    
+
     .dBufAdr                  (dBufAdr),
     .wrData                   (wrData),
     .rdData                   (rdData),
@@ -297,7 +297,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .rmw_rd_done              (rmw_rd_done),
     .wrDataAddr               (wrDataAddr),
     .wrDataEn                 (wrDataEn),
-    
+
     .mc_ACT_n                 (dllt_active ? dllt_mc_ACT_n : mc_ACT_n),
     .mc_ADR                   (dllt_active ? dllt_mc_ADR : mc_ADR),
     .mc_BA                    (dllt_active ? dllt_mc_BA : mc_BA),
@@ -307,7 +307,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .mc_ODT                   (mc_ODT),
     // CAS command slot select. Slot0 is enabled for example design.
     .mcCasSlot                (dllt_active ? 0 : mcCasSlot),
-    // CAS slot 2 select.  mcCasSlot2 serves a similar purpose as the mcCasSlot[1:0] signal, but mcCasSlot2 is used in timing 
+    // CAS slot 2 select.  mcCasSlot2 serves a similar purpose as the mcCasSlot[1:0] signal, but mcCasSlot2 is used in timing
     // critical logic in the Phy. Slot0 is enabled for example design.
     .mcCasSlot2               (dllt_active ? 0 : mcCasSlot2),
     .mcRdCAS                  (dllt_active ? 0 : mcRdCAS),
@@ -324,7 +324,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .winRank                  (winRank),
     .tCWL                     (tCWL),
     // Debug Port
-    .dbg_bus                  (dbg_bus)                                    
+    .dbg_bus                  (dbg_bus)
   );
   `elsif XUPP3R_x8_1R_UDIMM
   phy_ddr4_udimm phy_ddr4_i(
@@ -355,7 +355,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .c0_ddr4_dq               (c0_ddr4_dq),
     .c0_ddr4_dqs_c            (c0_ddr4_dqs_c),
     .c0_ddr4_dqs_t            (c0_ddr4_dqs_t),
-    
+
     .dBufAdr                  (dBufAdr),
     .wrData                   (wrData),
     .rdData                   (rdData),
@@ -366,7 +366,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .rmw_rd_done              (rmw_rd_done),
     .wrDataAddr               (wrDataAddr),
     .wrDataEn                 (wrDataEn),
-    
+
     .mc_ACT_n                 (dllt_active ? dllt_mc_ACT_n : mc_ACT_n),
     .mc_ADR                   (dllt_active ? dllt_mc_ADR : mc_ADR),
     .mc_BA                    (dllt_active ? dllt_mc_BA : mc_BA),
@@ -376,7 +376,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .mc_ODT                   (mc_ODT),
     // CAS command slot select. Slot0 is enabled for example design.
     .mcCasSlot                (dllt_active ? 2'b0 : mcCasSlot),
-    // CAS slot 2 select.  mcCasSlot2 serves a similar purpose as the mcCasSlot[1:0] signal, but mcCasSlot2 is used in timing 
+    // CAS slot 2 select.  mcCasSlot2 serves a similar purpose as the mcCasSlot[1:0] signal, but mcCasSlot2 is used in timing
     // critical logic in the Phy. Slot0 is enabled for example design.
     .mcCasSlot2               (dllt_active ? 1'b0 : mcCasSlot2),
     .mcRdCAS                  (dllt_active ? 1'b0 : mcRdCAS),
@@ -393,14 +393,14 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .winRank                  (winRank),
     .tCWL                     (tCWL),
     // Debug Port
-    .dbg_bus                  (dbg_bus)                                    
+    .dbg_bus                  (dbg_bus)
   );
   `else
   phy_ddr4 phy_ddr4_i(
     .sys_rst                  (sys_rst),
     .c0_sys_clk_p             (c0_sys_clk_p),
     .c0_sys_clk_n             (c0_sys_clk_n),
-    
+
     `ifdef ENABLE_DLL_TOGGLER
     .c0_ddr4_ui_clk           (ddr4_ui_clk),
     .addn_ui_clkout1          (c0_ddr4_dll_off_clk),
@@ -425,7 +425,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .c0_ddr4_dq               (c0_ddr4_dq),
     .c0_ddr4_dqs_c            (c0_ddr4_dqs_c),
     .c0_ddr4_dqs_t            (c0_ddr4_dqs_t),
-    
+
     .dBufAdr                  (dBufAdr),
     .wrData                   (wrData),
     .rdData                   (rdData),
@@ -436,7 +436,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .rmw_rd_done              (rmw_rd_done),
     .wrDataAddr               (wrDataAddr),
     .wrDataEn                 (wrDataEn),
-    
+
     .mc_ACT_n                 (dllt_active ? dllt_mc_ACT_n : mc_ACT_n),
     .mc_ADR                   (dllt_active ? dllt_mc_ADR : mc_ADR),
     .mc_BA                    (dllt_active ? dllt_mc_BA : mc_BA),
@@ -446,7 +446,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .mc_ODT                   (mc_ODT),
     // CAS command slot select. Slot0 is enabled for example design.
     .mcCasSlot                (dllt_active ? 0 : mcCasSlot),
-    // CAS slot 2 select.  mcCasSlot2 serves a similar purpose as the mcCasSlot[1:0] signal, but mcCasSlot2 is used in timing 
+    // CAS slot 2 select.  mcCasSlot2 serves a similar purpose as the mcCasSlot[1:0] signal, but mcCasSlot2 is used in timing
     // critical logic in the Phy. Slot0 is enabled for example design.
     .mcCasSlot2               (dllt_active ? 0 : mcCasSlot2),
     .mcRdCAS                  (dllt_active ? 0 : mcRdCAS),
@@ -463,45 +463,45 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .winRank                  (winRank),
     .tCWL                     (tCWL),
     // Debug Port
-    .dbg_bus                  (dbg_bus)                                    
-  );  
+    .dbg_bus                  (dbg_bus)
+  );
   `endif
-    
+
   softmc_pipeline pipeline(
     .clk(c0_ddr4_clk),
     .rst(c0_ddr4_rst || user_rst),
-   
+
     .softmc_end(softmc_fin),
     .read_size(incoming_reads),
     .read_seq_incoming(read_seq_incoming),
     .buffer_space(buffer_space),
-    
+
     .addr_out(fr_addr_in),
     .valid_out(fr_valid_in),
     .data_in(fr_data_out),
     .valid_in(fr_valid_out),
     .addr_in(fr_addr_out),
     .ready_out(fr_ready_out),
-   
-    .ddr_write(ddr_write),  
-    .ddr_read(ddr_read),  
-    .ddr_pre(ddr_pre),    
-    .ddr_act(ddr_act),    
-    .ddr_ref(ddr_ref),    
-    .ddr_sre(ddr_sre),    
-    .ddr_srx(ddr_srx),    
-    .ddr_zq(ddr_zq),    
-    .ddr_nop(ddr_nop),    
-    .ddr_ap(ddr_ap),    
-    .ddr_pall(ddr_pall),    
+
+    .ddr_write(ddr_write),
+    .ddr_read(ddr_read),
+    .ddr_pre(ddr_pre),
+    .ddr_act(ddr_act),
+    .ddr_ref(ddr_ref),
+    .ddr_sre(ddr_sre),
+    .ddr_srx(ddr_srx),
+    .ddr_zq(ddr_zq),
+    .ddr_nop(ddr_nop),
+    .ddr_ap(ddr_ap),
+    .ddr_pall(ddr_pall),
     .ddr_half_bl(ddr_half_bl),
-    .ddr_bg(ddr_bg),    
-    .ddr_bank(ddr_bank),  
-    .ddr_col(ddr_col),    
-    .ddr_row(ddr_row),    
+    .ddr_bg(ddr_bg),
+    .ddr_bank(ddr_bank),
+    .ddr_col(ddr_col),
+    .ddr_row(ddr_row),
     .ddr_wdata(ddr_wdata)
   );
- 
+
   `ifdef ENABLE_DLL_TOGGLER
   //BUFGMUX:GeneralClockMuxBuffer
   //UltraScale
@@ -515,23 +515,23 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     );
     //End of BUFGMUX_inst instantiation
   `endif
- 
- 
+
+
   wire frontend_ready;
-  
+
   frontend #(.SIM_MEM(SIM)) frontend(
     .clk(c0_ddr4_clk),
     .rst(c0_ddr4_rst),
-    
+
     .init_calib_complete(c0_init_calib_complete_r),
     .softmc_fin(softmc_fin),
     .user_rst(user_rst),
-   
+
     .dllt_begin(toggle_dll),
-   
+
     // indicates read_back unit is ready for the next iseq
     .frontend_ready(frontend_ready),
-       
+
     // frontend <-> fetch stage if
     .addr_in(fr_addr_in),
     .valid_in(fr_valid_in),
@@ -539,14 +539,14 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .valid_out(fr_valid_out),
     .addr_out(fr_addr_out),
     .ready_in(fr_ready_out),
-    
+
     // frontend <-> xdma interface
     .h2c_tdata_0(m_axis_h2c_tdata_0),
     .h2c_tlast_0(m_axis_h2c_tlast_0),
     .h2c_tvalid_0(m_axis_h2c_tvalid_0),
     .h2c_tready_0(m_axis_h2c_tready_0),
     .h2c_tkeep_0(m_axis_h2c_tkeep_0),
-    
+
     .per_rd_init(per_rd_init),
     .per_zq_init(per_zq_init),
     .per_ref_init(per_ref_init),
@@ -582,31 +582,31 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
    .mcRdCAS(mcRdCAS),   // Read CAS command issued.
    .mcWrCAS(mcWrCAS),   // Write CAS command issued.
    .winRank(winRank),   // Target rank for CAS commands. This value indicates which rank a CAS command is issued to.
-   .winBuf(winBuf),    // Optional control signal. When either mcRdCAS or mcWrCAS is asserted, the Phy will store the value on the winBuf signal.  
+   .winBuf(winBuf),    // Optional control signal. When either mcRdCAS or mcWrCAS is asserted, the Phy will store the value on the winBuf signal.
    //.rdData(rdData),    // DRAM read data.
    .rdDataEn(rdDataEn),  // Read data valid. This signal asserts for one fabric cycle for each completed read operation.
    .rdDataEnd(rdDataEnd),  // Unused.  Tied high.
    .mcCasSlot(mcCasSlot),
    .mcCasSlot2(mcCasSlot2),
    .gt_data_ready(gt_data_ready),
-   .ddr_write(ddr_write),  
-   .ddr_read(ddr_read),  
-   .ddr_pre(ddr_pre),    
-   .ddr_act(ddr_act),    
-   .ddr_ref(ddr_ref),    
-   .ddr_sre(ddr_sre),    
-   .ddr_srx(ddr_srx),    
-   .ddr_zq(ddr_zq),    
-   .ddr_nop(ddr_nop),    
-   .ddr_ap(ddr_ap),    
-   .ddr_pall(ddr_pall),    
+   .ddr_write(ddr_write),
+   .ddr_read(ddr_read),
+   .ddr_pre(ddr_pre),
+   .ddr_act(ddr_act),
+   .ddr_ref(ddr_ref),
+   .ddr_sre(ddr_sre),
+   .ddr_srx(ddr_srx),
+   .ddr_zq(ddr_zq),
+   .ddr_nop(ddr_nop),
+   .ddr_ap(ddr_ap),
+   .ddr_pall(ddr_pall),
    .ddr_half_bl(ddr_half_bl),
-   .ddr_bg(ddr_bg),    
-   .ddr_bank(ddr_bank),  
-   .ddr_col(ddr_col),    
-   .ddr_row(ddr_row),    
+   .ddr_bg(ddr_bg),
+   .ddr_bank(ddr_bank),
+   .ddr_col(ddr_col),
+   .ddr_row(ddr_row),
    .ddr_wdata(ddr_wdata),
- 
+
    .ddr_maint_read(per_rd_init)
   );
   `ifdef XUPP3R_x8
@@ -620,7 +620,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   localparam          ODTRDODUR               = 4'd6;
   localparam          ODTNOP                  = 16'h0000;
   localparam        ODTWR                     = 16'h0021;
-  localparam        ODTRD                     = 16'h0012; 
+  localparam        ODTRD                     = 16'h0012;
   `elsif XUPP3R_x8_1R_UDIMM
   localparam          ODTWRDEL                = 5'd9;
   localparam          ODTWRDUR                = 4'd6;
@@ -646,10 +646,10 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   localparam        ODTWR                     = 16'h0001;
   localparam        ODTRD                     = 16'h0000;
   `endif
-  
+
   wire tranSentC;
   assign tranSentC = mcRdCAS | mcWrCAS;
- 
+
   //synthesis translate_on
   //*******************************************************************************
   ddr4_mc_odt # (
@@ -658,13 +658,13 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     ,.ODTWRDUR  (ODTWRDUR)
     ,.ODTWRODEL (ODTWRODEL)
     ,.ODTWRODUR (ODTWRODUR)
-   
+
     ,.ODTRD     (ODTRD)
     ,.ODTRDDEL  (ODTRDDEL)
     ,.ODTRDDUR  (ODTRDDUR)
     ,.ODTRDODEL (ODTRDODEL)
     ,.ODTRDODUR (ODTRDODUR)
-   
+
     ,.ODTNOP    (ODTNOP)
     ,.ODTBITS   (`ODT_WIDTH)
     ,.TCQ       (0.1)
@@ -679,7 +679,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     ,.winWrite  (mcWrCAS)
     ,.tranSentC (tranSentC)
   );
- 
+
   wire sys_clk, sys_clk_gt;
   wire [2:0]    msi_vector_width;
   wire          msi_enable;
@@ -690,8 +690,8 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   IBUFDS_GTE3 # (.REFCLK_HROW_CK_SEL(2'b01)) refclk_ibuf (.O(sys_clk_gt), .ODIV2(sys_clk), .I(clk_ref_p), .CEB(1'b0), .IB(clk_ref_n));
   `endif
   wire axi_clk, axi_rst;
-  
-  xdma xdma_i 
+
+  xdma xdma_i
   (
     //---------------------------------------------------------------------------------------//
     //  PCI Express (pci_exp) Interface                                                      //
@@ -699,19 +699,19 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .sys_rst_n       ( pcie_rst ),
     .sys_clk         ( sys_clk ),
     .sys_clk_gt      ( sys_clk_gt),
-    
+
     // Tx
     .pci_exp_txn     ( pci_exp_txn ),
     .pci_exp_txp     ( pci_exp_txp ),
-    
+
     // Rx
     .pci_exp_rxn     ( pci_exp_rxn ),
     .pci_exp_rxp     ( pci_exp_rxp ),
-    
+
     // AXI streaming ports
-    .s_axis_c2h_tdata_0(xdma_c2h_tdata_0),  
+    .s_axis_c2h_tdata_0(xdma_c2h_tdata_0),
     .s_axis_c2h_tlast_0(xdma_c2h_tlast_0),
-    .s_axis_c2h_tvalid_0(xdma_c2h_tvalid_0), 
+    .s_axis_c2h_tvalid_0(xdma_c2h_tvalid_0),
     .s_axis_c2h_tready_0(xdma_c2h_tready_0),
     .s_axis_c2h_tkeep_0(xdma_c2h_tkeep_0),
     .m_axis_h2c_tdata_0(xdma_h2c_tdata_0),
@@ -719,13 +719,13 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .m_axis_h2c_tvalid_0(xdma_h2c_tvalid_0),
     .m_axis_h2c_tready_0(xdma_h2c_tready_0),
     .m_axis_h2c_tkeep_0(xdma_h2c_tkeep_0),
-    
+
     .usr_irq_req       (1'b0),
     .usr_irq_ack       (usr_irq_ack),
     .msi_enable        (msi_enable),
     .msi_vector_width  (msi_vector_width),
-    
-    
+
+
     // Config managemnet interface
     .cfg_mgmt_addr  ( 19'b0 ),
     .cfg_mgmt_write ( 1'b0 ),
@@ -737,18 +737,18 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     `ifndef XUPP3R
     .cfg_mgmt_type1_cfg_reg_access ( 1'b0 ),
     //---------- Shared Logic Internal -------------------------
-    .int_qpll1lock_out          (  ),   
+    .int_qpll1lock_out          (  ),
     .int_qpll1outrefclk_out     (  ),
     .int_qpll1outclk_out        (  ),
     `endif
-    
+
     //-- AXI Global
     .axi_aclk        (axi_clk), // AXI i-face clock driven from pcie clk
     .axi_aresetn     (axi_rst), // reset synchronous to axi_clk
-    
+
     .user_lnk_up     ( user_lnk_up )
   );
-  
+
     // Clock converter for the c2h interface
   axis_clock_converter axis_clk_conv_i0
   (
@@ -767,7 +767,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .m_axis_aresetn(axi_rst),
     .m_axis_aclk(axi_clk)
   );
-  
+
   // Clock converter for the h2c interface
   axis_clock_converter axis_clk_conv_i1
   (
@@ -786,13 +786,13 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
     .s_axis_aresetn(axi_rst),
     .s_axis_aclk(axi_clk)
   );
-  
+
   readback_engine rbe(
-    
+
   // common signals
   .clk(c0_ddr4_clk),
   .rst(c0_ddr4_rst || user_rst),
-  
+
   // other ctrl signals
   .flush(frontend_ready),
   .switch_mode(rbe_switch_mode),
@@ -802,21 +802,21 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
   // DRAM <-> engine if
   .rd_data(rdData),
   .rd_valid(rdDataEn),
-   
-  // rbe <-> rf interface  
+
+  // rbe <-> rf interface
   .ddr_wdata(ddr_wdata),
-  
+
   .per_rd_init(per_rd_init),
   .per_zq_init(per_zq_init),
   .per_ref_init(per_ref_init),
-  
+
   // rbe <-> xdma if
-  .c2h_tdata_0(s_axis_c2h_tdata_0),  
+  .c2h_tdata_0(s_axis_c2h_tdata_0),
   .c2h_tlast_0(s_axis_c2h_tlast_0),
   .c2h_tvalid_0(s_axis_c2h_tvalid_0),
   .c2h_tready_0(s_axis_c2h_tready_0),
   .c2h_tkeep_0(s_axis_c2h_tkeep_0)
-  
+
   );
 
   `ifdef ENABLE_DLL_TOGGLER
@@ -829,7 +829,7 @@ module softmc_top #(parameter tCK = 1500, SIM = "false")
      .mc_ADR(dllt_mc_ADR),    // DRAM address. There are 8 bits in the fabric interface for each address bit on the DRAM bus.
      .mc_BA(dllt_mc_BA),     // DRAM bank address. 8 bits for each DRAM bank address.
      .mc_BG(dllt_mc_BG),     // DRAM bank group address.
-     .mc_CS_n(dllt_mc_CS_n),   // DRAM CS_n    
+     .mc_CS_n(dllt_mc_CS_n),   // DRAM CS_n
      .mc_CKE(dllt_mc_CKE),
      .clk_sel(clk_sel),
      .dllt_done(dllt_done)

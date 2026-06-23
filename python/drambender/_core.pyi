@@ -268,6 +268,14 @@ class HBM2(Board):
         """Read the current HBM stack temperatures in degrees Celsius."""
         ...
 
+    def discard_readback_data(self, discard: bool) -> None:
+        """Enable or disable discarding HBM readback data."""
+        ...
+
+    def set_broadcast_channels(self, channels: list[int]) -> None:
+        """Configure the optional HBM command broadcast channel mask."""
+        ...
+
 def open_board(board_type: BoardType, board_id: int, instance_id: int, host_interface: HostInterface = HostInterface.XDMA) -> Board:
     """Open a DRAM Bender board.
 

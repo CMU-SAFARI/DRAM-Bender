@@ -1,6 +1,6 @@
 // Fetch
 `define INSTR_WIDTH 64
-`define IMEM_ADDR_WIDTH 11
+`define IMEM_ADDR_WIDTH 17
 
 // Decode - Execute
 `define DDR_UOP_WIDTH 31

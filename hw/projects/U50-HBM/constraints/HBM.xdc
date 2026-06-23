@@ -29,51 +29,51 @@
 #
 #
 #
-#   U50QSFP - Master XDC 
+#   U50QSFP - Master XDC
 #
 #   Key Notes:
 #       1) PCIe Clocks Support x16 and x8 Bifurcation with both synchronous or asynchronous operation
 #       2) Power warning constraint set to warn user if design exceeds 63 Watts
 #
 #   Clock Tree
-#           
+#
 #    1) SI5394 - SiLabs Si5394B-A10605-GM
-#      - IN0 <-- feedback clock ETH_recovered_clk_P/ETH_recovered_clk_N 
+#      - IN0 <-- feedback clock ETH_recovered_clk_P/ETH_recovered_clk_N
 #                PINS: IO_L12P_T1U_N10_GC_68_F19/IO_L12N_T1U_N11_GC_68_F18 #1588 Support
-#           
+#
 #      - IN1 Unconnected
-#           
+#
 #      - IN2 Unconnected
 #
-#      - XA  RPT5032A 40.0000MHz TCXO 
+#      - XA  RPT5032A 40.0000MHz TCXO
 #
-#      - OUT0--> SYNCE_CLK_P/SYNCE_CLK_P @ 161.1328125Mhz 
+#      - OUT0--> SYNCE_CLK_P/SYNCE_CLK_P @ 161.1328125Mhz
 #                PINS: MGTREFCLK0P_131_N36/MGTREFCLK0N_131_N37
-#           
-#      - OUT1--> CLK_1588_P/CLK_1588_P   @ 322.265625MHz  
+#
+#      - OUT1--> CLK_1588_P/CLK_1588_P   @ 322.265625MHz
 #                PINS: MGTREFCLK1P_131_M38/MGTREFCLK1N_131_M39
-#           
+#
 #      - OUT2 Unconnected
-#            
-#      - OUT3--> SYNCE_CLK_P/SYNCE_CLK_P @ 100.000Mhz 
+#
+#      - OUT3--> SYNCE_CLK_P/SYNCE_CLK_P @ 100.000Mhz
 #           |
-#           |--> SI53306-B-GM --> OUT0  PCIE_SYSCLK0_P/PCIE_SYSCLK0_N 100.000Mhz 
+#           |--> SI53306-B-GM --> OUT0  PCIE_SYSCLK0_P/PCIE_SYSCLK0_N 100.000Mhz
 #                             |   PINS: MGTREFCLK1P_227_AA11/MGTREFCLK1N_227_AA10
 #                             |
-#                             |-> OUT1  PCIE_SYSCLK1_P/PCIE_SYSCLK1_N 100.000Mhz 
+#                             |-> OUT1  PCIE_SYSCLK1_P/PCIE_SYSCLK1_N 100.000Mhz
 #                             |   PINS: MGTREFCLK1P_225_AE11/MGTREFCLK1N_225_AE10
 #                             |
 #                             |-> OUT2  SYSCLK2_P/SYSCLK2_N 100.000Mhz
 #                             |   PINS: IO_L11P_T1U_N8_GC_68/IO_L11N_T1U_N9_GC_68
 #                             |
-#                             |-> OUT3  SYSCLK3_P/SYSCLK3_N 100.000Mhz 
+#                             |-> OUT3  SYSCLK3_P/SYSCLK3_N 100.000Mhz
 #                                 PINS: IO_L11P_T1U_N8_GC_64/IO_L11N_T1U_N9_GC_64
 #
-#   2) PCIE Fingers PEX_REFCLK_P/PEX_REFCLK_P 100Mhz 
-#           |->  SI53102 -------> OUT0  PCIE_REFCLK0_P/PCIE_REFCLK0_N 100.000Mhz 
+#   2) PCIE Fingers PEX_REFCLK_P/PEX_REFCLK_P 100Mhz
+#           |->  SI53102 -------> OUT0  PCIE_REFCLK0_P/PCIE_REFCLK0_N 100.000Mhz
 #                             |   PINS: MGTREFCLK0P_227_AB9/MGTREFCLK0N_227_AB8
 #                             |
-#                             |-> OUT1  PCIE_REFCLK1_P/PCIE_REFCLK1_N 100.000Mhz 
+#                             |-> OUT1  PCIE_REFCLK1_P/PCIE_REFCLK1_N 100.000Mhz
 #                                 PINS: MGTREFCLK0P_225_AF9/MGTREFCLK0N_225_AF8
 #
 #  Revision 1.00.00 - Intial Release
@@ -119,7 +119,7 @@ set_property DQS_BIAS TRUE        [get_ports c0_sys_clk_p]            ;# Bank  6
 #
 # MGT Clocks
 #
-# PCIe Clocks 
+# PCIe Clocks
 #
 # Input Clocks for Gen3 x16  or Dual x8 Bifurcation on Lane 8-15
 # PCIE_REFCLK0 -> PCIe Host clock
@@ -131,7 +131,7 @@ set_property PACKAGE_PIN AB9      [get_ports clk_ref_p]       ;# Bank 227 - MGTR
 #
 # Input Clocks for Dual x8 Bifurcation on Lane 0-7
 # PCIE_REFCLK1 -> PCIe Host clock
-# PCIE_SYSCLK1 -> PCIe Asynchronous clock 
+# PCIE_SYSCLK1 -> PCIe Asynchronous clock
 #set_property PACKAGE_PIN AF8      [get_ports "PCIE_REFCLK1_N"]       ;# Bank 225 - MGTREFCLK0N_225
 #set_property PACKAGE_PIN AF9      [get_ports "PCIE_REFCLK1_P"]       ;# Bank 225 - MGTREFCLK0P_225
 #set_property PACKAGE_PIN AE10     [get_ports "PCIE_SYSCLK1_N"]       ;# Bank 225 - MGTREFCLK1N_225
@@ -140,8 +140,8 @@ set_property PACKAGE_PIN AB9      [get_ports clk_ref_p]       ;# Bank 227 - MGTR
 # Input QSFP28 Clocks
 #
 # SYNCE_CLK   -> Ethernet Clock
-# CLK_1588    -> 1588 PTP Clock 
-#set_property PACKAGE_PIN N37      [get_ports "SYNCE_CLK_N"]          ;# Bank 131 - MGTREFCLK0N_131 
+# CLK_1588    -> 1588 PTP Clock
+#set_property PACKAGE_PIN N37      [get_ports "SYNCE_CLK_N"]          ;# Bank 131 - MGTREFCLK0N_131
 #set_property PACKAGE_PIN N36      [get_ports "SYNCE_CLK_P"]          ;# Bank 131 - MGTREFCLK0P_131
 #set_property PACKAGE_PIN M39      [get_ports "CLK_1588_N"]           ;# Bank 131 - MGTREFCLK1N_131
 #set_property PACKAGE_PIN M38      [get_ports "CLK_1588_P"]           ;# Bank 131 - MGTREFCLK1P_131
@@ -157,9 +157,9 @@ create_clock -period 10.000 -name pcie_ref_clk0  [get_ports clk_ref_p]
 #create_clock -period 6.206  -name gtrefclk0      [get_ports "SYNCE_CLK_P"]
 #create_clock -period 3.103  -name gtrefclk1      [get_ports "CLK_1588_P"]
 set_clock_groups -asynchronous -group [get_clocks c0_sys_clk_p -include_generated_clocks]
-set_clock_groups -asynchronous -group [get_clocks pcie_ref_clk0 -include_generated_clocks]                                                                    
-# Bank 65 PCIe Connections    (1.8V bank)  
-#    PCIE_PERSTN Active low input from PCIe Connector to FPGA to detect presence.                                         
+set_clock_groups -asynchronous -group [get_clocks pcie_ref_clk0 -include_generated_clocks]
+# Bank 65 PCIe Connections    (1.8V bank)
+#    PCIE_PERSTN Active low input from PCIe Connector to FPGA to detect presence.
 #    PEX_PWRBRKN Active low input from PCIe Connector signalling PCIe card to shut down card power in Server failing condition.
 #
 set_property PACKAGE_PIN AW27     [get_ports pcie_rst]          ;# Bank  65 VCCO - VCC1V8   - IO_T3U_N12_PERSTN0_65
@@ -206,7 +206,7 @@ set_property IOSTANDARD  LVCMOS18 [get_ports pcie_rst]          ;# Bank  65 VCCO
 #set_property IOSTANDARD  LVCMOS18 [get_ports "FPGA_UART2_RXD"]        ;# Bank  68 VCCO - VCC1V8   - IO_L23P_T3U_N8_68
 #set_property PACKAGE_PIN A19      [get_ports "FPGA_UART2_TXD"]        ;# Bank  68 VCCO - VCC1V8   - IO_L22N_T3U_N7_DBC_AD0N_68
 #set_property IOSTANDARD  LVCMOS18 [get_ports "FPGA_UART2_TXD"]        ;# Bank  68 VCCO - VCC1V8   - IO_L22N_T3U_N7_DBC_AD0N_68
-# 
+#
 # Bank 68 Connections (1.8V bank) QSFP Status Indicators
 #    QSFP28_0_ACTIVITY_LED  Active high signal from FPGA to illuminate QSFP green Activity LED
 #    QSFP28_0_STATUS_LEDG   Active high signal from FPGA to illuminate QSFP green Status LED
@@ -215,7 +215,7 @@ set_property IOSTANDARD  LVCMOS18 [get_ports pcie_rst]          ;# Bank  65 VCCO
 #set_property PACKAGE_PIN E18      [get_ports icc] ;# Bank  68 VCCO - VCC1V8   - IO_L14P_T2L_N2_GC_68
 #set_property IOSTANDARD  LVCMOS18 [get_ports icc] ;# Bank  68 VCCO - VCC1V8   - IO_L14P_T2L_N2_GC_68
 #set_property PACKAGE_PIN E16      [get_ports "QSFP28_0_STATUS_LEDG"]  ;# Bank  68 VCCO - VCC1V8   - IO_L13N_T2L_N1_GC_QBC_68 Green LED
-#set_property IOSTANDARD  LVCMOS18 [get_ports "QSFP28_0_STATUS_LEDG"]  ;# Bank  68 VCCO - VCC1V8   - IO_L13N_T2L_N1_GC_QBC_68 
+#set_property IOSTANDARD  LVCMOS18 [get_ports "QSFP28_0_STATUS_LEDG"]  ;# Bank  68 VCCO - VCC1V8   - IO_L13N_T2L_N1_GC_QBC_68
 #set_property PACKAGE_PIN F17      [get_ports "QSFP28_0_STATUS_LEDY"]  ;# Bank  68 VCCO - VCC1V8   - IO_L13P_T2L_N0_GC_QBC_68 Yellow LED
 #set_property IOSTANDARD  LVCMOS18 [get_ports "QSFP28_0_STATUS_LEDY"]  ;# Bank  68 VCCO - VCC1V8   - IO_L13P_T2L_N0_GC_QBC_68
 #
@@ -1116,7 +1116,7 @@ set_property PACKAGE_PIN Y5       [get_ports pci_exp_txp[0]  ]        ;# Bank 22
 #set_property IOSTANDARD  LVCMOS18 [get_ports "No Connect"] ;# Bank  68 VCCO - VCC1V8   - IO_L1N_T0L_N1_DBC_68
 #set_property PACKAGE_PIN K15      [get_ports "No Connect"] ;# Bank  68 VCCO - VCC1V8   - IO_L1P_T0L_N0_DBC_68
 #set_property IOSTANDARD  LVCMOS18 [get_ports "No Connect"] ;# Bank  68 VCCO - VCC1V8   - IO_L1P_T0L_N0_DBC_68
-# 
+#
 # UNUSED MGTY connections
 #
 # PACKAGE_PIN AK38     No Connect       Bank 124 - MGTREFCLK0P_124

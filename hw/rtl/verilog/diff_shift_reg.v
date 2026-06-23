@@ -1,42 +1,42 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
+// Company:
+// Engineer:
+//
 // Create Date: 12/19/2018 01:07:06 PM
-// Design Name: 
+// Design Name:
 // Module Name: diff_shift_reg
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
+// Project Name:
+// Target Devices:
+// Tool Versions:
+// Description:
+//
+// Dependencies:
+//
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-// 
+//
 //////////////////////////////////////////////////////////////////////////////////
 
 
 module diff_shift_reg(
   input         clk,
   input         rst,
-  
+
   input         flush,
-  
+
   input [15:0]  in,
   input         in_valid,
 
   output[511:0] out,
   output        out_valid
   );
-  
+
   reg [4:0]   ctr_r;
   reg [511:0] shift_r;
   reg         valid_r;
-  
+
   always @(posedge clk) begin
     if(rst) begin
       shift_r <= 512'bX;
@@ -54,7 +54,7 @@ module diff_shift_reg(
           shift_r[0  +: 16]    <= in;
           ctr_r                <= ctr_r + 1;
         end
-        else begin 
+        else begin
           ctr_r   <= ctr_r;
           shift_r <= shift_r;
         end
@@ -62,8 +62,8 @@ module diff_shift_reg(
       end
     end
   end
-  
+
   assign out_valid = valid_r;
   assign out       = shift_r;
-  
+
 endmodule

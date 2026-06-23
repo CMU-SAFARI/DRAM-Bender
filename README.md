@@ -76,3 +76,18 @@ excluded from the main repository.
 
 Host examples, `tests/board_tests`, XDMA driver loading, and any command that
 touches `/dev/xdma*` require an intentionally prepared FPGA host.
+
+For the latest XCU55/U55 SID HBM2 image, use HBM channels `0..15`,
+pseudo-channel `0` or `1`, and stack ID `0` or `1`. The stack ID is encoded in
+`BAR[4]`, so logical bank `0` on stack ID `1` is programmed as physical
+`BAR=16`. HBM2 row traversal uses `CASR=1`; a 32-column row read returns
+`2048` payload bytes laid out as 32 64-byte column-pair chunks. The useful
+pseudo-channel half is bytes `0..31` for pseudo-channel 0 and `32..63` for
+pseudo-channel 1 within each chunk. The diagnostics
+`tests/board_tests/hbm2_rw_test.py` and `drambender_hbm2_rw_test` follow this
+layout and default to channel `0`, pseudo-channel `0`, stack ID `1`.
+
+The local test bitstream is `hw/prebuilt/XCU55/XCU55_latest_600MHz_sid.bit`
+with SHA256
+`242dc81bb8a6bec2c94b62290a170928d13095e97e9a1b7529bcc19c27c63035`; prebuilt
+bitstreams remain ignored by git.

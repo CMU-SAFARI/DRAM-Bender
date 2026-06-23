@@ -4,12 +4,15 @@
 #include <cstdio>
 #include <cstring>
 #include <exception>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 #include "drambender/api/board/DDR4.h"
 #include "drambender/api/board/HBM2.h"
+#include "c2h_protocol.h"
+#include "h2c_protocol.h"
 
 namespace DRAMBender {
 
@@ -138,6 +141,13 @@ void IBoard::execute(const FinalProgram& prog) {
                 &instructions[inst_id],
                 sizeof(Inst_t));
   }
+  if (!instructions.empty()) {
+    h2c_protocol::set_control(
+        std::span<std::byte>(
+            m_send_buffer_.data() + (instructions.size() - 1) * axi_datapath_byte_width,
+            axi_datapath_byte_width),
+        h2c_protocol::execute_program_control);
+  }
 
   m_host_interface_->begin_receive();
 
@@ -209,34 +219,57 @@ size_t IBoard::receive(std::span<std::byte> dst) {
   return dst.size_bytes();
 }
 
+std::optional<IBoard::ReadbackPacket> IBoard::receiveReadbackPacket_() {
+  std::array<std::byte, axi_datapath_byte_width> metadata{};
+
+  auto read_exact = [this](std::span<std::byte> dst) {
+    size_t total_read = 0;
+    while (total_read < dst.size_bytes()) {
+      const size_t recv_count = m_host_interface_->recv(dst.subspan(total_read));
+      if (recv_count == 0) {
+        return total_read;
+      }
+      total_read += recv_count;
+    }
+    return total_read;
+  };
+
+  const size_t metadata_bytes = read_exact(metadata);
+  if (metadata_bytes == 0) {
+    return std::nullopt;
+  }
+  if (metadata_bytes != metadata.size()) {
+    throw std::runtime_error("Platform readback metadata packet ended early.");
+  }
+
+  const auto parsed_metadata = c2h_protocol::parse_readback_metadata(metadata);
+  if (parsed_metadata.payload_bytes % sizeof(Word_t) != 0) {
+    throw std::runtime_error("Platform readback payload size is not word-aligned.");
+  }
+
+  std::vector<std::byte> payload(parsed_metadata.payload_bytes);
+  const size_t payload_bytes = read_exact(payload);
+  if (payload_bytes != payload.size()) {
+    throw std::runtime_error("Platform readback payload ended before the metadata-declared size.");
+  }
+
+  return ReadbackPacket{
+      .payload = std::move(payload),
+      .is_last = parsed_metadata.is_last,
+  };
+}
+
 void IBoard::consumeData_() {
   try {
-    std::vector<std::byte> recv_buffer(
-        static_cast<size_t>(readback_buffer_size_) * axi_datapath_byte_width);
-    const size_t requested_bytes = recv_buffer.size();
-
     while (true) {
-      const size_t recv_count = m_host_interface_->recv(recv_buffer);
-      if (recv_count == 0) {
+      const std::optional<ReadbackPacket> packet = receiveReadbackPacket_();
+      if (!packet.has_value()) {
         break;
       }
 
-      if (recv_count % sizeof(Word_t) != 0) {
-        throw std::runtime_error("Platform received a byte count that is not word-aligned.");
-      }
-
-      size_t payload_bytes = recv_count;
-      const bool is_final_transfer = recv_count != requested_bytes;
-      if (is_final_transfer) {
-        if (recv_count < axi_datapath_byte_width) {
-          throw std::runtime_error("Platform received a short final packet smaller than one AXI beat.");
-        }
-        payload_bytes = recv_count - axi_datapath_byte_width;
-      }
-
-      if (payload_bytes > 0) {
-        std::vector<Word_t> words(payload_bytes / sizeof(Word_t));
-        std::memcpy(words.data(), recv_buffer.data(), payload_bytes);
+      if (!packet->payload.empty()) {
+        std::vector<Word_t> words(packet->payload.size() / sizeof(Word_t));
+        std::memcpy(words.data(), packet->payload.data(), packet->payload.size());
 
         {
           std::lock_guard<std::mutex> lock(m_recv_mutex_);
@@ -245,7 +278,7 @@ void IBoard::consumeData_() {
         m_recv_cv_.notify_all();
       }
 
-      if (is_final_transfer) {
+      if (packet->is_last) {
         break;
       }
     }
@@ -279,7 +312,7 @@ void IBoard::sendControlPacketRaw_(std::span<const std::byte> control_packet) {
 
 void IBoard::reset_fpga() {
   std::array<std::byte, axi_datapath_byte_width> reset_packet{};
-  reset_packet[8] = static_cast<std::byte>(1);
+  h2c_protocol::set_control(reset_packet, h2c_protocol::reset_control);
   sendControlPacket_(reset_packet);
 }
 
@@ -290,7 +323,7 @@ void IBoard::full_reset() {
   joinReceiver_(false);
 
   std::array<std::byte, axi_datapath_byte_width> reset_packet{};
-  reset_packet[8] = static_cast<std::byte>(1);
+  h2c_protocol::set_control(reset_packet, h2c_protocol::reset_control);
   sendControlPacketRaw_(reset_packet);
 
   m_host_interface_->drain();
@@ -299,7 +332,7 @@ void IBoard::full_reset() {
 
 void IBoard::set_aref(bool is_on) {
   std::array<std::byte, axi_datapath_byte_width> aref_packet{};
-  aref_packet[8] = static_cast<std::byte>(0x8);
+  h2c_protocol::set_control(aref_packet, h2c_protocol::auto_refresh_control);
   aref_packet[0] = static_cast<std::byte>(is_on ? 1 : 0);
   sendControlPacket_(aref_packet);
 }

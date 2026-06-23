@@ -8,6 +8,7 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <span>
 #include <string_view>
 #include <thread>
@@ -47,6 +48,11 @@ constexpr std::string_view to_string(BoardType board_type) noexcept {
  */
 class IBoard {
  protected:
+  struct ReadbackPacket {
+    std::vector<std::byte> payload;
+    bool is_last;
+  };
+
   explicit IBoard(std::unique_ptr<IHostInterface> host_interface,
                   int max_num_insts_per_prog = 2048,
                   int readback_buffer_size = 1024,
@@ -57,6 +63,7 @@ class IBoard {
   void sendControlPacket_(std::span<const std::byte> control_packet);
   void sendControlPacketRaw_(std::span<const std::byte> control_packet);
   void ensureOpen_() const;
+  std::optional<ReadbackPacket> receiveReadbackPacket_();
 
   std::unique_ptr<IHostInterface> m_host_interface_;
   const int max_num_insts_per_prog_;

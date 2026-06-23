@@ -160,6 +160,11 @@ if (BUILD_TESTING)
     )
     target_link_libraries(drambender_full_reset_test PRIVATE DRAMBender)
 
+    add_executable(drambender_hbm2_rw_test
+      tests/board_tests/hbm2_rw_test.cpp
+    )
+    target_link_libraries(drambender_hbm2_rw_test PRIVATE DRAMBender)
+
     add_executable(drambender_rowhammer_test
       tests/board_tests/rowhammer_test.cpp
     )

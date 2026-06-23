@@ -2,6 +2,8 @@
 #define DRAMBENDER_API_BOARD_HBM2_H
 
 #include <memory>
+#include <span>
+#include <vector>
 
 #include "drambender/api/board/board.h"
 
@@ -20,6 +22,20 @@ class HBM2 : public IBoard {
    * @brief Read the current HBM stack temperatures in degrees Celsius.
    */
   HBMTemperature read_temperature();
+
+  /**
+   * @brief Enable or disable discarding HBM readback data.
+   *
+   * This is useful for workloads that issue reads for DRAM-side activity but
+   * do not need the returned data on the host.
+   */
+  void discard_readback_data(bool discard);
+
+  /**
+   * @brief Configure the optional HBM command broadcast channel mask.
+   */
+  void set_broadcast_channels(std::span<const int> channels);
+  void set_broadcast_channels(const std::vector<int>& channels);
 
  protected:
   HBM2(int board_id, int instance_id, std::unique_ptr<IHostInterface> host_interface);

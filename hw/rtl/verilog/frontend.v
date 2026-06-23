@@ -28,6 +28,8 @@ module frontend#(parameter SIM_MEM = "false")(
 
   `ifdef HBM_BENDER
   output                              hbm_temp_rd,
+  output [15:0]                       hbm_enabled_channels,
+  output                              hbm_discard_readback_data,
   `endif
 
   // frontend <-> xdma interface
@@ -51,7 +53,7 @@ module frontend#(parameter SIM_MEM = "false")(
       delay_fin <= 32'b0;
     else
       delay_fin[1+:31] <= delay_fin[0+:31];
-      delay_fin[0]    <= softmc_fin;
+      delay_fin[0]     <= softmc_fin;
   end
 
   assign frontend_ready = delay_fin[31];
@@ -131,8 +133,12 @@ module frontend#(parameter SIM_MEM = "false")(
   reg [(`IMEM_RD_LATENCY * `IMEM_ADDR_WIDTH)-1:0] addr_out_sr;
 
   reg hbm_temp_rd_ns, hbm_temp_rd_r;
+  (* mark_debug = "true", dont_touch = "yes" *) reg [15:0] hbm_enabled_channels_ns, hbm_enabled_channels_r;
+  (* mark_debug = "true", dont_touch = "yes" *) reg hbm_discard_readback_data_ns, hbm_discard_readback_data_r;
 
   assign hbm_temp_rd = hbm_temp_rd_r;
+  assign hbm_enabled_channels = hbm_enabled_channels_r;
+  assign hbm_discard_readback_data = hbm_discard_readback_data_r;
 
   assign user_rst     = (|rst_ctr_r);
 
@@ -161,6 +167,8 @@ module frontend#(parameter SIM_MEM = "false")(
     aref_en         = `LOW;
     `ifdef HBM_BENDER
     hbm_temp_rd_ns  = `LOW;
+    hbm_enabled_channels_ns = hbm_enabled_channels_r;
+    hbm_discard_readback_data_ns = hbm_discard_readback_data_r;
     `endif
     state_ns        = state_r;
     xfer_ctr_ns     = xfer_ctr_r;
@@ -199,6 +207,14 @@ module frontend#(parameter SIM_MEM = "false")(
             hbm_temp_rd_ns  = `HIGH;
             state_ns        = IDLE_S;
           end
+          else if(h2c_tdata_0[`INSTR_WIDTH+7]) begin // set enabled channels
+            hbm_enabled_channels_ns    = h2c_tdata_0[15:0];
+            state_ns                   = IDLE_S;
+          end
+          else if(h2c_tdata_0[`INSTR_WIDTH+6]) begin // discard readback data enable/disable
+            hbm_discard_readback_data_ns = h2c_tdata_0[0];
+            state_ns                   = IDLE_S;
+          end
           `endif
           else begin
             xfer_ctr_ns = xfer_ctr_r + 1;
@@ -236,6 +252,8 @@ module frontend#(parameter SIM_MEM = "false")(
         rst_ctr_r <= 0;
       `ifdef HBM_BENDER
       hbm_temp_rd_r <= 0;
+      hbm_enabled_channels_r <= 16'b0;
+      hbm_discard_readback_data_r <= 16'b0;
       `endif
     end
     else begin
@@ -254,6 +272,8 @@ module frontend#(parameter SIM_MEM = "false")(
       `endif
       `ifdef HBM_BENDER
       hbm_temp_rd_r <= hbm_temp_rd_ns;
+      hbm_enabled_channels_r <= hbm_enabled_channels_ns;
+      hbm_discard_readback_data_r <= hbm_discard_readback_data_ns;
       `endif
     end
   end

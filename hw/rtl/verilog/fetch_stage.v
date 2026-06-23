@@ -51,7 +51,7 @@ module fetch_stage(
   reg [`IMEM_ADDR_WIDTH-1:0] instr_pc_r, instr_pc_ns;
   reg [`INSTR_WIDTH-1:0]     instr_r, instr_ns;
   reg                        instr_valid_r, instr_valid_ns;
-  
+
   pre_decode pdec(
     .buffer_space(buffer_space),
     .read_size(read_size),
@@ -79,7 +79,7 @@ module fetch_stage(
     pc_ns          = pc_r;
     instr_ns       = instr_r;
     instr_pc_ns    = instr_pc_r;
-    instr_valid_ns = ~is_end && valid_in && (state_r == FETCH_NEXT_LINE_S) 
+    instr_valid_ns = ~is_end && valid_in && (state_r == FETCH_NEXT_LINE_S)
         && ~is_ddr_start;
     read_seq_incoming = `LOW;
     case(state_r)
@@ -110,7 +110,7 @@ module fetch_stage(
             pc_ns    = addr_in;     // register the info packet
                                     // as the next instruction to fetch
           end
-        end  
+        end
       end
       WAIT_BUFFER_SPACE_S: begin
         if(~need_flush) begin

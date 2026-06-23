@@ -11,14 +11,14 @@ module tb_decode_stage(
     .instr_pc(instr_pc),
     .instr_valid(instr_valid)
   );
- 
+
   reg clk = 0, rst = 1;
 
   initial begin
     #100;
     rst = 0;
   end
- 
+
   always begin
     #5;
     clk = ~clk;

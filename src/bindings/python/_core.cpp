@@ -1078,7 +1078,21 @@ NB_MODULE(_core, m) {
              nb::gil_scoped_release release;
              return board.read_temperature();
            },
-           "Read the current HBM stack temperatures in degrees Celsius.");
+           "Read the current HBM stack temperatures in degrees Celsius.")
+      .def("discard_readback_data",
+           [](HBM2& board, bool discard) {
+             nb::gil_scoped_release release;
+             board.discard_readback_data(discard);
+           },
+           nb::arg("discard"),
+           "Enable or disable discarding HBM readback data.")
+      .def("set_broadcast_channels",
+           [](HBM2& board, const std::vector<int>& channels) {
+             nb::gil_scoped_release release;
+             board.set_broadcast_channels(channels);
+           },
+           nb::arg("channels"),
+           "Configure the optional HBM command broadcast channel mask.");
 
   nb::class_<MockBoard, IBoard>(m, "_MockBoard")
       .def(nb::init<int>(), nb::arg("receive_timeout_ms") = 5000)

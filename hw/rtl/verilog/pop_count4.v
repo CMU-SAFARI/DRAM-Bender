@@ -1,22 +1,22 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
+// Company:
+// Engineer:
+//
 // Create Date: 12/19/2018 10:51:52 AM
-// Design Name: 
+// Design Name:
 // Module Name: pop_count4
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
+// Project Name:
+// Target Devices:
+// Tool Versions:
+// Description:
+//
+// Dependencies:
+//
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-// 
+//
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -24,9 +24,9 @@ module pop_count4(
   input [3:0] in,
   output [2:0] out
   );
-    
-  reg [2:0] out_r; 
-    
+
+  reg [2:0] out_r;
+
   always @* begin
     out_r = 3'd0;
     case(in)
@@ -60,9 +60,9 @@ module pop_count4(
         out_r = 3'd3;
       4'b1111:
         out_r = 3'd4;
-    endcase  
+    endcase
   end
-  
+
   assign out = out_r;
-  
+
 endmodule

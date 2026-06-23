@@ -29,6 +29,7 @@ module readback_engine(
   input hbm_temp_rd,
   input [6:0] hbm0_temp,
   input [6:0] hbm1_temp,
+  input hbm_discard_readback_data,
   `endif
 
   // readback <-> XDMA if
@@ -43,7 +44,7 @@ module readback_engine(
   `ifdef HBM_BENDER
   wire [15:0] hbm_temp_all = {1'b0, hbm1_temp, 1'b0, hbm0_temp};
   wire [511:0] fifo_wr_data= hbm_temp_rd ? hbm_temp_all : {rd_data[0+:128], rd_data[128+:128], rd_data[256+:128], rd_data[384+:128]};
-  wire fifo_wr_en = rd_valid | hbm_temp_rd;
+  wire fifo_wr_en = (rd_valid | hbm_temp_rd) & (~hbm_discard_readback_data);
   `else
   wire [511:0] fifo_wr_data= {rd_data[255:0],rd_data[511:256]};
   wire fifo_wr_en = rd_valid;
@@ -103,10 +104,6 @@ module readback_engine(
   (*dont_touch = "yes"*) reg                               process_flush_ns;
   (*dont_touch = "yes"*) reg                               process_flush_r;
 
-  // rolling transaction ID counter for metadata packets
-  (*dont_touch = "yes"*) reg               [31:0]          metadata_packet_counter_ns;
-  (*dont_touch = "yes"*) reg               [31:0]          metadata_packet_counter_r;
-
   wire c2h_fire = c2h_tvalid_0 & c2h_tready_0;
 
   assign buffer_space = allowed_nreads_r;
@@ -119,7 +116,7 @@ module readback_engine(
   assign c2h_tvalid_0 = (sender_state_r == SEND_META_S) |
   (((sender_state_r == SEND_DATA_S) | (sender_state_r == SEND_DATA_FLUSH_S)) & (axi_trans_count_r != axi_expected_trans_r) & (fifo_rd_valid));
 
-  assign c2h_tdata_0  = (sender_state_r == SEND_META_S) ? {process_flush_r, metadata_packet_counter_r, 211'b0, fifo_size_r} : fifo_rd_data;
+  assign c2h_tdata_0  = (sender_state_r == SEND_META_S) ? {process_flush_r, 243'b0, fifo_size_r} : fifo_rd_data;
 
 
   always @* begin
@@ -127,7 +124,6 @@ module readback_engine(
     expected_fifo_size_ns = expected_fifo_size_r;
     axi_expected_trans_ns = axi_expected_trans_r;
     axi_trans_count_ns = axi_trans_count_r;
-    metadata_packet_counter_ns = metadata_packet_counter_r;
 
     sender_state_ns = sender_state_r;
 
@@ -147,7 +143,7 @@ module readback_engine(
         fifo_size_ns = fifo_size_r - axi_expected_trans_r;
 
     // the most complex single unit of information to maintain
-    if (read_seq_incoming) begin
+    if (read_seq_incoming & ~hbm_discard_readback_data) begin
       // read seq incoming, but also finished sending a chunk of data
       if ((axi_trans_count_r == axi_expected_trans_r) & ((sender_state_r == SEND_DATA_S) | (sender_state_r == SEND_DATA_FLUSH_S)))
         expected_fifo_size_ns = expected_fifo_size_r + (incoming_reads << 1'b1) - axi_expected_trans_r;
@@ -179,7 +175,6 @@ module readback_engine(
         sender_state_ns = SEND_DATA_S;
         axi_expected_trans_ns = fifo_size_r;
         axi_trans_count_ns = 12'b0;
-        metadata_packet_counter_ns = metadata_packet_counter_r + 32'd1;
         if (process_flush_r && fifo_size_r == 12'b0) begin
           sender_state_ns = IDLE_S;
           process_flush_ns = 1'b0;
@@ -219,7 +214,6 @@ module readback_engine(
       sender_state_r                <=          IDLE_S;
       allowed_nreads_r              <=          12'b0;
       process_flush_r               <=          1'b0;
-      metadata_packet_counter_r     <=          32'b0;
     end
     else begin
       cycle_counter_r               <=          cycle_counter_ns;
@@ -230,7 +224,6 @@ module readback_engine(
       sender_state_r                <=          sender_state_ns;
       allowed_nreads_r              <=          allowed_nreads_ns;
       process_flush_r               <=          process_flush_ns;
-      metadata_packet_counter_r     <=          metadata_packet_counter_ns;
     end
   end
 

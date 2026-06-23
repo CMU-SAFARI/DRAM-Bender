@@ -1,6 +1,6 @@
 `include "parameters.vh"
 
-/* 
+/*
  * An 8 read 8 write port reg file
  * satisfying ddr pipeline's needs
  */
@@ -20,7 +20,7 @@ module register_file(
   input   [4*8-1:0]                    rf_raddr,
   input   [4*8-1:0]                    rf_waddr,
   output  [`COL_WIDTH-1:0]             casr,
-  output  [`BANK_WIDTH+`BG_WIDTH-1:0]  basr,
+  output  [`BANK_WIDTH+`BG_WIDTH:0]    basr,
   output  [`ROW_WIDTH-1:0]             rasr,
   // update stride registers, wen is OH (3'b001 = update rasr)
   input   [31:0]                       srf_value,
@@ -49,7 +49,7 @@ module register_file(
 
   // General purpose registers
   reg [31:0] reg_file [15:0];
-  
+
   // split r&w data signals into human readable form
   // also drive rdata with appropriate register values
   wire [31:0] wdata [7:0];
@@ -64,8 +64,8 @@ module register_file(
       assign waddr[i] = rf_waddr[4*i +: 4];
       assign raddr[i] = rf_raddr[4*i +: 4];
       // TODO will this compile?
-      assign rf_rdata[32*i +: 32] = raddr[i] == 0 ? casr_r : 
-        raddr[i] == 1 ? basr_r : 
+      assign rf_rdata[32*i +: 32] = raddr[i] == 0 ? casr_r :
+        raddr[i] == 1 ? basr_r :
         raddr[i] == 2 ? rasr_r : reg_file[raddr[i]];
     end
   endgenerate
@@ -78,7 +78,7 @@ module register_file(
         reg_file[waddr[j]] <= wdata[j];
     end
   end
-  
+
   // DDR4 8-burst write data register
   reg [511:0] wide_reg;
   always @(posedge clk) begin
@@ -86,7 +86,7 @@ module register_file(
     if(rf_wide_wen)
       wide_reg[rf_wide_offset*32 +: 32] <= wdata[0];
   end
- 
-  assign rf_wide_data = wide_reg; 
+
+  assign rf_wide_data = wide_reg;
 
 endmodule

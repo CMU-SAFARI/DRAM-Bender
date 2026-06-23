@@ -8,20 +8,20 @@ module reg_mem(
     input en,
     input we
     );
-    
+
     reg [31:0] mem [1023:0];
-    
+
     integer i;
     initial
     begin
         for(i=0; i<1024; i=i+1)
             mem[i]=0;
     end
-        
+
     reg [31:0] out;
-        
-    assign dout=out;    
-        
+
+    assign dout=out;
+
     always @(posedge clk)
     begin
         if(we)
@@ -29,5 +29,5 @@ module reg_mem(
         else if(en)
             out<=mem[addr];
     end
-            
+
 endmodule
