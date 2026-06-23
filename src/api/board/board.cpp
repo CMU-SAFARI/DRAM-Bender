@@ -28,10 +28,6 @@ IBoard::IBoard(std::unique_ptr<IHostInterface> host_interface,
 }
 
 IBoard::~IBoard() {
-  // Share shutdown logic with close(). Any exception is logged rather than
-  // rethrown — a destructor cannot propagate — but must not be swallowed
-  // silently. Professional users need to see fatal DMA faults, plugin ABI
-  // mismatches, etc.
   try {
     close();
   } catch (const std::exception& e) {
@@ -45,13 +41,9 @@ IBoard::~IBoard() {
 }
 
 void IBoard::close() {
-  // Idempotent. Safe to call from destructor after an explicit close().
   if (!m_host_interface_) {
     return;
   }
-  // Interrupt and join any in-flight receiver work first so the thread cannot
-  // touch the host interface after we release it. Cannot use the public
-  // synchronize() here because that asserts the board is still open.
   m_host_interface_->cancel_receive();
   joinReceiver_(true);
   m_host_interface_.reset();
@@ -294,8 +286,6 @@ void IBoard::reset_fpga() {
 void IBoard::full_reset() {
   ensureOpen_();
 
-  // Recovery path: interrupt a blocked C2H readback session, wait for the
-  // receiver thread to exit, and intentionally discard stale async errors.
   m_host_interface_->cancel_receive();
   joinReceiver_(false);
 

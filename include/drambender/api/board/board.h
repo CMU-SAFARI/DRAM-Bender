@@ -41,6 +41,9 @@ constexpr std::string_view to_string(BoardType board_type) noexcept {
 
 /**
  * @brief Abstract interface for FPGA boards.
+ *
+ * A board owns the host connection, sends programs to the FPGA, and buffers
+ * readback data until the caller receives it. 
  */
 class IBoard {
  protected:
@@ -64,25 +67,65 @@ class IBoard {
  public:
   virtual ~IBoard();
 
-  // Wait for the active readback session to finish and rethrow async receive
-  // errors. This does not consume, discard, or drain queued readback data.
+  /**
+   * @brief Send one finalized program to the board.
+   *
+   * The call waits for any previous readback session to finish before it sends
+   * the new program. If the program returns data, a background receiver starts
+   * collecting it immediately; call receive() to copy the bytes you expect and
+   * synchronize() as a barrier.
+   */
+  virtual void execute(const FinalProgram& prog);
+
+  /**
+   * @brief Execute a queue of finalized programs in order.
+   *
+   * This is a convenience wrapper around execute(program). Readback data from
+   * each program remains queued for receive() in the same order the programs
+   * ran.
+   */
+  void execute(const std::vector<FinalProgram>& prog_queue);
+
+  /**
+   * @brief Copy queued readback bytes into a caller-owned buffer.
+   *
+   * The destination size must be a multiple of four bytes. The call blocks
+   * until that many bytes are available, the FPGA finishes too early, the
+   * receive timeout expires, or the receiver thread reports an error.
+   *
+   * @return The number of bytes copied, which equals dst.size_bytes().
+   */
+  virtual size_t receive(std::span<std::byte> dst);
+
+  /**
+   * @brief Wait for the active readback session to finish.
+   *
+   * Any asynchronous receive error is rethrown here. Queued readback data is
+   * left intact, so it is fine to receive() first and synchronize() afterward.
+   */
   void synchronize();
 
-  virtual void execute(const FinalProgram& prog);
-  void execute(const std::vector<FinalProgram>& prog_queue);
-  virtual size_t receive(std::span<std::byte> dst);
-  // Send the FPGA reset control packet after synchronizing normal in-flight
-  // readback. Use full_reset() for recovery from stale or stuck readback.
+  /**
+   * @brief Send the FPGA reset control packet.
+   *
+   * This path first synchronizes normal in-flight work. Use full_reset() when
+   * recovering from stale data, a stuck readback, or a failed receive session.
+   */
   virtual void reset_fpga();
 
-  // Recovery path: cancel active readback, reset the FPGA, drain stale host
-  // readback, and clear queued software readback.
+  /**
+   * @brief Recover the board and discard any pending readback.
+   *
+   * full_reset() cancels active receive work, resets FPGA logic, drains stale
+   * data from the host interface, and clears the software readback queue.
+   */
   void full_reset();
+
+  /**
+   * @brief Enable or disable FPGA-managed DRAM auto-refresh.
+   */
   virtual void set_aref(bool is_on);
 
-  // Release the underlying host interface (closes DMA device file descriptors,
-  // joins the receiver thread). Idempotent. After close(), every method that
-  // touches the host interface raises `std::runtime_error`.
   void close();
   bool is_closed() const noexcept;
 

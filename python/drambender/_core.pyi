@@ -41,6 +41,8 @@ class BranchType(enum.Enum):
     JUMP = 2
 
 class HBMTemperature:
+    """Temperatures reported by an HBM2 board, in degrees Celsius."""
+
     @property
     def stack0_celsius(self) -> int: ...
 
@@ -192,7 +194,19 @@ class ExecutionResult:
     def __repr__(self) -> str: ...
 
 class Board:
-    def execute(self, arg: object, /) -> None: ...
+    """Open FPGA board handle.
+
+    Use it to execute programs, receive readback data, reset the board, and
+    release the host connection when finished.
+    """
+
+    def execute(self, arg: object, /) -> None:
+        """Send one program, or a list/tuple of programs, to the board.
+
+        If the program returns data, call receive_into() for the bytes you
+        expect and synchronize() as a barrier.
+        """
+        ...
 
     def synchronize(self) -> None:
         """Wait for active readback to finish and surface async receive errors.
@@ -202,37 +216,65 @@ class Board:
         ...
 
     def receive_into(self, arg: object, /) -> int:
-        """Copy queued readback data into a writable C-contiguous buffer."""
+        """Copy queued readback data into a writable C-contiguous buffer.
+
+        The buffer size must be a multiple of four bytes. This blocks until the
+        buffer is full or the receive session fails.
+        """
         ...
 
-    def set_aref(self, arg: bool, /) -> None: ...
+    def set_aref(self, arg: bool, /) -> None:
+        """Enable or disable FPGA-managed DRAM auto-refresh."""
+        ...
 
     def reset_fpga(self) -> None:
-        """Send the FPGA reset control packet after normal synchronization."""
+        """Send the FPGA reset control packet.
+
+        Use full_reset() when recovering from stale data, a stuck readback, or
+        a failed receive session.
+        """
         ...
 
     def full_reset(self) -> None:
-        """Cancel active readback, reset the FPGA, drain stale data, and clear queued readback."""
+        """Cancel active readback, reset FPGA logic, drain stale host readback,
+        and clear queued software readback.
+        """
         ...
 
-    def close(self) -> None: ...
+    def close(self) -> None:
+        """Release the host connection."""
+        ...
 
     @property
-    def is_closed(self) -> bool: ...
+    def is_closed(self) -> bool:
+        """True after the host connection has been released."""
+        ...
 
     def __enter__(self) -> Board: ...
 
     def __exit__(self, *args) -> bool: ...
 
 class DDR4(Board):
+    """DDR4-backed DRAM Bender board."""
+
     def __init__(self, board_id: int, instance_id: int, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 
 class HBM2(Board):
+    """HBM2-backed DRAM Bender board."""
+
     def __init__(self, board_id: int, instance_id: int, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 
-    def read_temperature(self) -> HBMTemperature: ...
+    def read_temperature(self) -> HBMTemperature:
+        """Read the current HBM stack temperatures in degrees Celsius."""
+        ...
 
-def open_board(board_type: BoardType, board_id: int, instance_id: int, host_interface: HostInterface = HostInterface.XDMA) -> Board: ...
+def open_board(board_type: BoardType, board_id: int, instance_id: int, host_interface: HostInterface = HostInterface.XDMA) -> Board:
+    """Open a DRAM Bender board.
+
+    board_id selects the FPGA card, and instance_id selects the controller
+    instance on that card.
+    """
+    ...
 
 def lower(ops: list) -> FinalProgram: ...
 

@@ -42,7 +42,7 @@ class IHostInterface {
   virtual void init() = 0;
 
   /**
-   * @brief Sends data to the FPGA.
+   * @brief Send bytes to the FPGA.
    *
    * Implementations must either send the full payload or throw.
    *
@@ -59,7 +59,7 @@ class IHostInterface {
   virtual void begin_receive() {}
 
   /**
-   * @brief Receives data from the FPGA into a caller-owned buffer.
+   * @brief Receive bytes from the FPGA into a caller-owned buffer.
    *
    * @return size_t The number of bytes received.
    */

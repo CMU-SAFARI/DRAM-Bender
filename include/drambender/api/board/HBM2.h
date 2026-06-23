@@ -16,6 +16,9 @@ class HBM2 : public IBoard {
  public:
   HBM2(int board_id, int instance_id, HostInterface host_interface = HostInterface::XDMA);
 
+  /**
+   * @brief Read the current HBM stack temperatures in degrees Celsius.
+   */
   HBMTemperature read_temperature();
 
  protected:

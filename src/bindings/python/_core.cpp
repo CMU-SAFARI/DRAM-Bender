@@ -825,7 +825,10 @@ NB_MODULE(_core, m) {
       .value("BL", Program::BR_TYPE::BL)
       .value("JUMP", Program::BR_TYPE::JUMP);
 
-  nb::class_<HBMTemperature>(m, "HBMTemperature")
+  nb::class_<HBMTemperature>(
+      m,
+      "HBMTemperature",
+      "Temperatures reported by an HBM2 board, in degrees Celsius.")
       .def_rw("stack0_celsius", &HBMTemperature::stack0_celsius)
       .def_rw("stack1_celsius", &HBMTemperature::stack1_celsius);
 
@@ -974,7 +977,11 @@ NB_MODULE(_core, m) {
                     " instructions=" + std::to_string(result.instructions_executed) + ">";
            });
 
-  nb::class_<IBoard>(m, "Board")
+  nb::class_<IBoard>(
+      m,
+      "Board",
+      "Open FPGA board handle. Use it to execute programs, receive readback "
+      "data, reset the board, and release the host connection when finished.")
       .def("execute",
            [](IBoard& board, nb::handle programs) {
              if (nb::isinstance<FinalProgram>(programs)) {
@@ -992,7 +999,10 @@ NB_MODULE(_core, m) {
 
              throw nb::type_error(
                  "execute expects a FinalProgram or a list/tuple of FinalProgram objects.");
-           })
+           },
+           "Send a FinalProgram, or a list/tuple of FinalProgram objects, to "
+           "the board. If the program returns data, call receive_into() for "
+           "the bytes you expect and synchronize() as a barrier.")
       .def("synchronize",
            [](IBoard& board) {
              nb::gil_scoped_release release;
@@ -1003,12 +1013,15 @@ NB_MODULE(_core, m) {
            "queued readback data.")
       .def("receive_into",
            &receive_into,
-           "Copy queued readback data into a writable C-contiguous buffer.")
+           "Copy queued readback data into a writable C-contiguous buffer. "
+           "The buffer size must be a multiple of four bytes; the call blocks "
+           "until the buffer is full or the receive session fails.")
       .def("set_aref",
            [](IBoard& board, bool enabled) {
              nb::gil_scoped_release release;
              board.set_aref(enabled);
-           })
+           },
+           "Enable or disable FPGA-managed DRAM auto-refresh.")
       .def("reset_fpga",
            [](IBoard& board) {
              nb::gil_scoped_release release;
@@ -1027,8 +1040,12 @@ NB_MODULE(_core, m) {
            [](IBoard& board) {
              nb::gil_scoped_release release;
              board.close();
-           })
-      .def_prop_ro("is_closed", &IBoard::is_closed)
+           },
+           "Release the host connection. After close(), open a new board to "
+           "run more programs.")
+      .def_prop_ro("is_closed",
+                   &IBoard::is_closed,
+                   "True after the host connection has been released.")
       .def("__enter__",
            [](IBoard& board) -> IBoard& { return board; },
            nb::rv_policy::reference_internal)
@@ -1039,13 +1056,19 @@ NB_MODULE(_core, m) {
              return false;  // do not suppress exceptions
            });
 
-  nb::class_<DDR4, IBoard>(m, "DDR4")
+  nb::class_<DDR4, IBoard>(
+      m,
+      "DDR4",
+      "DDR4-backed DRAM Bender board.")
       .def(nb::init<int, int, HostInterface>(),
            nb::arg("board_id"),
            nb::arg("instance_id"),
            nb::arg("host_interface") = HostInterface::XDMA);
 
-  nb::class_<HBM2, IBoard>(m, "HBM2")
+  nb::class_<HBM2, IBoard>(
+      m,
+      "HBM2",
+      "HBM2-backed DRAM Bender board.")
       .def(nb::init<int, int, HostInterface>(),
            nb::arg("board_id"),
            nb::arg("instance_id"),
@@ -1054,7 +1077,8 @@ NB_MODULE(_core, m) {
            [](HBM2& board) {
              nb::gil_scoped_release release;
              return board.read_temperature();
-           });
+           },
+           "Read the current HBM stack temperatures in degrees Celsius.");
 
   nb::class_<MockBoard, IBoard>(m, "_MockBoard")
       .def(nb::init<int>(), nb::arg("receive_timeout_ms") = 5000)
@@ -1070,7 +1094,9 @@ NB_MODULE(_core, m) {
         nb::arg("board_type"),
         nb::arg("board_id"),
         nb::arg("instance_id"),
-        nb::arg("host_interface") = HostInterface::XDMA);
+        nb::arg("host_interface") = HostInterface::XDMA,
+        "Open a DRAM Bender board. board_id selects the FPGA card, and "
+        "instance_id selects the controller instance on that card.");
 
   m.def("lower", &lower, nb::arg("ops"));
 
