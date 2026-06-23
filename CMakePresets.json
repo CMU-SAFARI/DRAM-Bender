@@ -7,14 +7,12 @@
   },
   "configurePresets": [
     {
-      "name": "dev-gcc12",
-      "displayName": "DRAMBender Dev GCC 12",
+      "name": "dev",
+      "displayName": "DRAMBender Dev",
       "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/build/dev-gcc12",
+      "binaryDir": "${sourceDir}/build/dev",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
-        "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
         "Python_EXECUTABLE": "${sourceDir}/.venv/bin/python",
         "DRAMBENDER_BUILD_PYTHON": "ON"
       }
@@ -22,14 +20,14 @@
   ],
   "buildPresets": [
     {
-      "name": "dev-gcc12",
-      "configurePreset": "dev-gcc12"
+      "name": "dev",
+      "configurePreset": "dev"
     }
   ],
   "testPresets": [
     {
-      "name": "dev-gcc12",
-      "configurePreset": "dev-gcc12",
+      "name": "dev",
+      "configurePreset": "dev",
       "output": {
         "outputOnFailure": true
       }

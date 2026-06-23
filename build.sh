@@ -12,10 +12,13 @@ terminal, you will be prompted to choose a configuration.
 Default builds include the Python extension and require .venv/bin/python.
 Run bash setup_venv.sh first for Python development.
 
-  debug                 -> build/dev-gcc12         (Python, Debug)
-  release               -> build/release-gcc12     (Python, Release)
-  --cxx-only debug      -> build/cxx-dev-gcc12     (C++ only, Debug)
-  --cxx-only release    -> build/cxx-release-gcc12 (C++ only, Release)
+  debug                 -> build/dev         (Python, Debug)
+  release               -> build/release     (Python, Release)
+  --cxx-only debug      -> build/cxx-dev     (C++ only, Debug)
+  --cxx-only release    -> build/cxx-release (C++ only, Release)
+
+The script requires g++ 11 or newer. It uses default g++ unless CXX is set.
+If your default g++ is too old, run 'export CXX=/path/to/g++-11-or-newer' first.
 
 Examples:
   bash setup_venv.sh
@@ -26,6 +29,40 @@ EOF
 
 CXX_ONLY=0
 CONFIG=""
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "$REPO_ROOT"
+
+MIN_GXX_MAJOR=11
+CXX_COMPILER="${CXX:-g++}"
+CXX_VERSION=""
+CXX_MAJOR=""
+
+check_cxx_compiler() {
+    if ! command -v "$CXX_COMPILER" >/dev/null 2>&1; then
+        echo "error: C++ compiler '$CXX_COMPILER' not found." >&2
+        echo "       Install g++ ${MIN_GXX_MAJOR} or newer, or run 'export CXX=/path/to/g++-11-or-newer'." >&2
+        exit 1
+    fi
+
+    CXX_VERSION="$("$CXX_COMPILER" -dumpfullversion -dumpversion 2>/dev/null || true)"
+    if [[ -z "$CXX_VERSION" ]]; then
+        CXX_VERSION="$("$CXX_COMPILER" -dumpversion 2>/dev/null || true)"
+    fi
+    CXX_VERSION="${CXX_VERSION%%$'\n'*}"
+    CXX_MAJOR="${CXX_VERSION%%.*}"
+
+    if [[ ! "$CXX_MAJOR" =~ ^[0-9]+$ ]]; then
+        echo "error: unable to determine g++ version for '$CXX_COMPILER'." >&2
+        echo "       Install g++ ${MIN_GXX_MAJOR} or newer, or run 'export CXX=/path/to/g++-11-or-newer'." >&2
+        exit 1
+    fi
+
+    if (( CXX_MAJOR < MIN_GXX_MAJOR )); then
+        echo "error: '$CXX_COMPILER' is g++ $CXX_VERSION; DRAMBender requires g++ ${MIN_GXX_MAJOR} or newer." >&2
+        echo "       Install a newer g++, or run 'export CXX=/path/to/g++-11-or-newer'." >&2
+        exit 1
+    fi
+}
 
 for arg in "$@"; do
     case "${arg,,}" in
@@ -72,21 +109,23 @@ if [[ -z "$CONFIG" ]]; then
     fi
 fi
 
+check_cxx_compiler
+
 case "${CONFIG,,}" in
     debug)
         CMAKE_BUILD_TYPE=Debug
         if (( CXX_ONLY )); then
-            BUILD_DIR=build/cxx-dev-gcc12
+            BUILD_DIR="build/cxx-dev"
         else
-            BUILD_DIR=build/dev-gcc12
+            BUILD_DIR="build/dev"
         fi
         ;;
     release)
         CMAKE_BUILD_TYPE=Release
         if (( CXX_ONLY )); then
-            BUILD_DIR=build/cxx-release-gcc12
+            BUILD_DIR="build/cxx-release"
         else
-            BUILD_DIR=build/release-gcc12
+            BUILD_DIR="build/release"
         fi
         ;;
     *)
@@ -96,14 +135,6 @@ case "${CONFIG,,}" in
         exit 1
         ;;
 esac
-
-CXX_COMPILER="${CXX:-/usr/bin/g++-12}"
-
-if ! command -v "$CXX_COMPILER" >/dev/null 2>&1; then
-    echo "error: C++ compiler '$CXX_COMPILER' not found." >&2
-    echo "       Set CXX=/path/to/g++ if you need a different compiler." >&2
-    exit 1
-fi
 
 cmake_args=(
   -S .
@@ -131,13 +162,16 @@ else
         exit 1
     fi
 
+    VENV_SITE_PACKAGES="$("$VENV_PYTHON" -c 'import sysconfig; print(sysconfig.get_path("platlib"))')"
+
     cmake_args+=(
       -DPython_EXECUTABLE="$VENV_PYTHON"
       -DDRAMBENDER_BUILD_PYTHON=ON
-      -DDRAMBENDER_PYTHON_PACKAGE_DIR="$(pwd)/python/drambender"
+      -DDRAMBENDER_PYTHON_PACKAGE_DIR="$VENV_SITE_PACKAGES/drambender"
     )
 fi
 
+echo "==> Using C++ compiler: $CXX_COMPILER (g++ $CXX_VERSION)"
 echo "==> Configuring $CMAKE_BUILD_TYPE build in $BUILD_DIR"
 cmake "${cmake_args[@]}"
 

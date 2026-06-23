@@ -26,17 +26,9 @@ _TRACE_MODE: ContextVar[bool | None] = ContextVar(
 
 _CODEGEN_VERSION = 5
 _PLUGIN_ABI_VERSION = 1
+_DEFAULT_COMPILER = "g++"
 _MIN_GXX_MAJOR = 11
-_JIT_CXX_ENV = "DRAMBENDER_JIT_CXX"
 _COMPILE_FLAGS = ("-std=c++20", "-O3", "-fPIC", "-shared")
-_DEFAULT_COMPILER_CANDIDATES = (
-    "g++",
-    "g++-15",
-    "g++-14",
-    "g++-13",
-    "g++-12",
-    "g++-11",
-)
 
 
 class TemplateCompileError(RuntimeError):
@@ -604,18 +596,11 @@ def _split_compiler_command(value: str) -> tuple[str, ...]:
 
 
 def _candidate_compiler_commands() -> list[tuple[str, tuple[str, ...], bool]]:
-    env_value = os.environ.get(_JIT_CXX_ENV)
-    if env_value:
-        return [(_JIT_CXX_ENV, _split_compiler_command(env_value), True)]
-
     cxx_value = os.environ.get("CXX")
     if cxx_value:
         return [("CXX", _split_compiler_command(cxx_value), True)]
 
-    return [
-        ("PATH", (candidate,), False)
-        for candidate in _DEFAULT_COMPILER_CANDIDATES
-    ]
+    return [("default g++", (_DEFAULT_COMPILER,), False)]
 
 
 def _resolve_executable(command: tuple[str, ...]) -> str:
@@ -708,7 +693,7 @@ def _resolve_compiler() -> _CompilerInfo:
     details = "\n  - ".join(errors)
     raise TemplateEnvironmentError(
         f"No suitable JIT compiler found. DRAMBender JIT requires G++ "
-        f"{_MIN_GXX_MAJOR}+ with C++20 <span> support. Set {_JIT_CXX_ENV}=/path/to/g++ "
+        f"{_MIN_GXX_MAJOR}+ with C++20 <span> support. Set CXX=/path/to/g++-11-or-newer "
         f"to choose one explicitly."
         + (f"\nTried:\n  - {details}" if details else "")
     )

@@ -19,8 +19,8 @@ Typical use::
 The native template compiler must be G++ 11 or newer with C++20 ``<span>``
 support. Wheels ship the C++ headers needed by the generated template plugin;
 editable/source-tree installs use the repository headers. Set
-``DRAMBENDER_JIT_CXX=/path/to/g++`` to choose a compiler explicitly; otherwise
-``CXX`` and common ``g++`` executables on ``PATH`` are tried.
+``CXX=/path/to/g++-11-or-newer`` to choose a compiler explicitly; otherwise
+default ``g++`` is used.
 """
 
 from .._jit import (

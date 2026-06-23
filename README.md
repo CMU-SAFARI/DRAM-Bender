@@ -19,6 +19,10 @@ DRAM-BenderV2 RTL and Vivado sources alongside it.
 
 ## Software Build
 
+Software builds require `g++` 11 or newer. The helper scripts use default
+`g++`; if your default compiler is older, run
+`export CXX=/path/to/g++-11-or-newer` before building.
+
 For a C++ software-only build that avoids FPGA/device access, Python bindings,
 and the XDMA driver:
 
