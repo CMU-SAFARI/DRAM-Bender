@@ -130,6 +130,14 @@ if (DRAMBENDER_BUILD_BOARD_BENCHMARKS)
 endif()
 
 if (BUILD_TESTING)
+  enable_testing()
+
+  add_executable(drambender_program_metadata_test
+    tests/program_metadata_test.cpp
+  )
+  target_link_libraries(drambender_program_metadata_test PRIVATE DRAMBender)
+  add_test(NAME drambender_program_metadata_test COMMAND drambender_program_metadata_test)
+
   if (DRAMBENDER_BUILD_BOARD_TESTS)
     add_executable(drambender_rw_test
       tests/board_tests/rw_test.cpp

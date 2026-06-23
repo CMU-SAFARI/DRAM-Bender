@@ -125,6 +125,7 @@ def build_rowhammer_program(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--board-id", type=int, default=0)
     parser.add_argument("--instance-id", type=int, default=0)
     parser.add_argument("--bank", type=int, default=0)
     parser.add_argument("--start-row", type=int, default=81)
@@ -134,6 +135,7 @@ def main() -> int:
 
     board = open_board(
         BoardType.DDR4,
+        board_id=args.board_id,
         instance_id=args.instance_id,
         host_interface=HostInterface.XDMA,
     )

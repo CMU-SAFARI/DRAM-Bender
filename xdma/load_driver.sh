@@ -5,6 +5,23 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODULE_PATH="${SCRIPT_DIR}/xdma/xdma.ko"
 
+print_h2c_devices() {
+  local node
+  local h2c_nodes=()
+
+  shopt -s nullglob
+  for node in /dev/xdma*_h2c_*; do
+    [[ -e "${node}" && ! -d "${node}" ]] && h2c_nodes+=("${node}")
+  done
+  shopt -u nullglob
+
+  if [[ ${#h2c_nodes[@]} -gt 0 ]]; then
+    printf "H2C device(s): %s\n" "${h2c_nodes[*]}"
+  else
+    echo "H2C device(s): none"
+  fi
+}
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") [insmod-arg...]
@@ -52,3 +69,4 @@ if ! grep -qw xdma /proc/devices; then
 fi
 
 echo " DONE"
+print_h2c_devices

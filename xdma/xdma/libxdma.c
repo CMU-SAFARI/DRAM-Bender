@@ -47,6 +47,16 @@ module_param(enable_st_c2h_credit, uint, 0644);
 MODULE_PARM_DESC(enable_st_c2h_credit,
 	"Set 1 to enable ST C2H engine credit feature, default is 0 ( credit control disabled)");
 
+static unsigned int cyclic_rx_pages = CYCLIC_RX_PAGES_MAX;
+module_param(cyclic_rx_pages, uint, 0644);
+MODULE_PARM_DESC(cyclic_rx_pages,
+	"AXI-ST C2H cyclic receive ring pages per engine, default is 8192 (32 MiB)");
+
+static unsigned int cyclic_initial_credits = CYCLIC_RX_INITIAL_CREDITS_DEFAULT;
+module_param(cyclic_initial_credits, uint, 0644);
+MODULE_PARM_DESC(cyclic_initial_credits,
+	"Initial AXI-ST C2H cyclic credits per engine, default is 512 (2 MiB)");
+
 unsigned int desc_blen_max = XDMA_DESC_BLEN_MAX;
 module_param(desc_blen_max, uint, 0644);
 MODULE_PARM_DESC(desc_blen_max,
@@ -99,6 +109,8 @@ static DEFINE_MUTEX(xdev_mutex);
 
 static LIST_HEAD(xdev_rcu_list);
 static DEFINE_SPINLOCK(xdev_rcu_lock);
+
+static int engine_service_cyclic(struct xdma_engine *engine);
 
 #ifndef list_last_entry
 #define list_last_entry(ptr, type, member) list_entry((ptr)->prev, type, member)
@@ -718,9 +730,13 @@ static struct xdma_transfer *engine_start(struct xdma_engine *engine)
 
 	/* Add credits for Streaming mode C2H */
 	if (enable_st_c2h_credit && engine->streaming &&
-	    engine->dir == DMA_FROM_DEVICE)
-		write_register(engine->desc_used,
-					&engine->sgdma_regs->credits, 0);
+	    engine->dir == DMA_FROM_DEVICE) {
+		u32 credits = transfer->cyclic ?
+			engine->cyclic_outstanding_credits : engine->desc_used;
+
+		if (credits)
+			write_register(credits, &engine->sgdma_regs->credits, 0);
+	}
 
 	/* initialize number of descriptors of dequeued transfers */
 	engine->desc_dequeued = 0;
@@ -1221,7 +1237,10 @@ static void engine_service_work(struct work_struct *work)
 	spin_lock_irqsave(&engine->lock, flags);
 
 	dbg_tfr("engine_service() for %s engine %p\n", engine->name, engine);
-	rv = engine_service(engine, 0);
+	if (engine->cyclic_req)
+		rv = engine_service_cyclic(engine);
+	else
+		rv = engine_service(engine, 0);
 	if (rv < 0) {
 		pr_err("Failed to service engine\n");
 		goto unlock;
@@ -1328,12 +1347,15 @@ int engine_service_poll(struct xdma_engine *engine,
 	 */
 
 	desc_wb = engine_service_wb_monitor(engine, expected_desc_count);
-	if (!desc_wb)
+	if (!desc_wb && !engine->cyclic_req)
 		return 0;
 
 	spin_lock_irqsave(&engine->lock, flags);
 	dbg_tfr("%s service.\n", engine->name);
-	rv = engine_service(engine, desc_wb);
+	if (engine->cyclic_req)
+		rv = engine_service_cyclic(engine);
+	else
+		rv = engine_service(engine, desc_wb);
 	spin_unlock_irqrestore(&engine->lock, flags);
 
 	return rv;
@@ -2637,7 +2659,7 @@ struct xdma_transfer *engine_cyclic_stop(struct xdma_engine *engine)
 {
 	int rv;
 	struct xdma_transfer *transfer = 0;
-	int size = engine->xdma_perf->transfer_size;
+	int size = engine->xdma_perf ? engine->xdma_perf->transfer_size : 0;
 
 	/* transfers on queue? */
 	if (!list_empty(&engine->transfer_list)) {
@@ -2663,7 +2685,7 @@ struct xdma_transfer *engine_cyclic_stop(struct xdma_engine *engine)
 				dbg_perf("Stopping cyclic transfer on %s\n",
 					 engine->name);
 			/* free up the buffer allocated for perf run */
-			if (engine->perf_buf_virt)
+			if (engine->perf_buf_virt && size)
 				dma_free_coherent(&engine->xdev->pdev->dev,
 						size, engine->perf_buf_virt,
 						engine->perf_buf_bus);
@@ -2866,9 +2888,8 @@ static int engine_init(struct xdma_engine *engine, struct xdma_dev *xdev,
 		(dir == DMA_TO_DEVICE) ? "H2C" : "C2H", channel,
 		engine->streaming ? "ST" : "MM");
 
-	if (enable_st_c2h_credit && engine->streaming &&
-	    engine->dir == DMA_FROM_DEVICE)
-		engine->desc_max = XDMA_ENGINE_CREDIT_XFER_MAX_DESC;
+	if (engine->streaming && engine->dir == DMA_FROM_DEVICE)
+		engine->desc_max = CYCLIC_RX_PAGES_MAX;
 	else
 		engine->desc_max = XDMA_ENGINE_XFER_MAX_DESC;
 
@@ -3145,6 +3166,858 @@ static struct xdma_request_cb *xdma_init_request(struct sg_table *sgt,
 	xdma_request_cb_dump(req);
 #endif
 	return req;
+}
+
+static unsigned int cyclic_configured_pages(void)
+{
+	unsigned int pages = cyclic_rx_pages;
+
+	if (pages < 2)
+		pages = 2;
+	if (pages > CYCLIC_RX_PAGES_MAX)
+		pages = CYCLIC_RX_PAGES_MAX;
+
+	return pages;
+}
+
+static unsigned int cyclic_configured_credits(unsigned int pages)
+{
+	unsigned int credits = cyclic_initial_credits;
+
+	if (credits < 1)
+		credits = 1;
+	if (credits >= pages)
+		credits = pages - 1;
+
+	return credits;
+}
+
+static void xdma_transfer_cyclic(struct xdma_transfer *transfer)
+{
+	struct xdma_desc *last = transfer->desc_virt + transfer->desc_num - 1;
+	u32 control = le32_to_cpu(last->control) & 0x00FFC0ffUL;
+
+	last->next_lo = cpu_to_le32(PCI_DMA_L(transfer->desc_bus));
+	last->next_hi = cpu_to_le32(PCI_DMA_H(transfer->desc_bus));
+	control |= DESC_MAGIC;
+	last->control = cpu_to_le32(control);
+	transfer->cyclic = 1;
+}
+
+static unsigned int cyclic_ring_used_locked(struct xdma_engine *engine)
+{
+	unsigned int head = engine->rx_head;
+	unsigned int tail = engine->rx_tail;
+	unsigned int pages = engine->cyclic_pages;
+
+	if (!pages)
+		return 0;
+	if (engine->rx_overrun)
+		return pages - 1;
+	if (tail >= head)
+		return tail - head;
+	return pages - head + tail;
+}
+
+static unsigned int cyclic_free_slots_locked(struct xdma_engine *engine)
+{
+	unsigned int used = cyclic_ring_used_locked(engine);
+	unsigned int pages = engine->cyclic_pages;
+
+	if (pages < 2 || used >= pages - 1)
+		return 0;
+	return pages - used - 1;
+}
+
+static void cyclic_credit_complete_locked(struct xdma_engine *engine,
+					  unsigned int credits)
+{
+	if (!enable_st_c2h_credit)
+		return;
+
+	if (credits > engine->cyclic_outstanding_credits)
+		engine->cyclic_outstanding_credits = 0;
+	else
+		engine->cyclic_outstanding_credits -= credits;
+}
+
+static unsigned int cyclic_credit_grant_locked(struct xdma_engine *engine,
+					       unsigned int requested)
+{
+	unsigned int grant;
+	unsigned int free_slots;
+
+	if (!enable_st_c2h_credit || !requested)
+		return 0;
+
+	if (engine->cyclic_outstanding_credits >=
+	    engine->cyclic_credit_window)
+		return 0;
+
+	grant = engine->cyclic_credit_window -
+		engine->cyclic_outstanding_credits;
+	if (grant > requested)
+		grant = requested;
+
+	free_slots = cyclic_free_slots_locked(engine);
+	if (grant > free_slots)
+		grant = free_slots;
+
+	engine->cyclic_outstanding_credits += grant;
+	return grant;
+}
+
+static int transfer_monitor_cyclic(struct xdma_engine *engine,
+			struct xdma_transfer *transfer, int timeout_ms)
+{
+	int rc = 0;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	if (!transfer) {
+		pr_err("%s cyclic transfer NULL\n", engine->name);
+		return -EINVAL;
+	}
+
+	if (poll_mode) {
+		int i;
+
+		for (i = 0; i < 5; i++) {
+			rc = engine_service_poll(engine, 0);
+			if (rc) {
+				pr_info("%s service_poll failed %d.\n",
+					engine->name, rc);
+				return -EIO;
+			}
+			if (engine->cyclic_result[engine->rx_head].status)
+				return 0;
+			schedule();
+		}
+		return -ETIMEDOUT;
+	}
+
+	dbg_tfr("%s: rx_head=%d, rx_tail=%d, wait ...\n",
+		engine->name, engine->rx_head, engine->rx_tail);
+	rc = xlx_wait_event_interruptible_timeout(transfer->wq,
+			(engine->rx_head != engine->rx_tail ||
+			 engine->rx_overrun ||
+			 (!enable_st_c2h_credit && engine->eop_found)),
+			msecs_to_jiffies(timeout_ms));
+	dbg_tfr("%s: wait returns %d, rx %d/%d, overrun %d, eop %d.\n",
+		engine->name, rc, engine->rx_head, engine->rx_tail,
+		engine->rx_overrun, engine->eop_found);
+
+	if (rc == 0)
+		return -ETIMEDOUT;
+	if (rc < 0)
+		return rc;
+
+	return 0;
+}
+
+static struct scatterlist *sglist_index(struct sg_table *sgt, unsigned int idx)
+{
+	struct scatterlist *sg = sgt->sgl;
+	unsigned int i;
+
+	if (idx >= sgt->orig_nents)
+		return NULL;
+
+	for (i = 0; i < idx; i++, sg = sg_next(sg))
+		;
+
+	return sg;
+}
+
+static int copy_cyclic_to_user(struct xdma_engine *engine,
+			       unsigned int pkt_length,
+			       unsigned int head,
+			       char __user *buf, size_t count)
+{
+	struct scatterlist *sg;
+	unsigned int more = pkt_length;
+	unsigned int copied = 0;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	if (!buf) {
+		pr_err("%s cyclic user buffer NULL\n", engine->name);
+		return -EINVAL;
+	}
+
+	dbg_tfr("%s, pkt_len %u, head %u, user buf idx %u.\n",
+		engine->name, pkt_length, head, engine->user_buffer_index);
+
+	sg = sglist_index(&engine->cyclic_sgt, head);
+	if (!sg) {
+		pr_info("%s, head %u OOR, sgl %u.\n",
+			engine->name, head, engine->cyclic_sgt.orig_nents);
+		return -EIO;
+	}
+
+	while (more) {
+		unsigned int copy = more > PAGE_SIZE ? PAGE_SIZE : more;
+		unsigned int blen;
+		int rv;
+
+		if (engine->user_buffer_index >= count)
+			break;
+
+		blen = count - engine->user_buffer_index;
+		if (copy > blen)
+			copy = blen;
+
+		dbg_tfr("%s sg %u, 0x%p, copy %u to user %u.\n",
+			engine->name, head, sg, copy,
+			engine->user_buffer_index);
+
+		rv = copy_to_user(&buf[engine->user_buffer_index],
+			page_address(sg_page(sg)), copy);
+		if (rv) {
+			pr_info("%s copy_to_user %u failed %d\n",
+				engine->name, copy, rv);
+			return -EIO;
+		}
+
+		more -= copy;
+		copied += copy;
+		engine->user_buffer_index += copy;
+
+		if (engine->user_buffer_index == count)
+			break;
+
+		head++;
+		if (head >= engine->cyclic_pages) {
+			head = 0;
+			sg = engine->cyclic_sgt.sgl;
+		} else {
+			sg = sg_next(sg);
+		}
+	}
+
+	return copied;
+}
+
+static int complete_cyclic(struct xdma_engine *engine, char __user *buf,
+			   size_t count)
+{
+	struct xdma_result *result;
+	unsigned int pkt_length = 0;
+	unsigned int head;
+	unsigned int num_credit = 0;
+	unsigned int grant = 0;
+	int fault = 0;
+	int eop = 0;
+	int rc = 0;
+	unsigned long flags;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	result = engine->cyclic_result;
+	if (!result) {
+		pr_err("%s cyclic result NULL\n", engine->name);
+		return -EINVAL;
+	}
+
+	spin_lock_irqsave(&engine->lock, flags);
+
+	head = engine->rx_head;
+
+	while (engine->rx_head != engine->rx_tail || engine->rx_overrun) {
+		WARN_ON(result[engine->rx_head].status == 0);
+
+		dbg_tfr("%s, result[%d].status = 0x%x length = 0x%x.\n",
+			engine->name, engine->rx_head,
+			result[engine->rx_head].status,
+			result[engine->rx_head].length);
+
+		if ((result[engine->rx_head].status >> 16) != C2H_WB) {
+			pr_info("%s, result[%d].status 0x%x, no magic.\n",
+				engine->name, engine->rx_head,
+				result[engine->rx_head].status);
+			fault = 1;
+		} else if (result[engine->rx_head].length > PAGE_SIZE) {
+			pr_info("%s, result[%d].len 0x%x, > PAGE_SIZE 0x%lx.\n",
+				engine->name, engine->rx_head,
+				result[engine->rx_head].length, PAGE_SIZE);
+			fault = 1;
+		} else if (result[engine->rx_head].length == 0) {
+			pr_info("%s, result[%d].length 0x%x.\n",
+				engine->name, engine->rx_head,
+				result[engine->rx_head].length);
+			fault = 1;
+		} else {
+			pkt_length += result[engine->rx_head].length;
+			num_credit++;
+			if (result[engine->rx_head].status & RX_STATUS_EOP) {
+				eop = 1;
+				engine->eop_found = 1;
+			}
+
+			dbg_tfr("%s, pkt_length=%u (%s)\n",
+				engine->name, pkt_length,
+				eop ? "with EOP" : "no EOP yet");
+		}
+
+		result[engine->rx_head].status = 0;
+		result[engine->rx_head].length = 0;
+		engine->rx_head =
+			(engine->rx_head + 1) % engine->cyclic_pages;
+
+		if (fault || eop)
+			break;
+	}
+
+	cyclic_credit_complete_locked(engine, num_credit);
+	engine->rx_overrun = 0;
+
+	spin_unlock_irqrestore(&engine->lock, flags);
+
+	if (fault)
+		return -EIO;
+
+	rc = copy_cyclic_to_user(engine, pkt_length, head, buf, count);
+	if (rc > 0) {
+		spin_lock_irqsave(&engine->lock, flags);
+		grant = cyclic_credit_grant_locked(engine, num_credit);
+		spin_unlock_irqrestore(&engine->lock, flags);
+
+		if (grant)
+			write_register(grant, &engine->sgdma_regs->credits, 0);
+	}
+
+	return rc;
+}
+
+ssize_t xdma_engine_read_cyclic(struct xdma_engine *engine, char __user *buf,
+				size_t count, int timeout_ms)
+{
+	int i = 0;
+	int rc = 0;
+	ssize_t rc_len = 0;
+	struct xdma_transfer *transfer;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	if (engine->magic != MAGIC_ENGINE) {
+		pr_err("%s has invalid magic number %lx\n", engine->name,
+		       engine->magic);
+		return -EINVAL;
+	}
+
+	if (!engine->cyclic_req)
+		return -EINVAL;
+
+	transfer = &engine->cyclic_req->tfer[0];
+	engine->user_buffer_index = 0;
+
+	do {
+		rc = transfer_monitor_cyclic(engine, transfer, timeout_ms);
+		if (rc < 0)
+			return rc_len ? rc_len : rc;
+
+		rc = complete_cyclic(engine, buf, count);
+		if (rc < 0)
+			return rc_len ? rc_len : rc;
+
+		rc_len += rc;
+		i++;
+		if (i > 10)
+			break;
+	} while (!engine->eop_found && engine->user_buffer_index < count);
+
+	engine->eop_found = 0;
+
+	return rc_len;
+}
+
+static void sgt_free_with_pages(struct sg_table *sgt, int dir,
+				struct pci_dev *pdev)
+{
+	struct scatterlist *sg = sgt->sgl;
+	int npages = sgt->orig_nents;
+	int i;
+
+	for (i = 0; i < npages; i++, sg = sg_next(sg)) {
+		struct page *pg = sg_page(sg);
+		dma_addr_t bus = sg_dma_address(sg);
+
+		if (pg) {
+			if (pdev)
+				pci_unmap_page(pdev, bus, PAGE_SIZE, dir);
+			__free_page(pg);
+		} else {
+			break;
+		}
+	}
+	sg_free_table(sgt);
+	memset(sgt, 0, sizeof(struct sg_table));
+}
+
+static int sgt_alloc_with_pages(struct sg_table *sgt, unsigned int npages,
+				int dir, struct pci_dev *pdev)
+{
+	struct scatterlist *sg;
+	int i;
+
+	if (sg_alloc_table(sgt, npages, GFP_KERNEL)) {
+		pr_info("sgt OOM.\n");
+		return -ENOMEM;
+	}
+
+	sg = sgt->sgl;
+	for (i = 0; i < npages; i++, sg = sg_next(sg)) {
+		struct page *pg = alloc_page(GFP_KERNEL);
+
+		if (!pg) {
+			pr_info("%d/%u, page OOM.\n", i, npages);
+			goto err_out;
+		}
+
+		if (pdev) {
+			dma_addr_t bus = pci_map_page(pdev, pg, 0, PAGE_SIZE,
+						      dir);
+			if (unlikely(pci_dma_mapping_error(pdev, bus))) {
+				pr_info("%d/%u, page 0x%p map err.\n",
+					i, npages, pg);
+				__free_page(pg);
+				goto err_out;
+			}
+			sg_dma_address(sg) = bus;
+			sg_dma_len(sg) = PAGE_SIZE;
+		}
+		sg_set_page(sg, pg, PAGE_SIZE, 0);
+	}
+
+	sgt->orig_nents = sgt->nents = npages;
+
+	return 0;
+
+err_out:
+	sgt_free_with_pages(sgt, dir, pdev);
+	return -ENOMEM;
+}
+
+int xdma_cyclic_transfer_setup(struct xdma_engine *engine)
+{
+	struct xdma_dev *xdev;
+	struct xdma_transfer *xfer;
+	dma_addr_t bus;
+	unsigned long flags;
+	unsigned int pages;
+	unsigned int credits;
+	int i;
+	int rc;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	if (engine->magic != MAGIC_ENGINE) {
+		pr_err("%s has invalid magic number %lx\n", engine->name,
+		       engine->magic);
+		return -EINVAL;
+	}
+
+	if (!engine->streaming || engine->dir != DMA_FROM_DEVICE)
+		return -EINVAL;
+
+	xdev = engine->xdev;
+	if (!xdev) {
+		pr_err("%s has invalid xdev\n", engine->name);
+		return -EINVAL;
+	}
+
+	mutex_lock(&engine->desc_lock);
+
+	spin_lock_irqsave(&engine->lock, flags);
+	if (engine->cyclic_req) {
+		spin_unlock_irqrestore(&engine->lock, flags);
+		mutex_unlock(&engine->desc_lock);
+		return -EBUSY;
+	}
+	if (engine->running || !list_empty(&engine->transfer_list)) {
+		spin_unlock_irqrestore(&engine->lock, flags);
+		mutex_unlock(&engine->desc_lock);
+		return -EBUSY;
+	}
+
+	pages = cyclic_configured_pages();
+	credits = cyclic_configured_credits(pages);
+
+	engine->rx_tail = 0;
+	engine->rx_head = 0;
+	engine->rx_overrun = 0;
+	engine->eop_found = 0;
+	engine->cyclic_pages = pages;
+	engine->cyclic_credit_window = credits;
+	engine->cyclic_outstanding_credits = enable_st_c2h_credit ? credits : 0;
+	engine->user_buffer_index = 0;
+	engine->desc_idx = 0;
+	engine->desc_used = 0;
+	spin_unlock_irqrestore(&engine->lock, flags);
+
+	rc = sgt_alloc_with_pages(&engine->cyclic_sgt, pages,
+				  engine->dir, xdev->pdev);
+	if (rc < 0) {
+		pr_info("%s cyclic pages %u OOM.\n", engine->name, pages);
+		goto err_out;
+	}
+
+	engine->cyclic_req = xdma_init_request(&engine->cyclic_sgt, 0);
+	if (!engine->cyclic_req) {
+		pr_info("%s cyclic request OOM.\n", engine->name);
+		rc = -ENOMEM;
+		goto err_out;
+	}
+
+	rc = transfer_init(engine, engine->cyclic_req,
+			   &engine->cyclic_req->tfer[0]);
+	if (rc < 0)
+		goto err_out;
+
+	xfer = &engine->cyclic_req->tfer[0];
+
+	memset(engine->cyclic_result, 0,
+	       pages * sizeof(struct xdma_result));
+	bus = engine->cyclic_result_bus;
+	for (i = 0; i < xfer->desc_num; i++) {
+		xfer->desc_virt[i].src_addr_lo =
+			cpu_to_le32(PCI_DMA_L(bus));
+		xfer->desc_virt[i].src_addr_hi =
+			cpu_to_le32(PCI_DMA_H(bus));
+		bus += sizeof(struct xdma_result);
+	}
+
+	for (i = 0; i < xfer->desc_num; i++) {
+		xdma_desc_control_set(xfer->desc_virt + i,
+				       XDMA_DESC_EOP | XDMA_DESC_COMPLETED);
+	}
+
+	xdma_transfer_cyclic(xfer);
+
+	rc = transfer_queue(engine, xfer);
+	if (rc < 0)
+		goto err_out;
+
+	if (engine->cmplthp)
+		xdma_kthread_wakeup(engine->cmplthp);
+
+	mutex_unlock(&engine->desc_lock);
+	return 0;
+
+err_out:
+	{
+		struct xdma_request_cb *cyclic_req = NULL;
+		int free_sgt = 0;
+
+		spin_lock_irqsave(&engine->lock, flags);
+		engine->desc_used = 0;
+		engine->desc_idx = 0;
+		engine->cyclic_pages = 0;
+		engine->cyclic_credit_window = 0;
+		engine->cyclic_outstanding_credits = 0;
+		if (engine->cyclic_req) {
+			cyclic_req = engine->cyclic_req;
+			engine->cyclic_req = NULL;
+		}
+		free_sgt = engine->cyclic_sgt.orig_nents != 0;
+		spin_unlock_irqrestore(&engine->lock, flags);
+
+		if (cyclic_req)
+			xdma_request_free(cyclic_req);
+		if (free_sgt)
+			sgt_free_with_pages(&engine->cyclic_sgt, engine->dir,
+					    xdev->pdev);
+	}
+	mutex_unlock(&engine->desc_lock);
+
+	return rc;
+}
+
+static int cyclic_shutdown_polled(struct xdma_engine *engine)
+{
+	unsigned long flags;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	spin_lock_irqsave(&engine->lock, flags);
+	dbg_tfr("Polling for shutdown completion\n");
+	do {
+		engine_status_read(engine, 1, 0);
+		spin_unlock_irqrestore(&engine->lock, flags);
+		schedule();
+		spin_lock_irqsave(&engine->lock, flags);
+	} while (engine->status & XDMA_STAT_BUSY);
+
+	if ((engine->running) && !(engine->status & XDMA_STAT_BUSY))
+		engine_service_shutdown(engine);
+
+	dbg_tfr("Shutdown completion polling done\n");
+	spin_unlock_irqrestore(&engine->lock, flags);
+
+	return 0;
+}
+
+static int cyclic_shutdown_interrupt(struct xdma_engine *engine)
+{
+	int rc;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	rc = xlx_wait_event_interruptible_timeout(engine->shutdown_wq,
+				!engine->running, msecs_to_jiffies(10000));
+
+	if (engine->running) {
+		pr_info("%s still running?!, %d\n", engine->name, rc);
+		return -EINVAL;
+	}
+
+	return rc;
+}
+
+int xdma_cyclic_transfer_teardown(struct xdma_engine *engine)
+{
+	int rc;
+	struct xdma_dev *xdev;
+	struct xdma_transfer *transfer;
+	struct xdma_request_cb *cyclic_req = NULL;
+	int free_sgt = 0;
+	unsigned long flags;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	xdev = engine->xdev;
+	if (!xdev) {
+		pr_err("%s has invalid xdev\n", engine->name);
+		return -EINVAL;
+	}
+
+	mutex_lock(&engine->desc_lock);
+
+	spin_lock_irqsave(&engine->lock, flags);
+	transfer = engine_cyclic_stop(engine);
+	if (transfer && transfer != &engine->cyclic_req->tfer[0])
+		pr_info("%s unexpected transfer 0x%p/0x%p\n",
+			engine->name, transfer, &engine->cyclic_req->tfer[0]);
+	spin_unlock_irqrestore(&engine->lock, flags);
+
+	if (poll_mode)
+		rc = cyclic_shutdown_polled(engine);
+	else
+		rc = cyclic_shutdown_interrupt(engine);
+
+	spin_lock_irqsave(&engine->lock, flags);
+	if (engine->cyclic_req) {
+		cyclic_req = engine->cyclic_req;
+		engine->cyclic_req = NULL;
+	}
+
+	free_sgt = engine->cyclic_sgt.orig_nents != 0;
+
+	engine->rx_tail = 0;
+	engine->rx_head = 0;
+	engine->rx_overrun = 0;
+	engine->eop_found = 0;
+	engine->cyclic_pages = 0;
+	engine->cyclic_credit_window = 0;
+	engine->cyclic_outstanding_credits = 0;
+	engine->user_buffer_index = 0;
+	engine->desc_used = 0;
+	engine->desc_idx = 0;
+	spin_unlock_irqrestore(&engine->lock, flags);
+
+	if (cyclic_req)
+		xdma_request_free(cyclic_req);
+	if (free_sgt)
+		sgt_free_with_pages(&engine->cyclic_sgt, engine->dir,
+				    xdev->pdev);
+
+	mutex_unlock(&engine->desc_lock);
+
+	return rc < 0 ? rc : 0;
+}
+
+static void engine_transfer_dequeue(struct xdma_engine *engine)
+{
+	struct xdma_transfer *transfer;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return;
+	}
+
+	if (!engine->cyclic_req || list_empty(&engine->transfer_list))
+		return;
+
+	transfer = list_entry(engine->transfer_list.next, struct xdma_transfer,
+			      entry);
+	if (!transfer || transfer != &engine->cyclic_req->tfer[0]) {
+		pr_info("%s, xfer 0x%p != 0x%p.\n",
+			engine->name, transfer, &engine->cyclic_req->tfer[0]);
+		return;
+	}
+
+	dbg_tfr("%s engine completed cyclic transfer 0x%p (%d desc).\n",
+		engine->name, transfer, transfer->desc_num);
+	list_del(engine->transfer_list.next);
+}
+
+static int engine_ring_process(struct xdma_engine *engine)
+{
+	struct xdma_result *result;
+	int eop_count = 0;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return 0;
+	}
+
+	result = engine->cyclic_result;
+	if (!result) {
+		pr_err("%s cyclic result NULL\n", engine->name);
+		return 0;
+	}
+
+	dbg_tfr("%s, result %d, 0x%x, len 0x%x.\n",
+		engine->name, engine->rx_tail, result[engine->rx_tail].status,
+		result[engine->rx_tail].length);
+
+	while (result[engine->rx_tail].status && !engine->rx_overrun) {
+		if (result[engine->rx_tail].status & RX_STATUS_EOP)
+			eop_count++;
+
+		engine->rx_tail = (engine->rx_tail + 1) %
+				  engine->cyclic_pages;
+
+		dbg_tfr("%s, head %d, tail %d, 0x%x, len 0x%x.\n",
+			engine->name, engine->rx_head, engine->rx_tail,
+			result[engine->rx_tail].status,
+			result[engine->rx_tail].length);
+
+		if (engine->rx_tail == engine->rx_head) {
+			dbg_tfr("%s: overrun\n", engine->name);
+			engine->rx_overrun = 1;
+		}
+	}
+
+	return eop_count;
+}
+
+static int engine_service_cyclic_polled(struct xdma_engine *engine)
+{
+	int eop_count = 0;
+	int rc = 0;
+	struct xdma_poll_wb *writeback_data;
+	u32 sched_limit = 0;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	writeback_data = (struct xdma_poll_wb *)engine->poll_mode_addr_virt;
+
+	while (eop_count == 0 && !engine->rx_overrun) {
+		if (sched_limit != 0 &&
+		    (sched_limit % NUM_POLLS_PER_SCHED) == 0)
+			schedule();
+		sched_limit++;
+
+		if ((writeback_data->completed_desc_count) & WB_ERR_MASK) {
+			rc = -EIO;
+			break;
+		}
+
+		eop_count = engine_ring_process(engine);
+		if (engine->rx_head != engine->rx_tail)
+			break;
+	}
+
+	if (eop_count == 0) {
+		engine_status_read(engine, 1, 0);
+		if ((engine->running) && !(engine->status & XDMA_STAT_BUSY)) {
+			engine_transfer_dequeue(engine);
+			engine_service_shutdown(engine);
+		}
+	}
+
+	return rc;
+}
+
+static int engine_service_cyclic_interrupt(struct xdma_engine *engine)
+{
+	int eop_count = 0;
+	struct xdma_transfer *xfer;
+
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	if (!engine->cyclic_req)
+		return 0;
+
+	engine_status_read(engine, 1, 0);
+	eop_count = engine_ring_process(engine);
+
+	xfer = &engine->cyclic_req->tfer[0];
+	if (enable_st_c2h_credit) {
+		if (eop_count > 0 || engine->rx_head != engine->rx_tail ||
+		    engine->rx_overrun)
+			xlx_wake_up(&xfer->wq);
+	} else if (eop_count > 0) {
+		dbg_tfr("wake up due to %d EOP's\n", eop_count);
+		engine->eop_found = 1;
+		xlx_wake_up(&xfer->wq);
+	}
+
+	if ((engine->running) && !(engine->status & XDMA_STAT_BUSY)) {
+		engine_transfer_dequeue(engine);
+		engine_service_shutdown(engine);
+	}
+
+	return 0;
+}
+
+static int engine_service_cyclic(struct xdma_engine *engine)
+{
+	if (!engine) {
+		pr_err("dma engine NULL\n");
+		return -EINVAL;
+	}
+
+	if (engine->magic != MAGIC_ENGINE) {
+		pr_err("%s has invalid magic number %lx\n", engine->name,
+		       engine->magic);
+		return -EINVAL;
+	}
+
+	if (poll_mode)
+		return engine_service_cyclic_polled(engine);
+	return engine_service_cyclic_interrupt(engine);
 }
 
 ssize_t xdma_xfer_aperture(struct xdma_engine *engine, bool write, u64 ep_addr,

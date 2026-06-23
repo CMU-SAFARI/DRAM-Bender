@@ -1,7 +1,9 @@
 #include "drambender/api/program/program.h"
 
+#include <string>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 #include "instruction_internal.h"
 
@@ -199,9 +201,24 @@ void Program::preprocess_branches_() {
 void Program::linear_analysis_() {
   warnings_.clear();
 
+  constexpr int k_max_read_count_metadata = 1023;
+  std::vector<std::pair<size_t, size_t>> read_segments;
   bool in_sequence = false;
   size_t seq_pc = 0;
   int read_counter = 0;
+
+  auto finish_sequence = [&](size_t end_pc) {
+    if (read_counter > k_max_read_count_metadata) {
+      throw std::invalid_argument(
+          "Uninterrupted DDR read segment starting at PC " + std::to_string(seq_pc) +
+          " contains " + std::to_string(read_counter) +
+          " READ commands, but FPGA read-count metadata only supports 0..1023.");
+    }
+    if (read_counter > 0) {
+      warnings_[seq_pc] = SMC_INFO(read_counter);
+      read_segments.emplace_back(seq_pc, end_pc);
+    }
+  };
 
   for (size_t pc = 0; pc < program_.size(); ++pc) {
     const Inst cur_inst = program_[pc];
@@ -215,12 +232,21 @@ void Program::linear_analysis_() {
     }
 
     if (!is_ddr(cur_inst) && !is_sleep(cur_inst)) {
+      finish_sequence(pc - 1);
       in_sequence = false;
-      if (read_counter > 0 && read_counter <= 1024) {
-        warnings_[seq_pc] = SMC_INFO(read_counter);
-      }
     } else {
       read_counter += count_ddr_reads(cur_inst);
+    }
+  }
+
+  for (const auto& [segment_start, segment_end] : read_segments) {
+    for (const auto& [label_name, label_pc] : labels_) {
+      if (label_pc > segment_start && label_pc <= segment_end) {
+        throw std::invalid_argument(
+            "Label '" + label_name +
+            "' targets the middle of a DDR read segment. Branch to the segment start so "
+            "generated SMC_INFO metadata is executed before the READ commands.");
+      }
     }
   }
 }

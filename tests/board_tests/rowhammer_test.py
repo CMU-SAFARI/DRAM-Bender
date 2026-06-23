@@ -53,6 +53,7 @@ def get_bitflip_indices(observed_bytes: np.ndarray, expected_pattern: int) -> np
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Single-sided RowHammer test")
+    ap.add_argument("--board-id", type=int, default=0)
     ap.add_argument("--instance-id", type=int, default=0)
     ap.add_argument("--bank", type=int, default=0)
     ap.add_argument("--start-row", type=int, default=0)
@@ -62,11 +63,12 @@ def main() -> int:
     ap.add_argument("--aggressor-data", type=lambda x: int(x, 0), default=0xFFFFFFFF)
     args = ap.parse_args()
 
-    print(f"rowhammer_test: bank={args.bank} start_row={args.start_row} "
+    print(f"rowhammer_test: board={args.board_id} instance={args.instance_id} "
+          f"bank={args.bank} start_row={args.start_row} "
           f"num_victims={args.num_victims} hammer_count={args.hammer_count}")
     print(f"  victim_data=0x{args.victim_data:08x} aggressor_data=0x{args.aggressor_data:08x}")
 
-    board = drambender.api.DDR4(args.instance_id)
+    board = drambender.api.DDR4(args.board_id, args.instance_id)
     board.reset_fpga()
 
     # Build template once, bind fixed args

@@ -83,7 +83,9 @@ class IHostInterface {
   virtual void drain() = 0;
 };
 
-std::unique_ptr<IHostInterface> create_host_interface(HostInterface host_interface, int instance_id);
+std::unique_ptr<IHostInterface> create_host_interface(HostInterface host_interface,
+                                                      int board_id,
+                                                      int instance_id);
 
 }  // namespace DRAMBender
 

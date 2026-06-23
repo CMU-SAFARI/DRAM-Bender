@@ -402,6 +402,27 @@ static ssize_t char_sgdma_write(struct file *file, const char __user *buf,
 static ssize_t char_sgdma_read(struct file *file, char __user *buf,
 				size_t count, loff_t *pos)
 {
+	struct xdma_cdev *xcdev = (struct xdma_cdev *)file->private_data;
+	struct xdma_engine *engine;
+	int rv;
+
+	rv = xcdev_check(__func__, xcdev, 1);
+	if (rv < 0)
+		return rv;
+
+	engine = xcdev->engine;
+
+	if (engine->streaming && engine->dir == DMA_FROM_DEVICE) {
+		if (!count)
+			return 0;
+
+		rv = xdma_cyclic_transfer_setup(engine);
+		if (rv < 0 && rv != -EBUSY)
+			return rv;
+
+		return xdma_engine_read_cyclic(engine, buf, count, 600000);
+	}
+
 	return char_sgdma_read_write(file, buf, count, pos, 0);
 }
 
@@ -873,8 +894,11 @@ static int char_sgdma_close(struct inode *inode, struct file *file)
 
 	engine = xcdev->engine;
 
-	if (engine->streaming && engine->dir == DMA_FROM_DEVICE)
+	if (engine->streaming && engine->dir == DMA_FROM_DEVICE) {
 		engine->device_open = 0;
+		if (engine->cyclic_req)
+			return xdma_cyclic_transfer_teardown(engine);
+	}
 
 	return 0;
 }

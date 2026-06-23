@@ -14,14 +14,15 @@ struct HBMTemperature {
 
 class HBM2 : public IBoard {
  public:
-  explicit HBM2(int instance_id = 0, HostInterface host_interface = HostInterface::XDMA);
+  HBM2(int board_id, int instance_id, HostInterface host_interface = HostInterface::XDMA);
 
   HBMTemperature read_temperature();
 
  protected:
-  HBM2(int instance_id, std::unique_ptr<IHostInterface> host_interface);
+  HBM2(int board_id, int instance_id, std::unique_ptr<IHostInterface> host_interface);
 
  private:
+  const int m_board_id_;
   const int m_instance_id_;
 };
 

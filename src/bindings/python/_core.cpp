@@ -1040,13 +1040,15 @@ NB_MODULE(_core, m) {
            });
 
   nb::class_<DDR4, IBoard>(m, "DDR4")
-      .def(nb::init<int, HostInterface>(),
-           nb::arg("instance_id") = 0,
+      .def(nb::init<int, int, HostInterface>(),
+           nb::arg("board_id"),
+           nb::arg("instance_id"),
            nb::arg("host_interface") = HostInterface::XDMA);
 
   nb::class_<HBM2, IBoard>(m, "HBM2")
-      .def(nb::init<int, HostInterface>(),
-           nb::arg("instance_id") = 0,
+      .def(nb::init<int, int, HostInterface>(),
+           nb::arg("board_id"),
+           nb::arg("instance_id"),
            nb::arg("host_interface") = HostInterface::XDMA)
       .def("read_temperature",
            [](HBM2& board) {
@@ -1066,6 +1068,7 @@ NB_MODULE(_core, m) {
   m.def("open_board",
         &create_board,
         nb::arg("board_type"),
+        nb::arg("board_id"),
         nb::arg("instance_id"),
         nb::arg("host_interface") = HostInterface::XDMA);
 

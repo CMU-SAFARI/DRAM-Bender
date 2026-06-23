@@ -125,7 +125,7 @@ def run_test(board, name: str, prog: FinalProgram):
 
 
 def main() -> int:
-    board = drambender.api.DDR4(0)
+    board = drambender.api.DDR4(0, 0)
     board.reset_fpga()
     print("Board reset complete.\n")
 

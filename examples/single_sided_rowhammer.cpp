@@ -43,6 +43,7 @@ constexpr int NUM_HAMMER = 7;
 constexpr int HAMMER_CTR = 8;
 
 struct Options {
+  int board_id     = 0;
   int instance_id  = 0;
   int bank         = 0;
   int start_row    = 81;
@@ -64,7 +65,8 @@ bool parse_args(int argc, char** argv, Options* opts) {
   for (int i = 1; i < argc; ++i) {
     const std::string_view arg(argv[i]);
     int* target = nullptr;
-    if      (arg == "--instance-id")  target = &opts->instance_id;
+    if      (arg == "--board-id")     target = &opts->board_id;
+    else if (arg == "--instance-id")  target = &opts->instance_id;
     else if (arg == "--bank")         target = &opts->bank;
     else if (arg == "--start-row")    target = &opts->start_row;
     else if (arg == "--num-victims")  target = &opts->num_victims;
@@ -176,14 +178,14 @@ int main(int argc, char** argv) {
   Options opts;
   if (!parse_args(argc, argv, &opts)) {
     std::fprintf(stderr,
-                 "Usage: %s [--instance-id N] [--bank N] [--start-row N] "
+                 "Usage: %s [--board-id N] [--instance-id N] [--bank N] [--start-row N] "
                  "[--num-victims N] [--hammer-count N]\n",
                  argv[0]);
     return 2;
   }
 
   try {
-    auto board = create_board(BoardType::DDR4, opts.instance_id, HostInterface::XDMA);
+    auto board = create_board(BoardType::DDR4, opts.board_id, opts.instance_id, HostInterface::XDMA);
     board->reset_fpga();
 
     std::vector<std::byte> row_buffer(k_row_bytes);

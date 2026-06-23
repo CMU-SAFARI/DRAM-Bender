@@ -9,12 +9,13 @@ namespace DRAMBender {
 
 class DDR4 : public IBoard {
  public:
-  explicit DDR4(int instance_id = 0, HostInterface host_interface = HostInterface::XDMA);
+  DDR4(int board_id, int instance_id, HostInterface host_interface = HostInterface::XDMA);
 
  protected:
-  DDR4(int instance_id, std::unique_ptr<IHostInterface> host_interface);
+  DDR4(int board_id, int instance_id, std::unique_ptr<IHostInterface> host_interface);
 
  private:
+  const int m_board_id_;
   const int m_instance_id_;
 };
 

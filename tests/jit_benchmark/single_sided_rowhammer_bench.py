@@ -34,6 +34,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Single-sided RowHammer sweep over a range of victim rows."
     )
+    parser.add_argument("--board-id", type=int, default=0)
     parser.add_argument("--instance-id", type=int, default=0)
     parser.add_argument("--bank", type=int, default=0)
     parser.add_argument("--start-row", type=int, default=81,
@@ -45,6 +46,7 @@ def main() -> int:
 
     board = open_board(
         BoardType.DDR4,
+        board_id=args.board_id,
         instance_id=args.instance_id,
         host_interface=HostInterface.XDMA,
     )
@@ -57,7 +59,7 @@ def main() -> int:
     )
 
     print(
-        f"single_sided_rowhammer: instance={args.instance_id} bank={args.bank} "
+        f"single_sided_rowhammer: board={args.board_id} instance={args.instance_id} bank={args.bank} "
         f"start_row={args.start_row} num_victims={args.num_victims} "
         f"hammer_count={args.hammer_count}"
     )

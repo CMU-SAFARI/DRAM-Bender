@@ -6,12 +6,15 @@
 
 namespace DRAMBender {
 
-std::unique_ptr<IHostInterface> make_xdma_host_interface(int instance_id);
+std::unique_ptr<IHostInterface> make_xdma_host_interface(int board_id, int instance_id);
 
-std::unique_ptr<IHostInterface> create_host_interface(HostInterface host_interface, int instance_id) {
+std::unique_ptr<IHostInterface> create_host_interface(HostInterface host_interface,
+                                                      int board_id,
+                                                      int instance_id) {
   switch (host_interface) {
     case HostInterface::XDMA: {
-      std::unique_ptr<IHostInterface> interface = make_xdma_host_interface(instance_id);
+      std::unique_ptr<IHostInterface> interface =
+          make_xdma_host_interface(board_id, instance_id);
       if (!interface) {
         throw std::runtime_error("Failed to create host interface for XDMA.");
       }

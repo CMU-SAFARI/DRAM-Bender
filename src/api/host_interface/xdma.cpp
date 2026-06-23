@@ -29,10 +29,12 @@ struct FreeDeleter {
 
 class XDMA : public IHostInterface {
  public:
-  explicit XDMA(int instance_id,
+  explicit XDMA(int board_id,
+                int instance_id,
                 size_t send_buffer_size = 32 * 2048,
                 size_t recv_buffer_size = 32 * 1024)
-      : instance_id_(instance_id),
+      : board_id_(board_id),
+        instance_id_(instance_id),
         send_buffer_size_(send_buffer_size),
         recv_buffer_size_(recv_buffer_size) {}
 
@@ -54,15 +56,15 @@ class XDMA : public IHostInterface {
       return;
     }
 
-    const std::string to_fpga_file = to_FPGA_prefix_ + std::to_string(instance_id_);
-    m_to_card_fd_ = ::open(to_fpga_file.c_str(), O_RDWR);
+    const std::string to_fpga_file = devicePath_("h2c");
+    m_to_card_fd_ = ::open(to_fpga_file.c_str(), O_RDWR | O_CLOEXEC);
     if (m_to_card_fd_ < 0) {
       throw std::system_error(errno, std::generic_category(),
                               "Failed to open XDMA host-to-card device " + to_fpga_file);
     }
 
-    const std::string from_fpga_file = from_FPGA_prefix_ + std::to_string(instance_id_);
-    m_from_card_fd_ = ::open(from_fpga_file.c_str(), O_RDWR);
+    const std::string from_fpga_file = devicePath_("c2h");
+    m_from_card_fd_ = ::open(from_fpga_file.c_str(), O_RDWR | O_CLOEXEC);
     if (m_from_card_fd_ < 0) {
       throw std::system_error(errno, std::generic_category(),
                               "Failed to open XDMA card-to-host device " + from_fpga_file);
@@ -90,10 +92,15 @@ class XDMA : public IHostInterface {
 
     std::memcpy(m_send_buf_.get(), data.data(), data.size());
 
+    size_t bytes_sent = 0;
     size_t zero_write_retries = 0;
-    while (true) {
-      const ssize_t rc = ::write(m_to_card_fd_, m_send_buf_.get(), data.size());
+    while (bytes_sent < data.size()) {
+      const ssize_t rc =
+          ::write(m_to_card_fd_, m_send_buf_.get() + bytes_sent, data.size() - bytes_sent);
       if (rc < 0) {
+        if (errno == EINTR) {
+          continue;
+        }
         throw std::system_error(errno, std::generic_category(), "XDMA write failed");
       }
       if (rc == 0) {
@@ -105,12 +112,12 @@ class XDMA : public IHostInterface {
         std::this_thread::yield();
         continue;
       }
-      if (static_cast<size_t>(rc) != data.size()) {
-        throw std::runtime_error("XDMA write completed with a short transfer.");
-      }
 
-      return static_cast<size_t>(rc);
+      bytes_sent += static_cast<size_t>(rc);
+      zero_write_retries = 0;
     }
+
+    return bytes_sent;
   }
 
   void begin_receive() override {
@@ -157,9 +164,19 @@ class XDMA : public IHostInterface {
       }
     }
 
-    const ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get(), dst.size());
+    ssize_t rc = 0;
+    while (true) {
+      rc = ::read(m_from_card_fd_, m_recv_buf_.get(), dst.size());
+      if (rc < 0 && errno == EINTR) {
+        continue;
+      }
+      break;
+    }
     if (rc < 0) {
       throw std::system_error(errno, std::generic_category(), "XDMA read failed");
+    }
+    if (rc == 0) {
+      throw std::runtime_error("XDMA read made no forward progress.");
     }
 
     const size_t recv_count = static_cast<size_t>(rc);
@@ -271,6 +288,11 @@ class XDMA : public IHostInterface {
     return std::unique_ptr<std::byte, FreeDeleter>(static_cast<std::byte*>(raw_ptr));
   }
 
+  std::string devicePath_(std::string_view direction) const {
+    return "/dev/xdma" + std::to_string(board_id_) + "_" + std::string(direction) + "_" +
+           std::to_string(instance_id_);
+  }
+
   void clearCancelEvent_() {
     if (m_cancel_fd_ < 0) {
       return;
@@ -296,6 +318,7 @@ class XDMA : public IHostInterface {
     }
   }
 
+  const int board_id_;
   const int instance_id_;
   const size_t send_buffer_size_;
   const size_t recv_buffer_size_;
@@ -304,14 +327,12 @@ class XDMA : public IHostInterface {
   int m_to_card_fd_ = -1;
   int m_from_card_fd_ = -1;
   int m_cancel_fd_ = -1;
-  const std::string to_FPGA_prefix_ = "/dev/xdma0_h2c_";
-  const std::string from_FPGA_prefix_ = "/dev/xdma0_c2h_";
 };
 
 }  // namespace
 
-std::unique_ptr<IHostInterface> make_xdma_host_interface(int instance_id) {
-  return std::make_unique<XDMA>(instance_id);
+std::unique_ptr<IHostInterface> make_xdma_host_interface(int board_id, int instance_id) {
+  return std::make_unique<XDMA>(board_id, instance_id);
 }
 
 }  // namespace DRAMBender

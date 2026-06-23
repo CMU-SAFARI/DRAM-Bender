@@ -165,7 +165,8 @@
 #define XDMA_ID_C2H 0x1fc1U
 
 /* for C2H AXI-ST mode */
-#define CYCLIC_RX_PAGES_MAX	256
+#define CYCLIC_RX_PAGES_MAX	8192
+#define CYCLIC_RX_INITIAL_CREDITS_DEFAULT 512
 
 #define LS_BYTE_MASK 0x000000FFUL
 
@@ -499,6 +500,17 @@ struct xdma_engine {
 	/* Members applicable to AXI-ST C2H (cyclic) transfers */
 	struct xdma_result *cyclic_result;
 	dma_addr_t cyclic_result_bus;	/* bus addr for transfer */
+	struct xdma_request_cb *cyclic_req;
+	struct sg_table cyclic_sgt;
+	u8 eop_found;
+	unsigned int cyclic_pages;
+	unsigned int cyclic_credit_window;
+	unsigned int cyclic_outstanding_credits;
+	int rx_tail;
+	int rx_head;
+	int rx_overrun;
+	unsigned int user_buffer_index;
+
 	u8 *perf_buf_virt;
 	dma_addr_t perf_buf_bus; /* bus address */
 
@@ -661,6 +673,10 @@ struct xdma_transfer *engine_cyclic_stop(struct xdma_engine *engine);
 void enable_perf(struct xdma_engine *engine);
 void get_perf_stats(struct xdma_engine *engine);
 
+int xdma_cyclic_transfer_setup(struct xdma_engine *engine);
+int xdma_cyclic_transfer_teardown(struct xdma_engine *engine);
+ssize_t xdma_engine_read_cyclic(struct xdma_engine *engine, char __user *buf,
+			size_t count, int timeout_ms);
 int engine_addrmode_set(struct xdma_engine *engine, unsigned long arg);
 int engine_service_poll(struct xdma_engine *engine, u32 expected_desc_count);
 

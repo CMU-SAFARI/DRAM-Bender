@@ -15,6 +15,7 @@ using namespace DRAMBender;
 namespace {
 
 // Default test configuration
+constexpr int k_default_board_id = 0;
 constexpr int k_default_instance_id = 0;
 constexpr int k_default_bank = 0;
 constexpr int k_default_num_rows = 65536;
@@ -44,6 +45,7 @@ enum ExitCode {
 };
 
 struct Options {
+  int board_id = k_default_board_id;
   int instance_id = k_default_instance_id;
   int bank = k_default_bank;
   int num_rows = k_default_num_rows;
@@ -52,7 +54,7 @@ struct Options {
 
 void print_usage(const char* argv0) {
   std::fprintf(stderr,
-               "Usage: %s [--instance-id N] [--bank N] [--num-rows N] [--num-cls N]\n",
+               "Usage: %s [--board-id N] [--instance-id N] [--bank N] [--num-rows N] [--num-cls N]\n",
                argv0);
 }
 
@@ -75,6 +77,16 @@ bool parse_non_negative_int(const char* text, int* value) {
 bool parse_args(int argc, char** argv, Options* options) {
   for (int arg_index = 1; arg_index < argc; ++arg_index) {
     const std::string_view arg(argv[arg_index]);
+    if (arg == "--board-id") {
+      if (arg_index + 1 >= argc ||
+          !parse_non_negative_int(argv[arg_index + 1], &options->board_id)) {
+        std::fprintf(stderr, "Invalid value for --board-id.\n");
+        return false;
+      }
+      ++arg_index;
+      continue;
+    }
+
     if (arg == "--instance-id") {
       if (arg_index + 1 >= argc ||
           !parse_non_negative_int(argv[arg_index + 1], &options->instance_id)) {
@@ -292,7 +304,8 @@ int main(int argc, char** argv) {
   }
 
   try {
-    auto board = create_board(BoardType::DDR4, options.instance_id, HostInterface::XDMA);
+    auto board = create_board(
+        BoardType::DDR4, options.board_id, options.instance_id, HostInterface::XDMA);
     board->reset_fpga();
 
     const FinalProgram program = build_rw_program(options.bank, options.num_rows, options.num_cls);
@@ -304,7 +317,8 @@ int main(int argc, char** argv) {
     uint32_t row_pattern = k_test_data;
     const int progress_interval = std::max(1, options.num_rows / 200);
 
-    std::printf("rw_test config: instance=%d bank=%d rows=%d cls=%d bytes-per-row=%zu\n",
+    std::printf("rw_test config: board=%d instance=%d bank=%d rows=%d cls=%d bytes-per-row=%zu\n",
+                options.board_id,
                 options.instance_id,
                 options.bank,
                 options.num_rows,
@@ -328,7 +342,8 @@ int main(int argc, char** argv) {
     std::printf("\n");
 
     if (total_mismatches == 0) {
-      std::printf("rw_test passed: instance=%d bank=%d rows=%d cls=%d bytes=%llu\n",
+      std::printf("rw_test passed: board=%d instance=%d bank=%d rows=%d cls=%d bytes=%llu\n",
+                  options.board_id,
                   options.instance_id,
                   options.bank,
                   options.num_rows,
@@ -346,7 +361,8 @@ int main(int argc, char** argv) {
                    reported_mismatches);
     }
     std::fprintf(stderr,
-                 "rw_test failed: instance=%d bank=%d rows=%d cls=%d total_mismatches=%zu bytes=%llu\n",
+                 "rw_test failed: board=%d instance=%d bank=%d rows=%d cls=%d total_mismatches=%zu bytes=%llu\n",
+                 options.board_id,
                  options.instance_id,
                  options.bank,
                  options.num_rows,
