@@ -19,12 +19,14 @@ namespace DRAMBender {
 IBoard::IBoard(std::unique_ptr<IHostInterface> host_interface,
                int max_num_insts_per_prog,
                int readback_buffer_size,
-               std::chrono::milliseconds receive_timeout)
+               std::chrono::milliseconds receive_timeout,
+               ReadbackProtocol readback_protocol)
     : m_host_interface_(std::move(host_interface)),
       max_num_insts_per_prog_(max_num_insts_per_prog),
       m_send_buffer_(axi_datapath_byte_width * static_cast<size_t>(max_num_insts_per_prog_)),
       readback_buffer_size_(readback_buffer_size),
-      receive_timeout_(receive_timeout) {
+      receive_timeout_(receive_timeout),
+      readback_protocol_(readback_protocol) {
   if (!m_host_interface_) {
     throw std::invalid_argument("IBoard requires a non-null host interface.");
   }
@@ -246,6 +248,9 @@ std::optional<IBoard::ReadbackPacket> IBoard::receiveReadbackPacket_() {
   if (parsed_metadata.payload_bytes % sizeof(Word_t) != 0) {
     throw std::runtime_error("Platform readback payload size is not word-aligned.");
   }
+  if (parsed_metadata.payload_bytes == 0 && !parsed_metadata.is_last) {
+    return std::nullopt;
+  }
 
   std::vector<std::byte> payload(parsed_metadata.payload_bytes);
   const size_t payload_bytes = read_exact(payload);
@@ -261,26 +266,13 @@ std::optional<IBoard::ReadbackPacket> IBoard::receiveReadbackPacket_() {
 
 void IBoard::consumeData_() {
   try {
-    while (true) {
-      const std::optional<ReadbackPacket> packet = receiveReadbackPacket_();
-      if (!packet.has_value()) {
+    switch (readback_protocol_) {
+      case ReadbackProtocol::RawStream:
+        consumeRawStreamData_();
         break;
-      }
-
-      if (!packet->payload.empty()) {
-        std::vector<Word_t> words(packet->payload.size() / sizeof(Word_t));
-        std::memcpy(words.data(), packet->payload.data(), packet->payload.size());
-
-        {
-          std::lock_guard<std::mutex> lock(m_recv_mutex_);
-          m_recv_words_.insert(m_recv_words_.end(), words.begin(), words.end());
-        }
-        m_recv_cv_.notify_all();
-      }
-
-      if (packet->is_last) {
+      case ReadbackProtocol::MetadataPackets:
+        consumeMetadataPacketData_();
         break;
-      }
     }
 
     {
@@ -296,6 +288,71 @@ void IBoard::consumeData_() {
   }
 
   m_recv_cv_.notify_all();
+}
+
+void IBoard::consumeRawStreamData_() {
+  std::vector<std::byte> recv_buffer(
+      static_cast<size_t>(readback_buffer_size_) * axi_datapath_byte_width);
+  const size_t requested_bytes = recv_buffer.size();
+
+  while (true) {
+    const size_t recv_count = m_host_interface_->recv(recv_buffer);
+    if (recv_count == 0) {
+      break;
+    }
+
+    if (recv_count % sizeof(Word_t) != 0) {
+      throw std::runtime_error("Platform received a byte count that is not word-aligned.");
+    }
+
+    size_t payload_bytes = recv_count;
+    const bool is_final_transfer = recv_count != requested_bytes;
+    if (is_final_transfer) {
+      if (recv_count < axi_datapath_byte_width) {
+        throw std::runtime_error("Platform received a short final packet smaller than one AXI beat.");
+      }
+      payload_bytes = recv_count - axi_datapath_byte_width;
+    }
+
+    if (payload_bytes > 0) {
+      std::vector<Word_t> words(payload_bytes / sizeof(Word_t));
+      std::memcpy(words.data(), recv_buffer.data(), payload_bytes);
+
+      {
+        std::lock_guard<std::mutex> lock(m_recv_mutex_);
+        m_recv_words_.insert(m_recv_words_.end(), words.begin(), words.end());
+      }
+      m_recv_cv_.notify_all();
+    }
+
+    if (is_final_transfer) {
+      break;
+    }
+  }
+}
+
+void IBoard::consumeMetadataPacketData_() {
+  while (true) {
+    const std::optional<ReadbackPacket> packet = receiveReadbackPacket_();
+    if (!packet.has_value()) {
+      break;
+    }
+
+    if (!packet->payload.empty()) {
+      std::vector<Word_t> words(packet->payload.size() / sizeof(Word_t));
+      std::memcpy(words.data(), packet->payload.data(), packet->payload.size());
+
+      {
+        std::lock_guard<std::mutex> lock(m_recv_mutex_);
+        m_recv_words_.insert(m_recv_words_.end(), words.begin(), words.end());
+      }
+      m_recv_cv_.notify_all();
+    }
+
+    if (packet->is_last) {
+      break;
+    }
+  }
 }
 
 void IBoard::sendControlPacket_(std::span<const std::byte> control_packet) {

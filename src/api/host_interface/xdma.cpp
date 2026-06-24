@@ -16,12 +16,15 @@
 #include <thread>
 #include <unistd.h>
 
+#include "api/host_interface/byte_stream_buffer.h"
+
 namespace DRAMBender {
 namespace {
 
 inline constexpr size_t max_zero_write_retries = 1'000'000;
 inline constexpr size_t max_drain_reads = 16'384;
 inline constexpr size_t c2h_read_quantum = 4096;
+inline constexpr int partial_receive_quiet_poll_ms = 100;
 inline constexpr int drain_quiet_poll_ms = 1;
 inline constexpr int drain_required_quiet_polls = 500;
 
@@ -121,6 +124,7 @@ class XDMA : public IHostInterface {
 
   void begin_receive() override {
     clearCancelEvent_();
+    m_recv_pending_.clear();
   }
 
   size_t recv(std::span<std::byte> dst) override {
@@ -130,18 +134,31 @@ class XDMA : public IHostInterface {
     if (m_cancel_fd_ < 0) {
       throw std::logic_error("XDMA receive cancellation is not initialized.");
     }
-    if (dst.size() > recv_buffer_size_) {
-      throw std::invalid_argument("XDMA receive request exceeds the aligned receive buffer size.");
+    if (dst.empty()) {
+      return 0;
     }
 
-    size_t total_read = 0;
-    while (total_read < dst.size()) {
-      const size_t request_size = std::min(c2h_read_quantum, dst.size() - total_read);
-      ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get() + total_read, request_size);
+    size_t total_copied = 0;
+    while (total_copied < dst.size()) {
+      const size_t buffered_count = m_recv_pending_.read(dst.subspan(total_copied));
+      if (buffered_count > 0) {
+        total_copied += buffered_count;
+        continue;
+      }
+
+      const size_t request_size =
+          std::min(recv_buffer_size_, std::max(c2h_read_quantum, dst.size() - total_copied));
+      ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get(), request_size);
       if (rc < 0 && errno == EINTR) {
         continue;
       }
       if (rc < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        if (total_copied > 0) {
+          if (!waitForReceiveReady_(partial_receive_quiet_poll_ms)) {
+            return total_copied;
+          }
+          continue;
+        }
         if (!waitForReceiveReady_()) {
           return 0;
         }
@@ -159,18 +176,10 @@ class XDMA : public IHostInterface {
         throw std::runtime_error("XDMA read exceeded the requested receive size.");
       }
 
-      total_read += recv_count;
-      if (recv_count < request_size) {
-        break;
-      }
+      m_recv_pending_.append(std::span<const std::byte>(m_recv_buf_.get(), recv_count));
     }
 
-    if (total_read == 0) {
-      throw std::runtime_error("XDMA read made no forward progress.");
-    }
-
-    std::memcpy(dst.data(), m_recv_buf_.get(), total_read);
-    return total_read;
+    return total_copied;
   }
 
   void cancel_receive() override {
@@ -202,6 +211,7 @@ class XDMA : public IHostInterface {
     if (m_from_card_fd_ < 0) {
       return;
     }
+    m_recv_pending_.clear();
     size_t drain_reads = 0;
     int quiet_polls = 0;
     while (true) {
@@ -252,6 +262,7 @@ class XDMA : public IHostInterface {
     }
 
     reopenFromCard_();
+    m_recv_pending_.clear();
   }
 
  private:
@@ -275,19 +286,22 @@ class XDMA : public IHostInterface {
     openFromCard_();
   }
 
-  bool waitForReceiveReady_() {
+  bool waitForReceiveReady_(int timeout_ms = -1) {
     while (true) {
       pollfd fds[2] = {
           {.fd = m_from_card_fd_, .events = POLLIN, .revents = 0},
           {.fd = m_cancel_fd_, .events = POLLIN, .revents = 0},
       };
 
-      const int poll_rc = ::poll(fds, 2, -1);
+      const int poll_rc = ::poll(fds, 2, timeout_ms);
       if (poll_rc < 0) {
         if (errno == EINTR) {
           continue;
         }
         throw std::system_error(errno, std::generic_category(), "XDMA receive poll failed");
+      }
+      if (poll_rc == 0) {
+        return false;
       }
 
       if ((fds[1].revents & POLLIN) != 0) {
@@ -352,6 +366,7 @@ class XDMA : public IHostInterface {
   const size_t recv_buffer_size_;
   std::unique_ptr<std::byte, FreeDeleter> m_send_buf_;
   std::unique_ptr<std::byte, FreeDeleter> m_recv_buf_;
+  host_interface_internal::ByteStreamBuffer m_recv_pending_;
   int m_to_card_fd_ = -1;
   int m_from_card_fd_ = -1;
   int m_cancel_fd_ = -1;

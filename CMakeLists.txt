@@ -149,6 +149,15 @@ if (BUILD_TESTING)
   target_link_libraries(drambender_vm_timing_test PRIVATE DRAMBender)
   add_test(NAME drambender_vm_timing_test COMMAND drambender_vm_timing_test)
 
+  add_executable(drambender_readback_protocol_test
+    tests/readback_protocol_test.cpp
+  )
+  target_include_directories(drambender_readback_protocol_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(drambender_readback_protocol_test PRIVATE DRAMBender)
+  add_test(NAME drambender_readback_protocol_test COMMAND drambender_readback_protocol_test)
+
   if (DRAMBENDER_BUILD_BOARD_TESTS)
     add_executable(drambender_rw_test
       tests/board_tests/rw_test.cpp
