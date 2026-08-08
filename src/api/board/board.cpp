@@ -211,10 +211,10 @@ void IBoard::execute(const FinalProgram& prog) {
       throw std::runtime_error("Board reported a short send while executing a program.");
     }
   } catch (...) {
-    m_host_interface_->cancel_receive();
-    joinReceiver_(false);
-    clearReceiveState_();
-    throw;
+    // A partial instruction upload leaves FPGA execution state ambiguous.
+    // Use the same recovery primitive as interrupted/failed readback and
+    // preserve the original send exception for the caller.
+    recoverAndRethrow_(std::current_exception());
   }
 }
 

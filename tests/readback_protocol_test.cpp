@@ -167,6 +167,7 @@ struct BlockingHostState {
   int drain_count = 0;
   bool cancelled = false;
   bool fail_drain = false;
+  bool fail_first_send = false;
 };
 
 class BlockingHostInterface : public DRAMBender::IHostInterface {
@@ -179,6 +180,9 @@ class BlockingHostInterface : public DRAMBender::IHostInterface {
   size_t send(std::span<const std::byte> data) override {
     std::lock_guard<std::mutex> lock(state_->mutex);
     ++state_->send_count;
+    if (state_->fail_first_send && state_->send_count == 1) {
+      throw std::runtime_error("injected send failure");
+    }
     return data.size();
   }
 
@@ -499,6 +503,34 @@ bool test_protocol_error_full_resets_and_board_is_reusable() {
   return verify_board_reuse(board, state);
 }
 
+bool test_send_error_full_resets_and_board_is_reusable() {
+  auto state = std::make_shared<BlockingHostState>();
+  state->fail_first_send = true;
+  RecoveryTestBoard board(state, std::chrono::seconds(5));
+
+  try {
+    board.execute(one_nop_program());
+    std::cerr << "expected injected send failure\n";
+    return false;
+  } catch (const std::runtime_error& error) {
+    if (std::string(error.what()) != "injected send failure") {
+      std::cerr << "send recovery masked the original error: " << error.what()
+                << '\n';
+      return false;
+    }
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->cancel_receive_count != 1 || state->drain_count != 1 ||
+        state->send_count != 2) {
+      std::cerr << "send failure did not perform exactly one full reset\n";
+      return false;
+    }
+  }
+  return verify_board_reuse(board, state);
+}
+
 bool test_failed_automatic_reset_closes_board_and_preserves_timeout() {
   auto state = std::make_shared<BlockingHostState>();
   state->fail_drain = true;
@@ -540,6 +572,7 @@ int main() {
   ok &= test_receive_timeout_full_resets_and_board_is_reusable();
   ok &= test_interrupted_synchronize_full_resets_and_board_is_reusable();
   ok &= test_protocol_error_full_resets_and_board_is_reusable();
+  ok &= test_send_error_full_resets_and_board_is_reusable();
   ok &= test_failed_automatic_reset_closes_board_and_preserves_timeout();
   return ok ? 0 : 1;
 }
