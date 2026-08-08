@@ -2,12 +2,15 @@
 #include "drambender/api/host_interface/host_interface.h"
 
 #include <array>
+#include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -85,7 +88,7 @@ class FakeHostInterface : public DRAMBender::IHostInterface {
     byte_index_ += count;
     return count;
   }
-  void cancel_receive() override {
+  void cancel_receive() noexcept override {
     cancel_receive_count_++;
   }
   void drain() override {
@@ -152,6 +155,133 @@ class PacketTestBoard : public DRAMBender::IBoard {
     return true;
   }
 };
+
+struct BlockingHostState {
+  std::mutex mutex;
+  std::condition_variable cv;
+  std::vector<std::byte> stream;
+  size_t read_offset = 0;
+  int send_count = 0;
+  int begin_receive_count = 0;
+  int cancel_receive_count = 0;
+  int drain_count = 0;
+  bool cancelled = false;
+  bool fail_drain = false;
+};
+
+class BlockingHostInterface : public DRAMBender::IHostInterface {
+ public:
+  explicit BlockingHostInterface(std::shared_ptr<BlockingHostState> state)
+      : state_(std::move(state)) {}
+
+  void init() override {}
+
+  size_t send(std::span<const std::byte> data) override {
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    ++state_->send_count;
+    return data.size();
+  }
+
+  void begin_receive() override {
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    ++state_->begin_receive_count;
+    state_->cancelled = false;
+  }
+
+  size_t recv(std::span<std::byte> dst) override {
+    std::unique_lock<std::mutex> lock(state_->mutex);
+    state_->cv.wait(lock, [&] {
+      return state_->cancelled || state_->read_offset < state_->stream.size();
+    });
+    if (state_->cancelled) {
+      return 0;
+    }
+
+    const size_t count =
+        std::min(dst.size_bytes(), state_->stream.size() - state_->read_offset);
+    std::memcpy(dst.data(),
+                state_->stream.data() +
+                    static_cast<std::ptrdiff_t>(state_->read_offset),
+                count);
+    state_->read_offset += count;
+    return count;
+  }
+
+  void cancel_receive() noexcept override {
+    {
+      std::lock_guard<std::mutex> lock(state_->mutex);
+      ++state_->cancel_receive_count;
+      state_->cancelled = true;
+    }
+    state_->cv.notify_all();
+  }
+
+  void drain() override {
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    ++state_->drain_count;
+    state_->stream.clear();
+    state_->read_offset = 0;
+    if (state_->fail_drain) {
+      throw std::runtime_error("injected drain failure");
+    }
+  }
+
+ private:
+  std::shared_ptr<BlockingHostState> state_;
+};
+
+class RecoveryTestBoard : public DRAMBender::IBoard {
+ public:
+  RecoveryTestBoard(std::shared_ptr<BlockingHostState> state,
+                    std::chrono::milliseconds receive_timeout)
+      : DRAMBender::IBoard(
+            std::make_unique<BlockingHostInterface>(std::move(state)),
+            2048,
+            1024,
+            receive_timeout) {}
+};
+
+class TestInterruption final {};
+
+DRAMBender::FinalProgram one_nop_program() {
+  DRAMBender::Program program;
+  program.add_inst(DRAMBender::all_nops());
+  return program.conclude();
+}
+
+void queue_stream(const std::shared_ptr<BlockingHostState>& state,
+                  std::vector<std::byte> stream) {
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    state->stream = std::move(stream);
+    state->read_offset = 0;
+  }
+  state->cv.notify_all();
+}
+
+bool verify_board_reuse(RecoveryTestBoard& board,
+                        const std::shared_ptr<BlockingHostState>& state) {
+  std::vector<std::byte> payload(axi_datapath_byte_width);
+  payload[0] = b(0x78);
+  payload[1] = b(0x56);
+  payload[2] = b(0x34);
+  payload[3] = b(0x12);
+  queue_stream(state, concat({metadata(payload.size(), true), payload}));
+
+  board.execute(one_nop_program());
+  std::array<std::byte, sizeof(uint32_t)> observed{};
+  if (board.receive(observed) != observed.size()) {
+    std::cerr << "reused board returned a short read\n";
+    return false;
+  }
+  board.synchronize();
+  if (observed[0] != b(0x78) || observed[1] != b(0x56) ||
+      observed[2] != b(0x34) || observed[3] != b(0x12)) {
+    std::cerr << "reused board returned incorrect data\n";
+    return false;
+  }
+  return true;
+}
 
 bool test_byte_stream_buffer_preserves_unused_bytes() {
   DRAMBender::host_interface_internal::ByteStreamBuffer buffer;
@@ -279,6 +409,123 @@ bool test_reserved_metadata_bits_are_malformed() {
       "Platform readback metadata contains nonzero reserved bits.");
 }
 
+bool test_receive_timeout_full_resets_and_board_is_reusable() {
+  auto state = std::make_shared<BlockingHostState>();
+  RecoveryTestBoard board(state, std::chrono::milliseconds(30));
+  board.execute(one_nop_program());
+
+  std::array<std::byte, sizeof(uint32_t)> observed{};
+  try {
+    (void)board.receive(observed);
+    std::cerr << "expected receive timeout\n";
+    return false;
+  } catch (const std::runtime_error& error) {
+    if (std::string(error.what()) !=
+        "Timed out while waiting for readback data from the platform.") {
+      std::cerr << "unexpected receive timeout error: " << error.what() << '\n';
+      return false;
+    }
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->cancel_receive_count != 1 || state->drain_count != 1 ||
+        state->send_count != 2) {
+      std::cerr << "receive timeout did not perform exactly one full reset\n";
+      return false;
+    }
+  }
+  return verify_board_reuse(board, state);
+}
+
+bool test_interrupted_synchronize_full_resets_and_board_is_reusable() {
+  auto state = std::make_shared<BlockingHostState>();
+  RecoveryTestBoard board(state, std::chrono::seconds(5));
+  board.execute(one_nop_program());
+
+  int interruption_checks = 0;
+  try {
+    board.synchronize_interruptibly([&] {
+      ++interruption_checks;
+      throw TestInterruption{};
+    });
+    std::cerr << "expected synchronization interruption\n";
+    return false;
+  } catch (const TestInterruption&) {
+  }
+
+  if (interruption_checks != 1) {
+    std::cerr << "unexpected number of synchronization interruption checks\n";
+    return false;
+  }
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->cancel_receive_count != 1 || state->drain_count != 1 ||
+        state->send_count != 2) {
+      std::cerr << "interrupted synchronization did not perform one full reset\n";
+      return false;
+    }
+  }
+  return verify_board_reuse(board, state);
+}
+
+bool test_protocol_error_full_resets_and_board_is_reusable() {
+  auto state = std::make_shared<BlockingHostState>();
+  RecoveryTestBoard board(state, std::chrono::seconds(5));
+  queue_stream(state, metadata(0, false));
+  board.execute(one_nop_program());
+
+  try {
+    board.synchronize();
+    std::cerr << "expected malformed-metadata error\n";
+    return false;
+  } catch (const std::runtime_error& error) {
+    if (std::string(error.what()) !=
+        "Platform readback metadata declares an empty non-final packet.") {
+      std::cerr << "unexpected malformed-metadata error: " << error.what()
+                << '\n';
+      return false;
+    }
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->cancel_receive_count != 1 || state->drain_count != 1 ||
+        state->send_count != 2) {
+      std::cerr << "protocol error did not perform exactly one full reset\n";
+      return false;
+    }
+  }
+  return verify_board_reuse(board, state);
+}
+
+bool test_failed_automatic_reset_closes_board_and_preserves_timeout() {
+  auto state = std::make_shared<BlockingHostState>();
+  state->fail_drain = true;
+  RecoveryTestBoard board(state, std::chrono::milliseconds(30));
+  board.execute(one_nop_program());
+
+  std::array<std::byte, sizeof(uint32_t)> observed{};
+  try {
+    (void)board.receive(observed);
+    std::cerr << "expected receive timeout with injected recovery failure\n";
+    return false;
+  } catch (const std::runtime_error& error) {
+    if (std::string(error.what()) !=
+        "Timed out while waiting for readback data from the platform.") {
+      std::cerr << "recovery failure masked the original timeout: "
+                << error.what() << '\n';
+      return false;
+    }
+  }
+
+  if (!board.is_closed()) {
+    std::cerr << "board remained open after automatic full_reset failed\n";
+    return false;
+  }
+  return true;
+}
+
 }  // namespace
 
 int main() {
@@ -290,5 +537,9 @@ int main() {
   ok &= test_empty_nonlast_metadata_is_malformed();
   ok &= test_empty_last_metadata_remains_valid_packet();
   ok &= test_reserved_metadata_bits_are_malformed();
+  ok &= test_receive_timeout_full_resets_and_board_is_reusable();
+  ok &= test_interrupted_synchronize_full_resets_and_board_is_reusable();
+  ok &= test_protocol_error_full_resets_and_board_is_reusable();
+  ok &= test_failed_automatic_reset_closes_board_and_preserves_timeout();
   return ok ? 0 : 1;
 }

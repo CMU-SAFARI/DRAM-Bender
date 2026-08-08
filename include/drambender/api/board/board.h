@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -47,6 +48,9 @@ constexpr std::string_view to_string(BoardType board_type) noexcept {
  * readback data until the caller receives it. 
  */
 class IBoard {
+ public:
+  using InterruptionPoint = std::function<void()>;
+
  protected:
   struct ReadbackPacket {
     std::vector<std::byte> payload;
@@ -99,18 +103,42 @@ class IBoard {
    * The destination size must be a multiple of four bytes. The call blocks
    * until that many bytes are available, the FPGA finishes too early, the
    * receive timeout expires, or the receiver thread reports an error.
+   * A timeout, premature end, or asynchronous receiver error is rethrown after
+   * full_reset() discards the failed session. If recovery itself fails, the
+   * board handle becomes unusable and must be reopened.
    *
    * @return The number of bytes copied, which equals dst.size_bytes().
    */
   virtual size_t receive(std::span<std::byte> dst);
 
   /**
+   * @brief Binding-oriented variant of receive() with periodic interruption checks.
+   *
+   * The callback runs on the waiting thread approximately every 50 ms. If it
+   * throws, the board performs full_reset() and then rethrows the callback
+   * exception. This keeps language runtimes responsive without changing the
+   * normal C++ receive() API.
+   */
+  virtual size_t receive_interruptibly(
+      std::span<std::byte> dst,
+      const InterruptionPoint& interruption_point);
+
+  /**
    * @brief Wait for the active readback session to finish.
    *
    * Any asynchronous receive error is rethrown here. Queued readback data is
    * left intact, so it is fine to receive() first and synchronize() afterward.
+   * An asynchronous receive error is rethrown after full_reset() discards the
+   * failed session.
    */
   void synchronize();
+
+  /**
+   * @brief Binding-oriented synchronization with periodic interruption checks.
+   *
+   * If the callback throws, the board performs full_reset() before rethrowing.
+   */
+  void synchronize_interruptibly(const InterruptionPoint& interruption_point);
 
   /**
    * @brief Send the FPGA reset control packet.
@@ -140,8 +168,12 @@ class IBoard {
   void consumeData_();
   void consumeMetadataPacketData_();
   void rethrowReceiverException_();
+  size_t receiveImpl_(std::span<std::byte> dst,
+                      const InterruptionPoint& interruption_point);
+  void synchronizeImpl_(const InterruptionPoint& interruption_point);
   void joinReceiver_(bool rethrow_receiver_exception);
   void clearReceiveState_();
+  [[noreturn]] void recoverAndRethrow_(std::exception_ptr original_exception);
 
   std::deque<Word_t> m_recv_words_;
   std::mutex m_recv_mutex_;
@@ -150,6 +182,7 @@ class IBoard {
   std::exception_ptr m_receiver_exception_;
   bool m_receive_complete_ = true;
   bool m_receive_started_ = false;
+  bool m_faulted_ = false;
 };
 
 std::unique_ptr<IBoard> create_board(

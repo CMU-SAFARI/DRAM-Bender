@@ -1,5 +1,6 @@
 #include "drambender/api/board/board.h"
 
+#include <algorithm>
 #include <array>
 #include <cstdio>
 #include <cstring>
@@ -15,6 +16,12 @@
 #include "h2c_protocol.h"
 
 namespace DRAMBender {
+
+namespace {
+
+inline constexpr std::chrono::milliseconds interruption_poll_interval{50};
+
+}  // namespace
 
 IBoard::IBoard(std::unique_ptr<IHostInterface> host_interface,
                int max_num_insts_per_prog,
@@ -62,6 +69,11 @@ void IBoard::ensureOpen_() const {
         "Board is closed. Open a new board via open_board(...) to run more "
         "programs.");
   }
+  if (m_faulted_) {
+    throw std::runtime_error(
+        "Board recovery failed and this handle is no longer usable. Close it "
+        "and open a new board.");
+  }
 }
 
 IHostInterface& IBoard::hostInterface() const {
@@ -82,8 +94,41 @@ void IBoard::rethrowReceiverException_() {
 }
 
 void IBoard::synchronize() {
+  synchronizeImpl_({});
+}
+
+void IBoard::synchronize_interruptibly(
+    const InterruptionPoint& interruption_point) {
+  synchronizeImpl_(interruption_point);
+}
+
+void IBoard::synchronizeImpl_(
+    const InterruptionPoint& interruption_point) {
   ensureOpen_();
-  joinReceiver_(true);
+
+  try {
+    if (m_receiver_thread_.joinable() && interruption_point) {
+      std::unique_lock<std::mutex> lock(m_recv_mutex_);
+      auto next_interruption_check =
+          std::chrono::steady_clock::now() + interruption_poll_interval;
+      while (!m_receive_complete_) {
+        m_recv_cv_.wait_until(lock, next_interruption_check);
+        const auto now = std::chrono::steady_clock::now();
+        if (!m_receive_complete_ && now >= next_interruption_check) {
+          next_interruption_check = now + interruption_poll_interval;
+          lock.unlock();
+          interruption_point();
+          lock.lock();
+        }
+      }
+    }
+
+    joinReceiver_(true);
+  } catch (...) {
+    // A failed metadata session can leave unread bytes behind just like an
+    // interrupted one. Use the same single recovery primitive.
+    recoverAndRethrow_(std::current_exception());
+  }
 }
 
 void IBoard::joinReceiver_(bool rethrow_receiver_exception) {
@@ -174,6 +219,18 @@ void IBoard::execute(const FinalProgram& prog) {
 }
 
 size_t IBoard::receive(std::span<std::byte> dst) {
+  return receiveImpl_(dst, {});
+}
+
+size_t IBoard::receive_interruptibly(
+    std::span<std::byte> dst,
+    const InterruptionPoint& interruption_point) {
+  return receiveImpl_(dst, interruption_point);
+}
+
+size_t IBoard::receiveImpl_(
+    std::span<std::byte> dst,
+    const InterruptionPoint& interruption_point) {
   ensureOpen_();
   if (dst.data() == nullptr && !dst.empty()) {
     throw std::invalid_argument("receive destination buffer cannot be null.");
@@ -188,6 +245,8 @@ size_t IBoard::receive(std::span<std::byte> dst) {
   auto* dst_words = reinterpret_cast<Word_t*>(dst.data());
   const size_t num_words_to_read = dst.size_bytes() / sizeof(Word_t);
   const auto deadline = std::chrono::steady_clock::now() + receive_timeout_;
+  auto next_interruption_check =
+      std::chrono::steady_clock::now() + interruption_poll_interval;
 
   std::unique_lock<std::mutex> lock(m_recv_mutex_);
   while (m_recv_words_.size() < num_words_to_read) {
@@ -195,7 +254,7 @@ size_t IBoard::receive(std::span<std::byte> dst) {
       std::exception_ptr exception = m_receiver_exception_;
       m_receiver_exception_ = nullptr;
       lock.unlock();
-      std::rethrow_exception(exception);
+      recoverAndRethrow_(exception);
     }
 
     if (!m_receive_started_ && m_recv_words_.empty()) {
@@ -203,11 +262,41 @@ size_t IBoard::receive(std::span<std::byte> dst) {
     }
 
     if (m_receive_complete_) {
-      throw std::runtime_error("Receive stream ended before the requested amount of data arrived.");
+      lock.unlock();
+      recoverAndRethrow_(std::make_exception_ptr(std::runtime_error(
+          "Receive stream ended before the requested amount of data arrived.")));
     }
 
-    if (m_recv_cv_.wait_until(lock, deadline) == std::cv_status::timeout) {
-      throw std::runtime_error("Timed out while waiting for readback data from the platform.");
+    const auto wake_deadline = interruption_point
+                                   ? std::min(deadline, next_interruption_check)
+                                   : deadline;
+    m_recv_cv_.wait_until(lock, wake_deadline);
+
+    auto now = std::chrono::steady_clock::now();
+    if (interruption_point && now >= next_interruption_check) {
+      next_interruption_check = now + interruption_poll_interval;
+      lock.unlock();
+      try {
+        interruption_point();
+      } catch (...) {
+        recoverAndRethrow_(std::current_exception());
+      }
+      lock.lock();
+      now = std::chrono::steady_clock::now();
+    }
+
+    // Give data and receiver terminal states precedence over a deadline that
+    // became due in the same wake-up. The top of the loop reports the precise
+    // protocol/short-stream result (or copies newly available data).
+    if (m_recv_words_.size() >= num_words_to_read || m_receiver_exception_ ||
+        m_receive_complete_) {
+      continue;
+    }
+
+    if (now >= deadline) {
+      lock.unlock();
+      recoverAndRethrow_(std::make_exception_ptr(std::runtime_error(
+          "Timed out while waiting for readback data from the platform.")));
     }
   }
 
@@ -327,15 +416,48 @@ void IBoard::reset_fpga() {
 void IBoard::full_reset() {
   ensureOpen_();
 
-  m_host_interface_->cancel_receive();
-  joinReceiver_(false);
+  try {
+    m_host_interface_->cancel_receive();
+    joinReceiver_(false);
 
-  std::array<std::byte, axi_datapath_byte_width> reset_packet{};
-  h2c_protocol::set_control(reset_packet, h2c_protocol::reset_control);
-  sendControlPacketRaw_(reset_packet);
+    std::array<std::byte, axi_datapath_byte_width> reset_packet{};
+    h2c_protocol::set_control(reset_packet, h2c_protocol::reset_control);
+    sendControlPacketRaw_(reset_packet);
 
-  m_host_interface_->drain();
-  clearReceiveState_();
+    m_host_interface_->drain();
+    clearReceiveState_();
+    m_faulted_ = false;
+  } catch (...) {
+    m_faulted_ = true;
+    throw;
+  }
+}
+
+[[noreturn]] void IBoard::recoverAndRethrow_(
+    std::exception_ptr original_exception) {
+  try {
+    full_reset();
+  } catch (const std::exception& recovery_error) {
+    std::fprintf(stderr,
+                 "[drambender] full_reset after an interrupted wait failed: %s\n",
+                 recovery_error.what());
+    try {
+      close();
+    } catch (...) {
+      // full_reset() has already marked the surviving handle faulted. Preserve
+      // the operation's original exception, which is the actionable error for
+      // the caller.
+    }
+  } catch (...) {
+    std::fprintf(stderr,
+                 "[drambender] full_reset after an interrupted wait failed\n");
+    try {
+      close();
+    } catch (...) {
+    }
+  }
+
+  std::rethrow_exception(original_exception);
 }
 
 void IBoard::set_aref(bool is_on) {

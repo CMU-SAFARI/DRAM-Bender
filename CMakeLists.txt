@@ -280,6 +280,15 @@ if (DRAMBENDER_BUILD_PYTHON)
     DRAMBender
   )
 
+  if (BUILD_TESTING)
+    add_test(
+      NAME drambender_python_interrupt_test
+      COMMAND "${Python_EXECUTABLE}"
+              "${CMAKE_CURRENT_SOURCE_DIR}/tests/python_interrupt_test.py"
+              --extension "$<TARGET_FILE:drambender_core>"
+    )
+  endif()
+
   install(
     TARGETS drambender_core
     LIBRARY DESTINATION drambender COMPONENT python

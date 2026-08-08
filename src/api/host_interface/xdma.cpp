@@ -25,6 +25,7 @@ namespace {
 inline constexpr size_t max_zero_write_retries = 1'000'000;
 inline constexpr size_t max_drain_reads = 16'384;
 inline constexpr size_t c2h_read_quantum = 4096;
+inline constexpr int receive_cancel_poll_ms = 50;
 inline constexpr int drain_quiet_poll_ms = 1;
 inline constexpr int drain_required_quiet_polls = 500;
 
@@ -198,12 +199,12 @@ class XDMA : public IHostInterface {
     }
   }
 
-  void cancel_receive() override {
+  void cancel_receive() noexcept override {
+    m_receive_cancelled_.store(true, std::memory_order_release);
     if (m_cancel_fd_ < 0) {
       return;
     }
 
-    m_receive_cancelled_.store(true, std::memory_order_release);
     const uint64_t value = 1;
     while (true) {
       const ssize_t rc = ::write(m_cancel_fd_, &value, sizeof(value));
@@ -217,10 +218,14 @@ class XDMA : public IHostInterface {
         return;  // Counter is saturated; cancellation is already signaled.
       }
       if (rc < 0) {
-        throw std::system_error(errno, std::generic_category(),
-                                "XDMA receive cancel eventfd write failed");
+        std::fprintf(stderr,
+                     "[drambender] XDMA receive cancel eventfd write failed: %s\n",
+                     std::strerror(errno));
+        return;
       }
-      throw std::runtime_error("XDMA receive cancel eventfd write was short.");
+      std::fprintf(stderr,
+                   "[drambender] XDMA receive cancel eventfd write was short\n");
+      return;
     }
   }
 
@@ -305,17 +310,27 @@ class XDMA : public IHostInterface {
 
   bool waitForReceiveReady_() {
     while (true) {
+      if (receiveCancelled_()) {
+        return false;
+      }
+
       pollfd fds[2] = {
           {.fd = m_from_card_fd_, .events = POLLIN, .revents = 0},
           {.fd = m_cancel_fd_, .events = POLLIN, .revents = 0},
       };
 
-      const int poll_rc = ::poll(fds, 2, -1);
+      // The timeout is a fallback for the extremely unlikely case where the
+      // eventfd notification itself fails. cancel_receive() is deliberately
+      // noexcept so reset/close can always progress to joining the receiver.
+      const int poll_rc = ::poll(fds, 2, receive_cancel_poll_ms);
       if (poll_rc < 0) {
         if (errno == EINTR) {
           continue;
         }
         throw std::system_error(errno, std::generic_category(), "XDMA receive poll failed");
+      }
+      if (poll_rc == 0) {
+        continue;
       }
       if ((fds[1].revents & POLLIN) != 0) {
         clearCancelEvent_();

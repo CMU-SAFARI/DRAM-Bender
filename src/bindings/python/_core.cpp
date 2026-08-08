@@ -1,5 +1,6 @@
 #include <array>
 #include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -7,6 +8,7 @@
 #include <dlfcn.h>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -33,6 +35,50 @@ namespace nb = nanobind;
 
 namespace DRAMBender {
 namespace {
+
+class PythonSignalPending final {};
+
+void python_interruption_point() {
+  nb::gil_scoped_acquire acquire;
+  if (PyErr_CheckSignals() != 0) {
+    throw PythonSignalPending{};
+  }
+}
+
+[[noreturn]] void recover_board_and_raise_python_signal(IBoard& board) {
+  {
+    nb::gil_scoped_release release;
+    try {
+      board.full_reset();
+    } catch (...) {
+      // full_reset() marks the handle faulted on failure. Close it when
+      // possible; either way, preserve the user's KeyboardInterrupt.
+      try {
+        board.close();
+      } catch (...) {
+      }
+    }
+  }
+  throw nb::python_error();
+}
+
+void recover_if_python_signal_pending(IBoard& board) {
+  if (PyErr_CheckSignals() != 0) {
+    recover_board_and_raise_python_signal(board);
+  }
+}
+
+void synchronize_interruptibly(IBoard& board) {
+  try {
+    nb::gil_scoped_release release;
+    board.synchronize_interruptibly(python_interruption_point);
+  } catch (const PythonSignalPending&) {
+    // IBoard has already completed full_reset() before rethrowing the
+    // interruption marker.
+    throw nb::python_error();
+  }
+  recover_if_python_signal_pending(board);
+}
 
 class WritableBufferView {
  public:
@@ -79,23 +125,55 @@ class WritableBufferView {
   bool has_view_ = false;
 };
 
+struct MockHostState {
+  std::mutex mutex;
+  std::condition_variable cv;
+  bool block_receive = false;
+  bool cancelled = false;
+  int drain_count = 0;
+};
+
 class NullHostInterface : public IHostInterface {
  public:
+  explicit NullHostInterface(std::shared_ptr<MockHostState> state)
+      : state_(std::move(state)) {}
+
   void init() override {}
 
   size_t send(std::span<const std::byte> data) override {
     return data.size();
   }
 
-  void begin_receive() override {}
+  void begin_receive() override {
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    state_->cancelled = false;
+  }
 
   size_t recv(std::span<std::byte>) override {
+    std::unique_lock<std::mutex> lock(state_->mutex);
+    if (!state_->block_receive) {
+      return 0;
+    }
+    state_->cv.wait(lock, [&] { return state_->cancelled; });
     return 0;
   }
 
-  void cancel_receive() override {}
+  void cancel_receive() noexcept override {
+    {
+      std::lock_guard<std::mutex> lock(state_->mutex);
+      state_->cancelled = true;
+    }
+    state_->cv.notify_all();
+  }
 
-  void drain() override {}
+  void drain() override {
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    state_->block_receive = false;
+    ++state_->drain_count;
+  }
+
+ private:
+  std::shared_ptr<MockHostState> state_;
 };
 
 // Internal test hook. This is intentionally not wrapped by the public
@@ -103,10 +181,7 @@ class NullHostInterface : public IHostInterface {
 class MockBoard : public IBoard {
  public:
   explicit MockBoard(int receive_timeout_ms = 5000)
-      : IBoard(std::make_unique<NullHostInterface>(),
-               2048,
-               1024,
-               std::chrono::milliseconds(receive_timeout_ms)) {}
+      : MockBoard(std::make_shared<MockHostState>(), receive_timeout_ms) {}
 
   void execute(const FinalProgram&) override {
     ensureOpen_();
@@ -135,6 +210,38 @@ class MockBoard : public IBoard {
     return dst.size_bytes();
   }
 
+  size_t receive_interruptibly(
+      std::span<std::byte> dst,
+      const InterruptionPoint& interruption_point) override {
+    bool block_receive = false;
+    {
+      std::lock_guard<std::mutex> lock(host_state_->mutex);
+      block_receive = host_state_->block_receive;
+    }
+    if (block_receive) {
+      return IBoard::receive_interruptibly(dst, interruption_point);
+    }
+
+    // The ordinary in-memory queue path never blocks. The binding performs
+    // one Python signal check immediately after it returns.
+    return receive(dst);
+  }
+
+  void start_blocked_receive() {
+    {
+      std::lock_guard<std::mutex> lock(host_state_->mutex);
+      host_state_->block_receive = true;
+    }
+    Program program;
+    program.add_inst(all_nops());
+    IBoard::execute(program.conclude());
+  }
+
+  int drain_count() {
+    std::lock_guard<std::mutex> lock(host_state_->mutex);
+    return host_state_->drain_count;
+  }
+
   void queue_receive_words(const std::vector<uint32_t>& words) {
     append_bytes_(words.data(), words.size() * sizeof(uint32_t));
   }
@@ -149,6 +256,13 @@ class MockBoard : public IBoard {
   }
 
  private:
+  MockBoard(std::shared_ptr<MockHostState> state, int receive_timeout_ms)
+      : IBoard(std::make_unique<NullHostInterface>(state),
+               2048,
+               1024,
+               std::chrono::milliseconds(receive_timeout_ms)),
+        host_state_(std::move(state)) {}
+
   void append_bytes_(const void* data, size_t size_bytes) {
     if (size_bytes == 0) {
       return;
@@ -160,17 +274,24 @@ class MockBoard : public IBoard {
 
   std::vector<std::byte> queued_readback_;
   size_t read_offset_ = 0;
+  std::shared_ptr<MockHostState> host_state_;
 };
 
 size_t receive_into(IBoard& board, nb::handle dst) {
   WritableBufferView buffer(dst);
 
   size_t bytes_received = 0;
-  {
+  try {
     nb::gil_scoped_release release;
-    bytes_received = board.receive(
-        std::span(reinterpret_cast<std::byte*>(buffer.data()), buffer.size_bytes()));
+    bytes_received = board.receive_interruptibly(
+        std::span(reinterpret_cast<std::byte*>(buffer.data()), buffer.size_bytes()),
+        python_interruption_point);
+  } catch (const PythonSignalPending&) {
+    // IBoard has already completed full_reset() before rethrowing the
+    // interruption marker.
+    throw nb::python_error();
   }
+  recover_if_python_signal_pending(board);
 
   return bytes_received;
 }
@@ -985,15 +1106,26 @@ NB_MODULE(_core, m) {
       .def("execute",
            [](IBoard& board, nb::handle programs) {
              if (nb::isinstance<FinalProgram>(programs)) {
-               nb::gil_scoped_release release;
-               board.execute(nb::cast<const FinalProgram&>(programs));
+               const auto& program = nb::cast<const FinalProgram&>(programs);
+               synchronize_interruptibly(board);
+               {
+                 nb::gil_scoped_release release;
+                 board.execute(program);
+               }
+               recover_if_python_signal_pending(board);
                return;
              }
 
              if (nb::isinstance<nb::list>(programs) || nb::isinstance<nb::tuple>(programs)) {
                auto program_vec = nb::cast<std::vector<FinalProgram>>(programs);
-               nb::gil_scoped_release release;
-               board.execute(program_vec);
+               for (const FinalProgram& program : program_vec) {
+                 synchronize_interruptibly(board);
+                 {
+                   nb::gil_scoped_release release;
+                   board.execute(program);
+                 }
+                 recover_if_python_signal_pending(board);
+               }
                return;
              }
 
@@ -1002,20 +1134,25 @@ NB_MODULE(_core, m) {
            },
            "Send a FinalProgram, or a list/tuple of FinalProgram objects, to "
            "the board. If the program returns data, call receive_into() for "
-           "the bytes you expect and synchronize() as a barrier.")
+           "the bytes you expect and synchronize() as a barrier. Ctrl+C is "
+           "handled while waiting for prior readback on Python's main thread; "
+           "an in-progress host-to-card write must return before the pending "
+           "signal can be handled.")
       .def("synchronize",
            [](IBoard& board) {
-             nb::gil_scoped_release release;
-             board.synchronize();
+             synchronize_interruptibly(board);
            },
            "Wait for the active readback session to finish and rethrow any "
            "asynchronous receive error. Does not consume, discard, or drain "
-           "queued readback data.")
+           "queued readback data. On Python's main thread, Ctrl+C performs a "
+           "full reset before KeyboardInterrupt is raised.")
       .def("receive_into",
            &receive_into,
            "Copy queued readback data into a writable C-contiguous buffer. "
            "The buffer size must be a multiple of four bytes; the call blocks "
-           "until the buffer is full or the receive session fails.")
+           "until the buffer is full or the receive session fails. On Python's "
+           "main thread, Ctrl+C performs a full reset before KeyboardInterrupt "
+           "is raised.")
       .def("set_aref",
            [](IBoard& board, bool enabled) {
              nb::gil_scoped_release release;
@@ -1096,6 +1233,8 @@ NB_MODULE(_core, m) {
 
   nb::class_<MockBoard, IBoard>(m, "_MockBoard")
       .def(nb::init<int>(), nb::arg("receive_timeout_ms") = 5000)
+      .def("start_blocked_receive", &MockBoard::start_blocked_receive)
+      .def_prop_ro("drain_count", &MockBoard::drain_count)
       .def("queue_receive_words", &MockBoard::queue_receive_words)
       .def("queue_receive_bytes", &MockBoard::queue_receive_bytes)
       .def("clear_receive_queue", &MockBoard::clear_receive_queue);

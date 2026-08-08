@@ -69,10 +69,11 @@ class IHostInterface {
    * @brief Interrupt a blocked recv() call, if the backend supports it.
    *
    * This is used by recovery paths such as full_reset() and close(). The
-   * default implementation is a no-op for host interfaces without a blocking
-   * receive primitive.
+   * operation must not throw; a backend with a blocking receive primitive must
+   * arrange for recv() to return within a bounded interval. The default
+   * implementation is a no-op for backends without blocking receive.
    */
-  virtual void cancel_receive() {}
+  virtual void cancel_receive() noexcept {}
 
   /**
    * @brief Drain any stale data from the host-side buffer.
