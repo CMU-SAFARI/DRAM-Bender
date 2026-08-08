@@ -11,6 +11,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -344,6 +345,41 @@ bool test_metadata_split_across_recv_calls() {
   return board.expect_packet(payload, true);
 }
 
+bool test_metadata_randomized_fragmentation() {
+  std::mt19937 generator(0x44525631U);
+  std::uniform_int_distribution<size_t> beat_count_distribution(1, 16);
+  std::uniform_int_distribution<size_t> chunk_size_distribution(1, 97);
+  std::uniform_int_distribution<unsigned int> byte_distribution(0, 255);
+
+  for (size_t iteration = 0; iteration < 2'000; ++iteration) {
+    std::vector<std::byte> payload(
+        beat_count_distribution(generator) * axi_datapath_byte_width);
+    for (std::byte& value : payload) {
+      value = b(static_cast<uint8_t>(byte_distribution(generator)));
+    }
+
+    const auto stream = concat({metadata(payload.size(), true), payload});
+    std::vector<std::vector<std::byte>> chunks;
+    for (size_t offset = 0; offset < stream.size();) {
+      const size_t chunk_size =
+          std::min(chunk_size_distribution(generator), stream.size() - offset);
+      chunks.emplace_back(stream.begin() + static_cast<std::ptrdiff_t>(offset),
+                          stream.begin() +
+                              static_cast<std::ptrdiff_t>(offset + chunk_size));
+      offset += chunk_size;
+    }
+
+    PacketTestBoard board(
+        std::make_unique<FakeHostInterface>(std::move(chunks)));
+    if (!board.expect_packet(payload, true)) {
+      std::cerr << "randomized fragmentation failed at iteration " << iteration
+                << '\n';
+      return false;
+    }
+  }
+  return true;
+}
+
 bool test_board_consumes_metadata_packets_by_default() {
   const auto payload = bytes({
       0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -564,6 +600,7 @@ int main() {
   bool ok = true;
   ok &= test_byte_stream_buffer_preserves_unused_bytes();
   ok &= test_metadata_split_across_recv_calls();
+  ok &= test_metadata_randomized_fragmentation();
   ok &= test_board_consumes_metadata_packets_by_default();
   ok &= test_driver_sized_chunk_parses_as_metadata_packet();
   ok &= test_empty_nonlast_metadata_is_malformed();
