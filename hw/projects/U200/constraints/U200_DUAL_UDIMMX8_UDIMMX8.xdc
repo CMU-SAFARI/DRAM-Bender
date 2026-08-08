@@ -272,19 +272,19 @@ set_property -dict {PACKAGE_PIN BE10 IOSTANDARD POD12_DCI      } [get_ports c1_d
 set_property -dict {PACKAGE_PIN BD10 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[4]    ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ4"      - IO_L2P_T0L_N2_67
 #set_property -dict {PACKAGE_PIN BF8  IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[1] ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQS_C9"   - IO_L1N_T0L_N1_DBC_67
 set_property -dict {PACKAGE_PIN BE8  IOSTANDARD POD12_DCI } [get_ports c1_ddr4_dm_dbi_n[0] ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQS_T9"   - IO_L1P_T0L_N0_DBC_67
-set_property -dict {PACKAGE_PIN AM15 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[56]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ56"     - IO_L23N_T3U_N9_66
-set_property -dict {PACKAGE_PIN AL15 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[57]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ57"     - IO_L23P_T3U_N8_66
-set_property -dict {PACKAGE_PIN AR16 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[7]]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQS_C7"   - IO_L22N_T3U_N7_DBC_AD0N_66
-set_property -dict {PACKAGE_PIN AP16 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_t[7]]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQS_T7"   - IO_L22P_T3U_N6_DBC_AD0P_66
+set_property -dict {PACKAGE_PIN BF25 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[56]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ64"     - IO_L5N_T0U_N9_AD14N_A23_65
+set_property -dict {PACKAGE_PIN BF24 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[57]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ65"     - IO_L5P_T0U_N8_AD14P_A22_65
 #set_property -dict {PACKAGE_PIN AN18 IOSTANDARD LVCMOS12       } [get_ports c1_ddr4_event_n  ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_EVENT_B"  - IO_T3U_N12_66
-set_property -dict {PACKAGE_PIN AN16 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[59]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ59"     - IO_L24N_T3U_N11_66
-set_property -dict {PACKAGE_PIN AN17 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[58]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ58"     - IO_L24P_T3U_N10_66
-set_property -dict {PACKAGE_PIN AL16 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[63]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ63"     - IO_L21N_T3L_N5_AD8N_66
-set_property -dict {PACKAGE_PIN AL17 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[62]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ62"     - IO_L21P_T3L_N4_AD8P_66
-set_property -dict {PACKAGE_PIN AR18 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[60]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ60"     - IO_L20N_T3L_N3_AD1N_66
-set_property -dict {PACKAGE_PIN AP18 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[61]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ61"     - IO_L20P_T3L_N2_AD1P_66
+set_property -dict {PACKAGE_PIN BD24 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[7]]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQS_C8"   - IO_L4N_T0U_N7_DBC_AD7N_A25_65
+set_property -dict {PACKAGE_PIN BC24 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_t[7]]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQS_T8"   - IO_L4P_T0U_N6_DBC_AD7P_A24_65
+set_property -dict {PACKAGE_PIN BE25 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[59]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ67"     - IO_L6N_T0U_N11_AD6N_A21_65
+set_property -dict {PACKAGE_PIN BD25 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[58]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ66"     - IO_L6P_T0U_N10_AD6P_A20_65
+set_property -dict {PACKAGE_PIN BF23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[62]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ70"     - IO_L3N_T0L_N5_AD15N_A27_65
+set_property -dict {PACKAGE_PIN BE23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[63]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ71"     - IO_L3P_T0L_N4_AD15P_A26_65
+set_property -dict {PACKAGE_PIN BD23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[60]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ68"     - IO_L2N_T0L_N3_FWE_FCS2_B_65
+set_property -dict {PACKAGE_PIN BC23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[61]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ69"     - IO_L2P_T0L_N2_FOE_B_65
 #set_property -dict {PACKAGE_PIN AM16 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[15]]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQS_C16"  - IO_L19N_T3L_N1_DBC_AD9N_66
-set_property -dict {PACKAGE_PIN AM17 IOSTANDARD POD12_DCI } [get_ports c1_ddr4_dm_dbi_n[7]]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQS_T16"  - IO_L19P_T3L_N0_DBC_AD9P_66
+set_property -dict {PACKAGE_PIN BE22 IOSTANDARD POD12_DCI } [get_ports c1_ddr4_dm_dbi_n[7]]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQS_T17"  - IO_L1P_T0L_N0_DBC_RS0_65
 set_property -dict {PACKAGE_PIN AU16 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[50]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ50"     - IO_L17N_T2U_N9_AD10N_66
 set_property -dict {PACKAGE_PIN AU17 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[51]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ51"     - IO_L17P_T2U_N8_AD10P_66
 set_property -dict {PACKAGE_PIN AW18 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[6]]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQS_C6"   - IO_L16N_T2U_N7_QBC_AD3N_66
@@ -359,18 +359,36 @@ set_property -dict {PACKAGE_PIN BA23 IOSTANDARD SSTL12_DCI     } [get_ports c1_d
 set_property -dict {PACKAGE_PIN BA22 IOSTANDARD SSTL12_DCI     } [get_ports c1_ddr4_adr[7]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_ADR7"     - IO_L8P_T1L_N2_AD5P_A16_65
 set_property -dict {PACKAGE_PIN BC22 IOSTANDARD SSTL12_DCI     } [get_ports c1_ddr4_bg[0]    ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_BG0"      - IO_L7N_T1L_N1_QBC_AD13N_A19_65
 set_property -dict {PACKAGE_PIN BB22 IOSTANDARD SSTL12_DCI     } [get_ports c1_ddr4_adr[12]  ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_ADR12"    - IO_L7P_T1L_N0_QBC_AD13P_A18_65
-set_property -dict {PACKAGE_PIN BF25 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[16]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ64"     - IO_L5N_T0U_N9_AD14N_A23_65
-set_property -dict {PACKAGE_PIN BF24 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[17]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ65"     - IO_L5P_T0U_N8_AD14P_A22_65
-set_property -dict {PACKAGE_PIN BD24 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[2]]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQS_C8"   - IO_L4N_T0U_N7_DBC_AD7N_A25_65
-set_property -dict {PACKAGE_PIN BC24 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_t[2]]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQS_T8"   - IO_L4P_T0U_N6_DBC_AD7P_A24_65
-set_property -dict {PACKAGE_PIN BE25 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[19]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ67"     - IO_L6N_T0U_N11_AD6N_A21_65
-set_property -dict {PACKAGE_PIN BD25 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[18]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ66"     - IO_L6P_T0U_N10_AD6P_A20_65
-set_property -dict {PACKAGE_PIN BF23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[22]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ70"     - IO_L3N_T0L_N5_AD15N_A27_65
-set_property -dict {PACKAGE_PIN BE23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[23]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ71"     - IO_L3P_T0L_N4_AD15P_A26_65
-set_property -dict {PACKAGE_PIN BD23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[20]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ68"     - IO_L2N_T0L_N3_FWE_FCS2_B_65
-set_property -dict {PACKAGE_PIN BC23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[21]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ69"     - IO_L2P_T0L_N2_FOE_B_65
+#set_property -dict {PACKAGE_PIN BC23 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[21]   ]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQ69"     - IO_L2P_T0L_N2_FOE_B_65
 #set_property -dict {PACKAGE_PIN BF22 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[17]]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQS_C17"  - IO_L1N_T0L_N1_DBC_RS1_65
-set_property -dict {PACKAGE_PIN BE22 IOSTANDARD POD12_DCI } [get_ports c1_ddr4_dm_dbi_n[2]]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQS_T17"  - IO_L1P_T0L_N0_DBC_RS0_65
+#set_property -dict {PACKAGE_PIN BE22 IOSTANDARD POD12_DCI } [get_ports c1_ddr4_dm_dbi_n[2]]; # Bank 65 VCCO - VCC1V2 Net "DDR4_C1_DQS_T17"  - IO_L1P_T0L_N0_DBC_RS0_65
 
+# Logical byte 2 on its straight nets DDR4_C1_DQ16-23 / DQS2 (DM = DQS_T11 pin).
+# (Previously logical byte 2 was placed on net byte 8 and these nets were unused;
+#  on this slot net byte 7, not net byte 2, carries the ECC byte.)
+#
+set_property -dict {PACKAGE_PIN BA12 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[16]   ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ16"     - IO_L12P_T1U_N10_GC_67
+set_property -dict {PACKAGE_PIN BB12 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[17]   ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ17"     - IO_L12N_T1U_N11_GC_67
+set_property -dict {PACKAGE_PIN BA13 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[18]   ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ18"     - IO_L11N_T1U_N9_GC_67
+set_property -dict {PACKAGE_PIN BA14 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[19]   ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ19"     - IO_L11P_T1U_N8_GC_67
+set_property -dict {PACKAGE_PIN BC9  IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[20]   ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ20"     - IO_L8N_T1L_N3_AD5N_67
+set_property -dict {PACKAGE_PIN BB9  IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[21]   ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ21"     - IO_L8P_T1L_N2_AD5P_67
+set_property -dict {PACKAGE_PIN BA7  IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[22]   ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ22"     - IO_L9N_T1L_N5_AD12N_67
+set_property -dict {PACKAGE_PIN BA8  IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[23]   ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQ23"     - IO_L9P_T1L_N4_AD12P_67
+set_property -dict {PACKAGE_PIN BB10 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[2] ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQS_C2"   - IO_L10N_T1U_N7_QBC_AD4N_67
+set_property -dict {PACKAGE_PIN BB11 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_t[2] ]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQS_T2"   - IO_L10P_T1U_N6_QBC_AD4P_67
+set_property -dict {PACKAGE_PIN BA10 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dm_dbi_n[2]]; # Bank 67 VCCO - VCC1V2 Net "DDR4_C1_DQS_T11"  - IO_L7P_T1L_N0_QBC_AD13P_67
 
+# ECC byte (CB0-7) on this slot, unconnected on non-ECC x8 UDIMM
+#set_property -dict {PACKAGE_PIN AM15 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[56]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ56"     - IO_L23N_T3U_N9_66 ;
+#set_property -dict {PACKAGE_PIN AL15 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[57]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ57"     - IO_L23P_T3U_N8_66 ;
+#set_property -dict {PACKAGE_PIN AR16 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_c[7]]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQS_C7"   - IO_L22N_T3U_N7_DBC_AD0N_66 ;
+#set_property -dict {PACKAGE_PIN AP16 IOSTANDARD DIFF_POD12_DCI } [get_ports c1_ddr4_dqs_t[7]]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQS_T7"   - IO_L22P_T3U_N6_DBC_AD0P_66 ;
+#set_property -dict {PACKAGE_PIN AN16 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[59]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ59"     - IO_L24N_T3U_N11_66 ;
+#set_property -dict {PACKAGE_PIN AN17 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[58]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ58"     - IO_L24P_T3U_N10_66 ;
+#set_property -dict {PACKAGE_PIN AL16 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[63]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ63"     - IO_L21N_T3L_N5_AD8N_66 ;
+#set_property -dict {PACKAGE_PIN AL17 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[62]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ62"     - IO_L21P_T3L_N4_AD8P_66 ;
+#set_property -dict {PACKAGE_PIN AR18 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[60]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ60"     - IO_L20N_T3L_N3_AD1N_66 ;
+#set_property -dict {PACKAGE_PIN AP18 IOSTANDARD POD12_DCI      } [get_ports c1_ddr4_dq[61]   ]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQ61"     - IO_L20P_T3L_N2_AD1P_66 ;
+#set_property -dict {PACKAGE_PIN AM17 IOSTANDARD POD12_DCI } [get_ports c1_ddr4_dm_dbi_n[7]]; # Bank 66 VCCO - VCC1V2 Net "DDR4_C1_DQS_T16"  - IO_L19P_T3L_N0_DBC_AD9P_66 ;
 

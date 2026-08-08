@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="54" Path="C:/SAFARI/DRAM-Bender/projects/U200/U200.xpr">
+<Project Version="7" Minor="54" Path="/home/orhun/DRAM-Bender/hw/projects/U200/U200.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="8a2defedc3d04a619da01e12b0113d95"/>
@@ -74,12 +74,14 @@
   <FileSets Version="1" Minor="31">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/verilog/project.vh">
+      <File Path="$PSRCDIR/sources_1/ip/phy_ddr4/phy_ddr4.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/header_verilog/parameters.vh">
+      <File Path="$PPRDIR/../../rtl/header_verilog/parameters.vh">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -99,104 +101,137 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/header_verilog/encoding.vh">
+      <File Path="$PPRDIR/../../rtl/header_verilog/encoding.vh">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/ddr_pipeline.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/decode_stage.v">
+      <File Path="$PPRDIR/../../rtl/verilog/ddr_pipeline.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/diff_shift_reg.v">
+      <File Path="$PPRDIR/../../rtl/verilog/decode_stage.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/dll_toggler.v">
+      <File Path="$PPRDIR/../../rtl/verilog/exe_pipeline.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/exe_pipeline.v">
+      <File Path="$PPRDIR/../../rtl/verilog/execute_stage.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/execute_stage.v">
+      <File Path="$PPRDIR/../../rtl/verilog/fetch_stage.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/fetch_stage.v">
+      <File Path="$PPRDIR/../../rtl/verilog/frontend.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/frontend.v">
+      <File Path="$PPRDIR/../../rtl/verilog/maintenance_controller.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/maintenance_controller.v">
+      <File Path="$PPRDIR/../../rtl/verilog/pre_decode.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/pop_count4.v">
+      <File Path="$PPRDIR/../../rtl/verilog/readback_engine.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/pre_decode.v">
+      <File Path="$PPRDIR/../../rtl/verilog/register_file.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/readback_engine.v">
+      <File Path="$PPRDIR/../../rtl/verilog/softmc_pipeline.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/register_file.v">
+      <File Path="$PPRDIR/verilog/softmc_rdimmx4_top.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/softmc_pipeline.v">
+      <File Path="$PPRDIR/verilog/softmc_udimmx8_top.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/verilog/dual_udimmx8_rdimmx4.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../rtl/verilog/diff_shift_reg.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../rtl/verilog/pop_count4.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/verilog/dual_udimmx8_udimmx8.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/verilog/project.vh">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../rtl/verilog/dll_toggler.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -254,28 +289,14 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/verilog/dual_udimmx8_rdimmx4.v">
+      <File Path="$PSRCDIR/sources_1/ip/phy_rdimm_x8_dual/phy_rdimm_x8_dual.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/verilog/softmc_udimmx8_top.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/verilog/softmc_rdimmx4_top.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/verilog/dual_udimmx8_udimmx8.v">
+      <File Path="$PSRCDIR/sources_1/ip/xdma/xdma.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -330,14 +351,14 @@
     </FileSet>
     <FileSet Name="sim_1" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../sources/hdl/verilog/reg_mem.v">
+      <File Path="$PPRDIR/../../rtl/verilog/reg_mem.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../sources/hdl/sim_verilog/example_top.sv">
+      <File Path="$PPRDIR/../../sim/example_top.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -404,19 +425,6 @@
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
-    <FileSet Name="phy_ddr4" Type="BlockSrcs" RelSrcDir="$PSRCDIR/phy_ddr4">
-      <File Path="$PSRCDIR/sources_1/ip/phy_ddr4/phy_ddr4.xci">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="TopModule" Val="phy_ddr4"/>
-        <Option Name="UseBlackboxStub" Val="1"/>
-      </Config>
-    </FileSet>
     <FileSet Name="rdback_fifo" Type="BlockSrcs" RelSrcDir="$PSRCDIR/rdback_fifo">
       <File Path="$PSRCDIR/sources_1/ip/rdback_fifo/rdback_fifo.xci">
         <FileInfo>
@@ -440,32 +448,6 @@
       </File>
       <Config>
         <Option Name="TopModule" Val="phy_ddr4_udimm"/>
-        <Option Name="UseBlackboxStub" Val="1"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="phy_rdimm_x8_dual" Type="BlockSrcs" RelSrcDir="$PSRCDIR/phy_rdimm_x8_dual">
-      <File Path="$PSRCDIR/sources_1/ip/phy_rdimm_x8_dual/phy_rdimm_x8_dual.xci">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="TopModule" Val="phy_rdimm_x8_dual"/>
-        <Option Name="UseBlackboxStub" Val="1"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="xdma" Type="BlockSrcs" RelSrcDir="$PSRCDIR/xdma">
-      <File Path="$PSRCDIR/sources_1/ip/xdma/xdma.xci">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="TopModule" Val="xdma"/>
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
@@ -546,15 +528,21 @@
     <Simulator Name="Questa">
       <Option Name="Description" Val="Questa Advanced Simulator"/>
     </Simulator>
+    <Simulator Name="IES">
+      <Option Name="Description" Val="Incisive Enterprise Simulator (IES)"/>
+    </Simulator>
+    <Simulator Name="Xcelium">
+      <Option Name="Description" Val="Xcelium Parallel Simulator"/>
+    </Simulator>
+    <Simulator Name="VCS">
+      <Option Name="Description" Val="Verilog Compiler Simulator (VCS)"/>
+    </Simulator>
     <Simulator Name="Riviera">
       <Option Name="Description" Val="Riviera-PRO Simulator"/>
     </Simulator>
-    <Simulator Name="ActiveHDL">
-      <Option Name="Description" Val="Active-HDL Simulator"/>
-    </Simulator>
   </Simulators>
   <Runs Version="1" Minor="15">
-    <Run Id="synth_1" Type="Ft3:Synth" SrcSet="sources_1" Part="xcu200-fsgd2104-2-e" ConstrsSet="constrs_1" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" State="current" Dir="$PRUNDIR/synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../home/ataberk/C:/Users/hasan/git/SoftMC_DDR4/projects/U200/U200.srcs/utils_1/imports/synth_1">
+    <Run Id="synth_1" Type="Ft3:Synth" SrcSet="sources_1" Part="xcu200-fsgd2104-2-e" ConstrsSet="constrs_1" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" State="current" Dir="$PRUNDIR/synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/home/ataberk/C:/Users/hasan/git/SoftMC_DDR4/projects/U200/U200.srcs/utils_1/imports/synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2019"/>
         <Step Id="synth_design"/>
@@ -564,7 +552,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="pr_ref_mem_synth_1" Type="Ft3:Synth" SrcSet="pr_ref_mem" Part="xcu200-fsgd2104-2-e" ConstrsSet="pr_ref_mem" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/pr_ref_mem_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/pr_ref_mem_synth_1">
+    <Run Id="pr_ref_mem_synth_1" Type="Ft3:Synth" SrcSet="pr_ref_mem" Part="xcu200-fsgd2104-2-e" ConstrsSet="pr_ref_mem" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/pr_ref_mem_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/pr_ref_mem_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -574,7 +562,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="scratchpad_synth_1" Type="Ft3:Synth" SrcSet="scratchpad" Part="xcu200-fsgd2104-2-e" ConstrsSet="scratchpad" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/scratchpad_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/scratchpad_synth_1">
+    <Run Id="scratchpad_synth_1" Type="Ft3:Synth" SrcSet="scratchpad" Part="xcu200-fsgd2104-2-e" ConstrsSet="scratchpad" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/scratchpad_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/scratchpad_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -584,7 +572,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="axis_clock_converter_synth_1" Type="Ft3:Synth" SrcSet="axis_clock_converter" Part="xcu200-fsgd2104-2-e" ConstrsSet="axis_clock_converter" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/axis_clock_converter_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/axis_clock_converter_synth_1">
+    <Run Id="axis_clock_converter_synth_1" Type="Ft3:Synth" SrcSet="axis_clock_converter" Part="xcu200-fsgd2104-2-e" ConstrsSet="axis_clock_converter" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/axis_clock_converter_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/axis_clock_converter_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -594,7 +582,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="phy_ddr4_synth_1" Type="Ft3:Synth" SrcSet="phy_ddr4" Part="xcu200-fsgd2104-2-e" ConstrsSet="phy_ddr4" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/phy_ddr4_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/phy_ddr4_synth_1">
+    <Run Id="rdback_fifo_synth_1" Type="Ft3:Synth" SrcSet="rdback_fifo" Part="xcu200-fsgd2104-2-e" ConstrsSet="rdback_fifo" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/rdback_fifo_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/rdback_fifo_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -604,7 +592,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="rdback_fifo_synth_1" Type="Ft3:Synth" SrcSet="rdback_fifo" Part="xcu200-fsgd2104-2-e" ConstrsSet="rdback_fifo" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/rdback_fifo_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/rdback_fifo_synth_1">
+    <Run Id="phy_ddr4_udimm_synth_1" Type="Ft3:Synth" SrcSet="phy_ddr4_udimm" Part="xcu200-fsgd2104-2-e" ConstrsSet="phy_ddr4_udimm" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/phy_ddr4_udimm_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/phy_ddr4_udimm_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -614,7 +602,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="phy_ddr4_udimm_synth_1" Type="Ft3:Synth" SrcSet="phy_ddr4_udimm" Part="xcu200-fsgd2104-2-e" ConstrsSet="phy_ddr4_udimm" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/phy_ddr4_udimm_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/phy_ddr4_udimm_synth_1">
+    <Run Id="xdma_dual_synth_1" Type="Ft3:Synth" SrcSet="xdma_dual" Part="xcu200-fsgd2104-2-e" ConstrsSet="xdma_dual" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/xdma_dual_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/xdma_dual_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -624,7 +612,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="phy_rdimm_x8_dual_synth_1" Type="Ft3:Synth" SrcSet="phy_rdimm_x8_dual" Part="xcu200-fsgd2104-2-e" ConstrsSet="phy_rdimm_x8_dual" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/phy_rdimm_x8_dual_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/phy_rdimm_x8_dual_synth_1">
+    <Run Id="zq_calib_mem_synth_1" Type="Ft3:Synth" SrcSet="zq_calib_mem" Part="xcu200-fsgd2104-2-e" ConstrsSet="zq_calib_mem" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/zq_calib_mem_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/zq_calib_mem_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -634,7 +622,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="xdma_synth_1" Type="Ft3:Synth" SrcSet="xdma" Part="xcu200-fsgd2104-2-e" ConstrsSet="xdma" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/xdma_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/xdma_synth_1">
+    <Run Id="instr_blk_mem_synth_1" Type="Ft3:Synth" SrcSet="instr_blk_mem" Part="xcu200-fsgd2104-2-e" ConstrsSet="instr_blk_mem" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/instr_blk_mem_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/instr_blk_mem_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -644,7 +632,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="xdma_dual_synth_1" Type="Ft3:Synth" SrcSet="xdma_dual" Part="xcu200-fsgd2104-2-e" ConstrsSet="xdma_dual" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/xdma_dual_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/xdma_dual_synth_1">
+    <Run Id="instr_blk_mem_sim_synth_1" Type="Ft3:Synth" SrcSet="instr_blk_mem_sim" Part="xcu200-fsgd2104-2-e" ConstrsSet="instr_blk_mem_sim" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/instr_blk_mem_sim_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/SAFARI/DRAM-Bender/projects/U200/U200.srcs/utils_1/imports/instr_blk_mem_sim_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -654,7 +642,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="zq_calib_mem_synth_1" Type="Ft3:Synth" SrcSet="zq_calib_mem" Part="xcu200-fsgd2104-2-e" ConstrsSet="zq_calib_mem" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/zq_calib_mem_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/zq_calib_mem_synth_1">
+    <Run Id="pr_read_mem_synth_1" Type="Ft3:Synth" SrcSet="pr_read_mem" Part="xcu200-fsgd2104-2-e" ConstrsSet="pr_read_mem" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/pr_read_mem_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/SAFARI/DRAM-Bender/projects/U200/U200.srcs/utils_1/imports/pr_read_mem_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
         <Step Id="synth_design"/>
@@ -664,41 +652,11 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="instr_blk_mem_synth_1" Type="Ft3:Synth" SrcSet="instr_blk_mem" Part="xcu200-fsgd2104-2-e" ConstrsSet="instr_blk_mem" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/instr_blk_mem_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/instr_blk_mem_synth_1">
-      <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
-        <Step Id="synth_design"/>
-      </Strategy>
-      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
-      <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2020"/>
-      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
-      <RQSFiles/>
-    </Run>
-    <Run Id="instr_blk_mem_sim_synth_1" Type="Ft3:Synth" SrcSet="instr_blk_mem_sim" Part="xcu200-fsgd2104-2-e" ConstrsSet="instr_blk_mem_sim" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/instr_blk_mem_sim_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/instr_blk_mem_sim_synth_1">
-      <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
-        <Step Id="synth_design"/>
-      </Strategy>
-      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
-      <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2020"/>
-      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
-      <RQSFiles/>
-    </Run>
-    <Run Id="pr_read_mem_synth_1" Type="Ft3:Synth" SrcSet="pr_read_mem" Part="xcu200-fsgd2104-2-e" ConstrsSet="pr_read_mem" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/pr_read_mem_synth_1" IncludeInArchive="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/pr_read_mem_synth_1">
-      <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2020"/>
-        <Step Id="synth_design"/>
-      </Strategy>
-      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
-      <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2020"/>
-      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
-      <RQSFiles/>
-    </Run>
-    <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="constrs_1" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" State="current" Dir="$PRUNDIR/impl_1" SynthRun="synth_1" IncludeInArchive="true" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../home/ataberk/C:/Users/hasan/git/SoftMC_DDR4/projects/U200/U200.srcs/utils_1/imports/impl_1">
+    <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="constrs_1" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" State="current" Dir="$PRUNDIR/impl_1" SynthRun="synth_1" IncludeInArchive="true" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/home/ataberk/C:/Users/hasan/git/SoftMC_DDR4/projects/U200/U200.srcs/utils_1/imports/impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2019"/>
         <Step Id="init_design"/>
-        <Step Id="opt_design"/>
+        <Step Id="opt_design" PreStepTclHook="$PPRDIR/build_agent/threads16.tcl"/>
         <Step Id="power_opt_design"/>
         <Step Id="place_design"/>
         <Step Id="post_place_power_opt_design"/>
@@ -712,7 +670,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="pr_ref_mem_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="pr_ref_mem" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="pr_ref_mem_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/pr_ref_mem_impl_1">
+    <Run Id="pr_ref_mem_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="pr_ref_mem" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="pr_ref_mem_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/pr_ref_mem_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -729,7 +687,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="scratchpad_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="scratchpad" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="scratchpad_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/scratchpad_impl_1">
+    <Run Id="scratchpad_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="scratchpad" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="scratchpad_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/scratchpad_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -746,7 +704,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="axis_clock_converter_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="axis_clock_converter" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="axis_clock_converter_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/axis_clock_converter_impl_1">
+    <Run Id="axis_clock_converter_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="axis_clock_converter" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="axis_clock_converter_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/axis_clock_converter_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -763,7 +721,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="phy_ddr4_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="phy_ddr4" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="phy_ddr4_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/phy_ddr4_impl_1">
+    <Run Id="rdback_fifo_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="rdback_fifo" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="rdback_fifo_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/rdback_fifo_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -780,7 +738,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="rdback_fifo_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="rdback_fifo" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="rdback_fifo_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/rdback_fifo_impl_1">
+    <Run Id="phy_ddr4_udimm_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="phy_ddr4_udimm" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="phy_ddr4_udimm_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/phy_ddr4_udimm_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -797,7 +755,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="phy_ddr4_udimm_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="phy_ddr4_udimm" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="phy_ddr4_udimm_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/phy_ddr4_udimm_impl_1">
+    <Run Id="xdma_dual_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="xdma_dual" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="xdma_dual_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/xdma_dual_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -814,7 +772,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="phy_rdimm_x8_dual_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="phy_rdimm_x8_dual" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="phy_rdimm_x8_dual_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/phy_rdimm_x8_dual_impl_1">
+    <Run Id="zq_calib_mem_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="zq_calib_mem" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="zq_calib_mem_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/zq_calib_mem_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -831,7 +789,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="xdma_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="xdma" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="xdma_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/xdma_impl_1">
+    <Run Id="instr_blk_mem_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="instr_blk_mem" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="instr_blk_mem_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/instr_blk_mem_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -848,7 +806,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="xdma_dual_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="xdma_dual" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="xdma_dual_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/xdma_dual_impl_1">
+    <Run Id="instr_blk_mem_sim_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="instr_blk_mem_sim" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="instr_blk_mem_sim_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/SAFARI/DRAM-Bender/projects/U200/U200.srcs/utils_1/imports/instr_blk_mem_sim_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -865,58 +823,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="zq_calib_mem_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="zq_calib_mem" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="zq_calib_mem_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/zq_calib_mem_impl_1">
-      <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
-        <Step Id="init_design"/>
-        <Step Id="opt_design"/>
-        <Step Id="power_opt_design"/>
-        <Step Id="place_design"/>
-        <Step Id="post_place_power_opt_design"/>
-        <Step Id="phys_opt_design"/>
-        <Step Id="route_design"/>
-        <Step Id="post_route_phys_opt_design"/>
-        <Step Id="write_bitstream"/>
-      </Strategy>
-      <ReportStrategy Name="Vivado Implementation Default Reports" Flow="Vivado Implementation 2020"/>
-      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
-      <RQSFiles/>
-    </Run>
-    <Run Id="instr_blk_mem_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="instr_blk_mem" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="instr_blk_mem_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/../../../../Users/ataberk/Desktop/SAFARI/dram-bender-gitlab/projects/U200/U200.srcs/utils_1/imports/instr_blk_mem_impl_1">
-      <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
-        <Step Id="init_design"/>
-        <Step Id="opt_design"/>
-        <Step Id="power_opt_design"/>
-        <Step Id="place_design"/>
-        <Step Id="post_place_power_opt_design"/>
-        <Step Id="phys_opt_design"/>
-        <Step Id="route_design"/>
-        <Step Id="post_route_phys_opt_design"/>
-        <Step Id="write_bitstream"/>
-      </Strategy>
-      <ReportStrategy Name="Vivado Implementation Default Reports" Flow="Vivado Implementation 2020"/>
-      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
-      <RQSFiles/>
-    </Run>
-    <Run Id="instr_blk_mem_sim_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="instr_blk_mem_sim" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="instr_blk_mem_sim_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/instr_blk_mem_sim_impl_1">
-      <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
-        <Step Id="init_design"/>
-        <Step Id="opt_design"/>
-        <Step Id="power_opt_design"/>
-        <Step Id="place_design"/>
-        <Step Id="post_place_power_opt_design"/>
-        <Step Id="phys_opt_design"/>
-        <Step Id="route_design"/>
-        <Step Id="post_route_phys_opt_design"/>
-        <Step Id="write_bitstream"/>
-      </Strategy>
-      <ReportStrategy Name="Vivado Implementation Default Reports" Flow="Vivado Implementation 2020"/>
-      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
-      <RQSFiles/>
-    </Run>
-    <Run Id="pr_read_mem_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="pr_read_mem" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="pr_read_mem_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/pr_read_mem_impl_1">
+    <Run Id="pr_read_mem_impl_1" Type="Ft2:EntireDesign" Part="xcu200-fsgd2104-2-e" ConstrsSet="pr_read_mem" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="pr_read_mem_synth_1" IncludeInArchive="false" GenFullBitstream="true" AutoIncrementalDir="$PPRDIR/build_agent/C:/SAFARI/DRAM-Bender/projects/U200/U200.srcs/utils_1/imports/pr_read_mem_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2020"/>
         <Step Id="init_design"/>
@@ -958,6 +865,34 @@
     <MsgAttr Name="RuleSource" Val="2"/>
     <MsgAttr Name="StringIsRegExp" Val="0"/>
     <MsgAttr Name="RuleId" Val="2"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="[BD 41-1306]"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="2"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="21"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="[BD 41-1271]"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="2"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="22"/>
     <MsgAttr Name="Note" Val=""/>
     <MsgAttr Name="Author" Val=""/>
     <MsgAttr Name="CreatedTimestamp" Val=""/>
@@ -1014,6 +949,76 @@
     <MsgAttr Name="RuleSource" Val="2"/>
     <MsgAttr Name="StringIsRegExp" Val="0"/>
     <MsgAttr Name="RuleId" Val="4"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="[BD 41-1306]"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="2"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="5"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="[BD 41-1271]"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="2"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="6"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="[BD 41-1306]"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="2"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="7"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="[BD 41-1271]"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="2"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="8"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="[BD 41-1306]"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="2"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="9"/>
     <MsgAttr Name="Note" Val=""/>
     <MsgAttr Name="Author" Val=""/>
     <MsgAttr Name="CreatedTimestamp" Val=""/>
