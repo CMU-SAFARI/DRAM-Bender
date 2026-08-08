@@ -6,6 +6,7 @@ terminates cleanly. A full_reset() is issued between tests to ensure
 clean state.
 """
 
+import argparse
 import sys
 import time
 
@@ -126,7 +127,12 @@ def run_test(board, name: str, prog: FinalProgram):
 
 
 def main() -> int:
-    board = drambender.api.DDR4(0, 0)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pci-bdf", required=True)
+    parser.add_argument("--xdma-channel", type=int, default=0)
+    args = parser.parse_args()
+
+    board = drambender.api.DDR4(args.pci_bdf, args.xdma_channel)
     board.reset_fpga()
     print("Board reset complete.\n")
 

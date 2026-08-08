@@ -9,6 +9,7 @@ import drambender.builtin_programs as builtin_programs
 import drambender.api.board as board_api
 from drambender.api import (
     BoardType,
+    DDR4,
     DDR4Target,
     HBM2Target,
     HostInterface,
@@ -125,33 +126,49 @@ def test_open_board_accepts_targets_and_board_type() -> None:
     calls = []
     original_native_open_board = board_api._native_open_board
 
-    def fake_native_open_board(board_type, board_id, instance_id, host_interface):
-        calls.append((board_type, board_id, instance_id, host_interface))
+    def fake_native_open_board(board_type, pci_bdf, xdma_channel, host_interface):
+        calls.append((board_type, pci_bdf, xdma_channel, host_interface))
         return object()
 
     board_api._native_open_board = fake_native_open_board
     try:
-        open_board(DDR4Target(), 1, 2, HostInterface.XDMA)
-        open_board(HBM2Target(), 3, 4, HostInterface.XDMA)
-        open_board(BoardType.DDR4, 5, 6, HostInterface.XDMA)
+        open_board(DDR4Target(), "0000:01:00.0", 0, HostInterface.XDMA)
+        open_board(HBM2Target(), "0000:81:00.0", 1, HostInterface.XDMA)
+        open_board(BoardType.DDR4, "0001:01:00.0", 2, HostInterface.XDMA)
     finally:
         board_api._native_open_board = original_native_open_board
 
     _assert(
         calls == [
-            (BoardType.DDR4, 1, 2, HostInterface.XDMA),
-            (BoardType.HBM2, 3, 4, HostInterface.XDMA),
-            (BoardType.DDR4, 5, 6, HostInterface.XDMA),
+            (BoardType.DDR4, "0000:01:00.0", 0, HostInterface.XDMA),
+            (BoardType.HBM2, "0000:81:00.0", 1, HostInterface.XDMA),
+            (BoardType.DDR4, "0001:01:00.0", 2, HostInterface.XDMA),
         ],
         f"unexpected open_board dispatch calls: {calls}",
     )
 
     try:
-        open_board(object(), 0, 0)
+        open_board(object(), "0000:01:00.0", 0)
     except TypeError as exc:
         _assert("DDR4Target" in str(exc), f"unclear open_board type error: {exc}")
     else:
         raise AssertionError("open_board(object(), ...) should fail")
+
+
+def test_native_board_selector_requires_complete_bdf() -> None:
+    try:
+        DDR4(0, 0)
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("integer probe-order selector should not be accepted")
+
+    try:
+        DDR4("01:00.0")
+    except ValueError as exc:
+        _assert("dddd:bb:ss.f" in str(exc), f"unclear invalid-BDF error: {exc}")
+    else:
+        raise AssertionError("domain-less PCI address should not be accepted")
 
 
 def test_builtins_are_configured_only() -> None:
@@ -232,6 +249,7 @@ def main() -> int:
         test_hbm2_target_selects_channel_bank_and_rank,
         test_legacy_sel_ch_and_ddr4_rejection,
         test_open_board_accepts_targets_and_board_type,
+        test_native_board_selector_requires_complete_bdf,
         test_builtins_are_configured_only,
         test_configured_ddr4_builtins,
         test_configured_hbm2_builtins,

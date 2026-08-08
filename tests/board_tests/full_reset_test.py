@@ -118,23 +118,23 @@ def run_verified_read_write(board: Board, bank: int, row: int, pattern: int) -> 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Full-reset recovery test")
-    parser.add_argument("--board-id", type=int, default=0)
-    parser.add_argument("--instance-id", type=int, default=0)
+    parser.add_argument("--pci-bdf", required=True)
+    parser.add_argument("--xdma-channel", type=int, default=0)
     parser.add_argument("--bank", type=int, default=0)
     parser.add_argument("--row", type=int, default=32)
     parser.add_argument("--pattern", type=parse_u32, default=DEFAULT_PATTERN)
     args = parser.parse_args()
 
     print(
-        f"full_reset_test: board={args.board_id} instance={args.instance_id} "
+        f"full_reset_test: pci_bdf={args.pci_bdf} xdma_channel={args.xdma_channel} "
         f"bank={args.bank} row={args.row} pattern=0x{args.pattern:08x}"
     )
 
     try:
         with open_board(
             DDR4_TARGET,
-            board_id=args.board_id,
-            instance_id=args.instance_id,
+            pci_bdf=args.pci_bdf,
+            xdma_channel=args.xdma_channel,
             host_interface=HostInterface.XDMA,
         ) as board:
             board.reset_fpga()

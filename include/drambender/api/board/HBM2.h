@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <span>
+#include <string>
 #include <vector>
 
 #include "drambender/api/board/board.h"
@@ -16,7 +17,9 @@ struct HBMTemperature {
 
 class HBM2 : public IBoard {
  public:
-  HBM2(int board_id, int instance_id, HostInterface host_interface = HostInterface::XDMA);
+  HBM2(std::string pci_bdf,
+       int xdma_channel = 0,
+       HostInterface host_interface = HostInterface::XDMA);
 
   /**
    * @brief Read the current HBM stack temperatures in degrees Celsius.
@@ -38,11 +41,7 @@ class HBM2 : public IBoard {
   void set_broadcast_channels(const std::vector<int>& channels);
 
  protected:
-  HBM2(int board_id, int instance_id, std::unique_ptr<IHostInterface> host_interface);
-
- private:
-  const int m_board_id_;
-  const int m_instance_id_;
+  explicit HBM2(std::unique_ptr<IHostInterface> host_interface);
 };
 
 }  // namespace DRAMBender

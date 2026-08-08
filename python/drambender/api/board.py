@@ -24,15 +24,15 @@ def _resolve_board_type(target_or_type) -> BoardType:
 
 def open_board(
     target_or_type,
-    board_id: int,
-    instance_id: int,
+    pci_bdf: str,
+    xdma_channel: int = 0,
     host_interface: HostInterface = HostInterface.XDMA,
 ) -> Board:
-    """Open a DRAM Bender board from a memory target or low-level board type."""
+    """Open an endpoint by complete PCI BDF and XDMA channel."""
     return _native_open_board(
         _resolve_board_type(target_or_type),
-        board_id,
-        instance_id,
+        pci_bdf,
+        xdma_channel,
         host_interface,
     )
 

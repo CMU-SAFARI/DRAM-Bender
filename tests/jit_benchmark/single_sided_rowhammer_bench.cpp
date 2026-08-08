@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <exception>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -35,8 +36,6 @@ constexpr int k_column_stride = 8;
 constexpr uint32_t k_victim_pattern = 0x00000000;
 constexpr uint32_t k_aggressor_pattern = 0xFFFFFFFF;
 
-constexpr int k_default_instance_id = 0;
-constexpr int k_default_board_id = 0;
 constexpr int k_default_bank = 0;
 constexpr int k_default_start_row = 81;
 constexpr int k_default_num_victims = 30;
@@ -52,8 +51,8 @@ constexpr int NUM_HAMMER = 7;
 constexpr int HAMMER_CTR = 8;
 
 struct Options {
-  int board_id = k_default_board_id;
-  int instance_id = k_default_instance_id;
+  std::string pci_bdf;
+  int xdma_channel = 0;
   int bank = k_default_bank;
   int start_row = k_default_start_row;
   int num_victims = k_default_num_victims;
@@ -62,7 +61,7 @@ struct Options {
 
 void print_usage(const char* argv0) {
   std::fprintf(stderr,
-               "Usage: %s [--board-id N] [--instance-id N] [--bank N] [--start-row N] "
+               "Usage: %s --pci-bdf dddd:bb:ss.f [--xdma-channel N] [--bank N] [--start-row N] "
                "[--num-victims N] [--hammer-count N]\n",
                argv0);
 }
@@ -84,9 +83,13 @@ bool parse_int(const char* text, int* value) {
 bool parse_args(int argc, char** argv, Options* opts) {
   for (int i = 1; i < argc; ++i) {
     const std::string_view arg(argv[i]);
+    if (arg == "--pci-bdf") {
+      if (i + 1 >= argc) return false;
+      opts->pci_bdf = argv[++i];
+      continue;
+    }
     int* target = nullptr;
-    if (arg == "--board-id") target = &opts->board_id;
-    else if (arg == "--instance-id") target = &opts->instance_id;
+    if (arg == "--xdma-channel") target = &opts->xdma_channel;
     else if (arg == "--bank") target = &opts->bank;
     else if (arg == "--start-row") target = &opts->start_row;
     else if (arg == "--num-victims") target = &opts->num_victims;
@@ -116,7 +119,7 @@ bool parse_args(int argc, char** argv, Options* opts) {
     std::fprintf(stderr, "--hammer-count must be greater than 0.\n");
     return false;
   }
-  return true;
+  return !opts->pci_bdf.empty();
 }
 
 // Build a program that: init victim, init aggressor, hammer aggressor, read victim.
@@ -241,12 +244,13 @@ int main(int argc, char** argv) {
   }
 
   try {
-    auto board = create_board(BoardType::DDR4, opts.board_id, opts.instance_id, HostInterface::XDMA);
+    auto board = create_board(
+        BoardType::DDR4, opts.pci_bdf, opts.xdma_channel, HostInterface::XDMA);
     board->reset_fpga();
 
-    std::printf("single_sided_rowhammer: board=%d instance=%d bank=%d start_row=%d "
+    std::printf("single_sided_rowhammer: pci_bdf=%s xdma_channel=%d bank=%d start_row=%d "
                 "num_victims=%d hammer_count=%d\n",
-                opts.board_id, opts.instance_id, opts.bank, opts.start_row,
+                opts.pci_bdf.c_str(), opts.xdma_channel, opts.bank, opts.start_row,
                 opts.num_victims, opts.hammer_count);
 
     std::vector<std::byte> row_buffer(k_row_bytes);

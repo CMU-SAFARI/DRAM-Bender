@@ -88,8 +88,8 @@ def build_read_program(bank: int, row: int) -> FinalProgram:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--board-id", type=int, default=0)
-    parser.add_argument("--instance-id", type=int, default=0)
+    parser.add_argument("--pci-bdf", required=True)
+    parser.add_argument("--xdma-channel", type=int, default=0)
     parser.add_argument("--bank", type=int, default=0)
     parser.add_argument("--row", type=int, default=0)
     parser.add_argument("--pattern", type=lambda v: int(v, 0), default=0xDEADBEEF)
@@ -97,8 +97,8 @@ def main() -> int:
 
     board = open_board(
         DDR4_TARGET,
-        board_id=args.board_id,
-        instance_id=args.instance_id,
+        pci_bdf=args.pci_bdf,
+        xdma_channel=args.xdma_channel,
         host_interface=HostInterface.XDMA,
     )
     board.reset_fpga()

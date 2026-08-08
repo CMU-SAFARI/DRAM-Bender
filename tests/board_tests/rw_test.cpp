@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <exception>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -15,8 +16,6 @@ using namespace DRAMBender;
 namespace {
 
 // Default test configuration
-constexpr int k_default_board_id = 0;
-constexpr int k_default_instance_id = 0;
 constexpr int k_default_bank = 0;
 constexpr int k_default_num_rows = 65536;
 constexpr int k_default_num_cls = 128;
@@ -45,8 +44,8 @@ enum ExitCode {
 };
 
 struct Options {
-  int board_id = k_default_board_id;
-  int instance_id = k_default_instance_id;
+  std::string pci_bdf;
+  int xdma_channel = 0;
   int bank = k_default_bank;
   int num_rows = k_default_num_rows;
   int num_cls = k_default_num_cls;
@@ -55,7 +54,7 @@ struct Options {
 
 void print_usage(const char* argv0) {
   std::fprintf(stderr,
-               "Usage: %s [--board-id N] [--instance-id N] [--bank N] "
+               "Usage: %s --pci-bdf dddd:bb:ss.f [--xdma-channel N] [--bank N] "
                "[--num-rows N] [--num-cls N] [--pattern N]\n",
                argv0);
 }
@@ -106,20 +105,20 @@ bool parse_u32(const char* text, uint32_t* value) {
 bool parse_args(int argc, char** argv, Options* options) {
   for (int arg_index = 1; arg_index < argc; ++arg_index) {
     const std::string_view arg(argv[arg_index]);
-    if (arg == "--board-id") {
-      if (arg_index + 1 >= argc ||
-          !parse_non_negative_int(argv[arg_index + 1], &options->board_id)) {
-        std::fprintf(stderr, "Invalid value for --board-id.\n");
+    if (arg == "--pci-bdf") {
+      if (arg_index + 1 >= argc) {
+        std::fprintf(stderr, "Missing value for --pci-bdf.\n");
         return false;
       }
+      options->pci_bdf = argv[arg_index + 1];
       ++arg_index;
       continue;
     }
 
-    if (arg == "--instance-id") {
+    if (arg == "--xdma-channel") {
       if (arg_index + 1 >= argc ||
-          !parse_non_negative_int(argv[arg_index + 1], &options->instance_id)) {
-        std::fprintf(stderr, "Invalid value for --instance-id.\n");
+          !parse_non_negative_int(argv[arg_index + 1], &options->xdma_channel)) {
+        std::fprintf(stderr, "Invalid value for --xdma-channel.\n");
         return false;
       }
       ++arg_index;
@@ -177,7 +176,7 @@ bool parse_args(int argc, char** argv, Options* options) {
     return false;
   }
 
-  return true;
+  return !options->pci_bdf.empty();
 }
 
 uint32_t rotate_pattern_right(uint32_t pattern) {
@@ -343,7 +342,7 @@ int main(int argc, char** argv) {
 
   try {
     auto board = create_board(
-        BoardType::DDR4, options.board_id, options.instance_id, HostInterface::XDMA);
+        BoardType::DDR4, options.pci_bdf, options.xdma_channel, HostInterface::XDMA);
     board->reset_fpga();
 
     const FinalProgram program = build_rw_program(
@@ -356,10 +355,10 @@ int main(int argc, char** argv) {
     uint32_t row_pattern = options.pattern;
     const int progress_interval = std::max(1, options.num_rows / 200);
 
-    std::printf("rw_test config: board=%d instance=%d bank=%d rows=%d cls=%d "
+    std::printf("rw_test config: pci_bdf=%s xdma_channel=%d bank=%d rows=%d cls=%d "
                 "pattern=0x%08x bytes-per-row=%zu\n",
-                options.board_id,
-                options.instance_id,
+                options.pci_bdf.c_str(),
+                options.xdma_channel,
                 options.bank,
                 options.num_rows,
                 options.num_cls,
@@ -383,10 +382,10 @@ int main(int argc, char** argv) {
     std::printf("\n");
 
     if (total_mismatches == 0) {
-      std::printf("rw_test passed: board=%d instance=%d bank=%d rows=%d cls=%d "
+      std::printf("rw_test passed: pci_bdf=%s xdma_channel=%d bank=%d rows=%d cls=%d "
                   "pattern=0x%08x bytes=%llu\n",
-                  options.board_id,
-                  options.instance_id,
+                  options.pci_bdf.c_str(),
+                  options.xdma_channel,
                   options.bank,
                   options.num_rows,
                   options.num_cls,
@@ -404,10 +403,10 @@ int main(int argc, char** argv) {
                    reported_mismatches);
     }
     std::fprintf(stderr,
-                 "rw_test failed: board=%d instance=%d bank=%d rows=%d cls=%d "
+                 "rw_test failed: pci_bdf=%s xdma_channel=%d bank=%d rows=%d cls=%d "
                  "pattern=0x%08x total_mismatches=%zu bytes=%llu\n",
-                 options.board_id,
-                 options.instance_id,
+                 options.pci_bdf.c_str(),
+                 options.xdma_channel,
                  options.bank,
                  options.num_rows,
                  options.num_cls,

@@ -178,8 +178,8 @@ def verify_row(observed_bytes: np.ndarray, expected_u32: np.ndarray,
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="DRAM read-write integrity test")
-    ap.add_argument("--board-id", type=int, default=0)
-    ap.add_argument("--instance-id", type=int, default=0)
+    ap.add_argument("--pci-bdf", required=True)
+    ap.add_argument("--xdma-channel", type=int, default=0)
     ap.add_argument("--bank", type=int, default=0)
     ap.add_argument("--num-rows", type=int, default=65536)
     ap.add_argument("--num-cls", type=int, default=128)
@@ -189,11 +189,11 @@ def main() -> int:
 
     row_bytes = args.num_cls * BYTES_PER_CACHELINE
     total_bytes = args.num_rows * row_bytes
-    print(f"rw_test: board={args.board_id} instance={args.instance_id} bank={args.bank} "
+    print(f"rw_test: pci_bdf={args.pci_bdf} xdma_channel={args.xdma_channel} bank={args.bank} "
           f"rows={args.num_rows} cls={args.num_cls} pattern=0x{args.pattern:08x} "
           f"bytes/row={row_bytes}")
 
-    board = drambender.api.DDR4(args.board_id, args.instance_id)
+    board = drambender.api.DDR4(args.pci_bdf, args.xdma_channel)
     board.reset_fpga()
     board.execute(build_rw_program(args.bank, args.num_rows, args.num_cls, args.pattern))
 

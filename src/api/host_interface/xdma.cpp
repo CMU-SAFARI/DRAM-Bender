@@ -9,15 +9,20 @@
 #include <exception>
 #include <fcntl.h>
 #include <memory>
+#include <optional>
 #include <poll.h>
 #include <stdexcept>
 #include <string>
 #include <sys/eventfd.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <system_error>
 #include <thread>
 #include <unistd.h>
+#include <utility>
 
 #include "api/host_interface/byte_stream_buffer.h"
+#include "api/host_interface/xdma_device_resolver.h"
 
 namespace DRAMBender {
 namespace {
@@ -37,12 +42,12 @@ struct FreeDeleter {
 
 class XDMA : public IHostInterface {
  public:
-  explicit XDMA(int board_id,
-                int instance_id,
+  explicit XDMA(std::string pci_bdf,
+                int xdma_channel,
                 size_t send_buffer_size = 32 * 2048,
                 size_t recv_buffer_size = 32 * 1024)
-      : board_id_(board_id),
-        instance_id_(instance_id),
+      : pci_bdf_(xdma_internal::normalize_pci_bdf(pci_bdf)),
+        xdma_channel_(xdma_channel),
         send_buffer_size_(send_buffer_size),
         recv_buffer_size_(recv_buffer_size) {}
 
@@ -64,17 +69,17 @@ class XDMA : public IHostInterface {
       return;
     }
 
+    if (!m_device_paths_) {
+      m_device_paths_ = xdma_internal::resolve_device_paths(pci_bdf_, xdma_channel_);
+    }
+
     // Claim C2H first. The driver treats the streaming C2H endpoint as the
     // execution-session lease, so another DRAM-Bender process cannot acquire
     // the same channel while this instance proceeds to open H2C.
     openFromCard_();
 
-    const std::string to_fpga_file = devicePath_("h2c");
-    m_to_card_fd_ = ::open(to_fpga_file.c_str(), O_RDWR | O_CLOEXEC);
-    if (m_to_card_fd_ < 0) {
-      throw std::system_error(errno, std::generic_category(),
-                              "Failed to open XDMA host-to-card device " + to_fpga_file);
-    }
+    m_to_card_fd_ = openVerifiedNode_(m_device_paths_->h2c, O_RDWR | O_CLOEXEC,
+                                     "host-to-card");
 
     if (m_cancel_fd_ < 0) {
       m_cancel_fd_ = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
@@ -290,12 +295,11 @@ class XDMA : public IHostInterface {
 
  private:
   void openFromCard_() {
-    const std::string from_fpga_file = devicePath_("c2h");
-    m_from_card_fd_ = ::open(from_fpga_file.c_str(), O_RDWR | O_CLOEXEC | O_NONBLOCK);
-    if (m_from_card_fd_ < 0) {
-      throw std::system_error(errno, std::generic_category(),
-                              "Failed to open XDMA card-to-host device " + from_fpga_file);
+    if (!m_device_paths_) {
+      throw std::logic_error("XDMA device paths were not resolved before opening C2H.");
     }
+    m_from_card_fd_ = openVerifiedNode_(
+        m_device_paths_->c2h, O_RDWR | O_CLOEXEC | O_NONBLOCK, "card-to-host");
   }
 
   void reopenFromCard_() {
@@ -359,9 +363,32 @@ class XDMA : public IHostInterface {
     return std::unique_ptr<std::byte, FreeDeleter>(static_cast<std::byte*>(raw_ptr));
   }
 
-  std::string devicePath_(std::string_view direction) const {
-    return "/dev/xdma" + std::to_string(board_id_) + "_" + std::string(direction) + "_" +
-           std::to_string(instance_id_);
+  static int openVerifiedNode_(const xdma_internal::DeviceNode& node,
+                               int flags,
+                               std::string_view description) {
+    const int fd = ::open(node.path.c_str(), flags);
+    if (fd < 0) {
+      throw std::system_error(errno, std::generic_category(),
+                              "Failed to open XDMA " + std::string(description) +
+                                  " device " + node.path.string());
+    }
+
+    struct stat status {};
+    if (::fstat(fd, &status) != 0) {
+      const int saved_errno = errno;
+      ::close(fd);
+      throw std::system_error(saved_errno, std::generic_category(),
+                              "Failed to inspect XDMA device " + node.path.string());
+    }
+
+    if (!S_ISCHR(status.st_mode) || ::major(status.st_rdev) != node.major_number ||
+        ::minor(status.st_rdev) != node.minor_number) {
+      ::close(fd);
+      throw std::runtime_error(
+          "XDMA device node " + node.path.string() +
+          " changed while it was being opened; retry after the driver has settled.");
+    }
+    return fd;
   }
 
   bool receiveCancelled_() const noexcept {
@@ -393,13 +420,14 @@ class XDMA : public IHostInterface {
     }
   }
 
-  const int board_id_;
-  const int instance_id_;
+  const std::string pci_bdf_;
+  const int xdma_channel_;
   const size_t send_buffer_size_;
   const size_t recv_buffer_size_;
   std::unique_ptr<std::byte, FreeDeleter> m_send_buf_;
   std::unique_ptr<std::byte, FreeDeleter> m_recv_buf_;
   host_interface_internal::ByteStreamBuffer m_recv_pending_;
+  std::optional<xdma_internal::DevicePaths> m_device_paths_;
   int m_to_card_fd_ = -1;
   int m_from_card_fd_ = -1;
   int m_cancel_fd_ = -1;
@@ -408,8 +436,8 @@ class XDMA : public IHostInterface {
 
 }  // namespace
 
-std::unique_ptr<IHostInterface> make_xdma_host_interface(int board_id, int instance_id) {
-  return std::make_unique<XDMA>(board_id, instance_id);
+std::unique_ptr<IHostInterface> make_xdma_host_interface(std::string pci_bdf, int xdma_channel) {
+  return std::make_unique<XDMA>(std::move(pci_bdf), xdma_channel);
 }
 
 }  // namespace DRAMBender

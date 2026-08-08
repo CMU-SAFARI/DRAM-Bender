@@ -34,8 +34,8 @@ constexpr int RAR = 5;
 constexpr int PATTERN_REG = 6;
 
 struct Options {
-  int board_id = 0;
-  int instance_id = 0;
+  std::string pci_bdf;
+  int xdma_channel = 0;
   int channel = 0;
   int pseudo_channel = 0;
   int sid = 1;
@@ -52,7 +52,7 @@ struct Options {
 
 void print_usage(const char* argv0) {
   std::fprintf(stderr,
-               "Usage: %s [--board-id N] [--instance-id N] [--channel N] "
+               "Usage: %s --pci-bdf dddd:bb:ss.f [--xdma-channel N] [--channel N] "
                "[--pseudo-channel N] [--sid N] [--bank N] [--row N] "
                "[--row-count N] [--pattern HEX_OR_DEC] [--receive-bytes N] "
                "[--iterations N] [--progress-interval N] [--static-only] "
@@ -145,10 +145,10 @@ bool parse_args(int argc, char** argv, Options* options) {
     }
 
     bool ok = true;
-    if (arg == "--board-id") {
-      ok = parse_int(argv[arg_index], &options->board_id);
-    } else if (arg == "--instance-id") {
-      ok = parse_int(argv[arg_index], &options->instance_id);
+    if (arg == "--pci-bdf") {
+      options->pci_bdf = argv[arg_index];
+    } else if (arg == "--xdma-channel") {
+      ok = parse_int(argv[arg_index], &options->xdma_channel);
     } else if (arg == "--channel") {
       ok = parse_int(argv[arg_index], &options->channel);
     } else if (arg == "--pseudo-channel") {
@@ -221,7 +221,7 @@ bool parse_args(int argc, char** argv, Options* options) {
     return false;
   }
 
-  return true;
+  return options->static_only || !options->pci_bdf.empty();
 }
 
 FinalProgram build_hbm2_rw_program(int channel,
@@ -459,10 +459,10 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  std::printf("hbm2_rw_test: board=%d instance=%d channel=%d pch=%d sid=%d "
+  std::printf("hbm2_rw_test: pci_bdf=%s xdma_channel=%d channel=%d pch=%d sid=%d "
               "bank=%d physical_bar=%d rows=%d..%d pattern=0x%08x receive_bytes=%zu\n",
-              options.board_id,
-              options.instance_id,
+              options.pci_bdf.c_str(),
+              options.xdma_channel,
               options.channel,
               options.pseudo_channel,
               options.sid,
@@ -474,7 +474,7 @@ int main(int argc, char** argv) {
               options.receive_bytes);
 
   try {
-    HBM2 board(options.board_id, options.instance_id);
+    HBM2 board(options.pci_bdf, options.xdma_channel);
     if (!options.skip_temperature) {
       try {
         const HBMTemperature temp = board.read_temperature();

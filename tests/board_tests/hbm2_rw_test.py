@@ -275,8 +275,8 @@ def run_row_sweep(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="HBM2 latest-U55-SID read/write test")
-    parser.add_argument("--board-id", type=int, default=0)
-    parser.add_argument("--instance-id", type=int, default=0)
+    parser.add_argument("--pci-bdf", required=True)
+    parser.add_argument("--xdma-channel", type=int, default=0)
     parser.add_argument("--channel", type=int, default=0)
     parser.add_argument("--pseudo-channel", type=int, default=0)
     parser.add_argument("--sid", type=int, default=1)
@@ -360,7 +360,7 @@ def main() -> int:
 
     print(
         "hbm2_rw_test: "
-        f"board={args.board_id} instance={args.instance_id} "
+        f"pci_bdf={args.pci_bdf} xdma_channel={args.xdma_channel} "
         f"channel={args.channel} pch={args.pseudo_channel} "
         f"sid={args.sid} bank={args.bank} physical_bar={physical_bank} "
         f"rows={args.row}..{args.row + args.row_count - 1} "
@@ -369,7 +369,7 @@ def main() -> int:
     )
 
     try:
-        with HBM2(args.board_id, args.instance_id) as board:
+        with HBM2(args.pci_bdf, args.xdma_channel) as board:
             if not args.skip_temperature:
                 try:
                     temp = board.read_temperature()

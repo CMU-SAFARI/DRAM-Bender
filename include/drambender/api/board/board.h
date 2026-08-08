@@ -187,9 +187,9 @@ class IBoard {
 
 std::unique_ptr<IBoard> create_board(
     BoardType board_type,
-    int board_id,
-    int instance_id,
-    HostInterface host_interface);
+    std::string pci_bdf,
+    int xdma_channel = 0,
+    HostInterface host_interface = HostInterface::XDMA);
 
 }  // namespace DRAMBender
 

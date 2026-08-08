@@ -257,12 +257,12 @@ class Board:
 class DDR4(Board):
     """DDR4-backed DRAM Bender board."""
 
-    def __init__(self, board_id: int, instance_id: int, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
+    def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 
 class HBM2(Board):
     """HBM2-backed DRAM Bender board."""
 
-    def __init__(self, board_id: int, instance_id: int, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
+    def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 
     def read_temperature(self) -> HBMTemperature:
         """Read the current HBM stack temperatures in degrees Celsius."""
@@ -276,11 +276,11 @@ class HBM2(Board):
         """Configure the optional HBM command broadcast channel mask."""
         ...
 
-def open_board(board_type: BoardType, board_id: int, instance_id: int, host_interface: HostInterface = HostInterface.XDMA) -> Board:
+def open_board(board_type: BoardType, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> Board:
     """Open a DRAM Bender board.
 
-    board_id selects the FPGA card, and instance_id selects the controller
-    instance on that card.
+    pci_bdf selects the FPGA PCI function, and xdma_channel selects an independent
+    XDMA endpoint on that function.
     """
     ...
 

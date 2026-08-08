@@ -8,6 +8,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "drambender/api/board/DDR4.h"
@@ -468,14 +469,14 @@ void IBoard::set_aref(bool is_on) {
 }
 
 std::unique_ptr<IBoard> create_board(BoardType board_type,
-                                     int board_id,
-                                     int instance_id,
+                                     std::string pci_bdf,
+                                     int xdma_channel,
                                      HostInterface host_interface) {
   switch (board_type) {
     case BoardType::DDR4:
-      return std::make_unique<DDR4>(board_id, instance_id, host_interface);
+      return std::make_unique<DDR4>(std::move(pci_bdf), xdma_channel, host_interface);
     case BoardType::HBM2:
-      return std::make_unique<HBM2>(board_id, instance_id, host_interface);
+      return std::make_unique<HBM2>(std::move(pci_bdf), xdma_channel, host_interface);
   }
 
   throw std::runtime_error("Unsupported board type requested.");

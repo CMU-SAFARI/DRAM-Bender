@@ -29,8 +29,8 @@ def count_bitflips(mask: np.ndarray) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--board-id", type=int, default=0)
-    parser.add_argument("--instance-id", type=int, default=0)
+    parser.add_argument("--pci-bdf", required=True)
+    parser.add_argument("--xdma-channel", type=int, default=0)
     parser.add_argument("--bank", type=int, default=0)
     parser.add_argument("--start-row", type=int, default=81,
                         help="First victim row (physical).")
@@ -50,8 +50,8 @@ def main() -> int:
 
     board = open_board(
         target,
-        board_id=args.board_id,
-        instance_id=args.instance_id,
+        pci_bdf=args.pci_bdf,
+        xdma_channel=args.xdma_channel,
         host_interface=HostInterface.XDMA,
     )
     board.reset_fpga()

@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <memory>
 #include <span>
+#include <string>
 #include <string_view>
 
 namespace DRAMBender {
@@ -85,8 +86,8 @@ class IHostInterface {
 };
 
 std::unique_ptr<IHostInterface> create_host_interface(HostInterface host_interface,
-                                                      int board_id,
-                                                      int instance_id);
+                                                      std::string pci_bdf,
+                                                      int xdma_channel);
 
 }  // namespace DRAMBender
 

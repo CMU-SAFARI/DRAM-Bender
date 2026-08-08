@@ -3,18 +3,19 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace DRAMBender {
 
-std::unique_ptr<IHostInterface> make_xdma_host_interface(int board_id, int instance_id);
+std::unique_ptr<IHostInterface> make_xdma_host_interface(std::string pci_bdf, int xdma_channel);
 
 std::unique_ptr<IHostInterface> create_host_interface(HostInterface host_interface,
-                                                      int board_id,
-                                                      int instance_id) {
+                                                      std::string pci_bdf,
+                                                      int xdma_channel) {
   switch (host_interface) {
     case HostInterface::XDMA: {
       std::unique_ptr<IHostInterface> interface =
-          make_xdma_host_interface(board_id, instance_id);
+          make_xdma_host_interface(std::move(pci_bdf), xdma_channel);
       if (!interface) {
         throw std::runtime_error("Failed to create host interface for XDMA.");
       }

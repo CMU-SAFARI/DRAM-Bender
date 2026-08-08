@@ -17,6 +17,7 @@
 #include <cstring>
 #include <exception>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -52,8 +53,8 @@ constexpr int NUM_HAMMER = 7;
 constexpr int HAMMER_CTR = 8;
 
 struct Options {
-  int board_id = 0;
-  int instance_id = 0;
+  std::string pci_bdf;
+  int xdma_channel = 0;
   int bank = k_default_bank;
   int start_row = k_default_start_row;
   int num_victims = k_default_num_victims;
@@ -73,9 +74,12 @@ bool parse_args(int argc, char** argv, Options* opts) {
   for (int i = 1; i < argc; i += 2) {
     std::string_view arg(argv[i]);
     if (i + 1 >= argc) { std::fprintf(stderr, "Missing value for %.*s\n", (int)arg.size(), arg.data()); return false; }
+    if (arg == "--pci-bdf") {
+      opts->pci_bdf = argv[i + 1];
+      continue;
+    }
     int* target = nullptr;
-    if (arg == "--board-id") target = &opts->board_id;
-    else if (arg == "--instance-id") target = &opts->instance_id;
+    if (arg == "--xdma-channel") target = &opts->xdma_channel;
     else if (arg == "--bank") target = &opts->bank;
     else if (arg == "--start-row") target = &opts->start_row;
     else if (arg == "--num-victims") target = &opts->num_victims;
@@ -83,7 +87,7 @@ bool parse_args(int argc, char** argv, Options* opts) {
     else { std::fprintf(stderr, "Unknown argument: %.*s\n", (int)arg.size(), arg.data()); return false; }
     if (!parse_int(argv[i + 1], target)) { std::fprintf(stderr, "Invalid value for %.*s\n", (int)arg.size(), arg.data()); return false; }
   }
-  return true;
+  return !opts->pci_bdf.empty();
 }
 
 // Build a program that: init victim, init aggressor, hammer, read victim
@@ -208,7 +212,8 @@ int main(int argc, char** argv) {
   if (!parse_args(argc, argv, &opts)) return 2;
 
   try {
-    auto board = create_board(BoardType::DDR4, opts.board_id, opts.instance_id, HostInterface::XDMA);
+    auto board = create_board(
+        BoardType::DDR4, opts.pci_bdf, opts.xdma_channel, HostInterface::XDMA);
     board->reset_fpga();
 
     std::printf("rowhammer_test: bank=%d start_row=%d num_victims=%d hammer_count=%d\n",

@@ -1197,18 +1197,18 @@ NB_MODULE(_core, m) {
       m,
       "DDR4",
       "DDR4-backed DRAM Bender board.")
-      .def(nb::init<int, int, HostInterface>(),
-           nb::arg("board_id"),
-           nb::arg("instance_id"),
+      .def(nb::init<std::string, int, HostInterface>(),
+           nb::arg("pci_bdf"),
+           nb::arg("xdma_channel") = 0,
            nb::arg("host_interface") = HostInterface::XDMA);
 
   nb::class_<HBM2, IBoard>(
       m,
       "HBM2",
       "HBM2-backed DRAM Bender board.")
-      .def(nb::init<int, int, HostInterface>(),
-           nb::arg("board_id"),
-           nb::arg("instance_id"),
+      .def(nb::init<std::string, int, HostInterface>(),
+           nb::arg("pci_bdf"),
+           nb::arg("xdma_channel") = 0,
            nb::arg("host_interface") = HostInterface::XDMA)
       .def("read_temperature",
            [](HBM2& board) {
@@ -1245,11 +1245,10 @@ NB_MODULE(_core, m) {
   m.def("open_board",
         &create_board,
         nb::arg("board_type"),
-        nb::arg("board_id"),
-        nb::arg("instance_id"),
+        nb::arg("pci_bdf"),
+        nb::arg("xdma_channel") = 0,
         nb::arg("host_interface") = HostInterface::XDMA,
-        "Open a DRAM Bender board. board_id selects the FPGA card, and "
-        "instance_id selects the controller instance on that card.");
+        "Open a DRAM Bender endpoint selected by complete PCI BDF and XDMA channel.");
 
   m.def("lower", &lower, nb::arg("ops"));
 

@@ -29,6 +29,7 @@ find_package(Threads REQUIRED)
 add_library(DRAMBender
   src/api/host_interface/host_interface.cpp
   src/api/host_interface/xdma.cpp
+  src/api/host_interface/xdma_device_resolver.cpp
   src/api/board/DDR4.cpp
   src/api/board/HBM2.cpp
   src/api/board/board.cpp
@@ -157,6 +158,15 @@ if (BUILD_TESTING)
   )
   target_link_libraries(drambender_readback_protocol_test PRIVATE DRAMBender)
   add_test(NAME drambender_readback_protocol_test COMMAND drambender_readback_protocol_test)
+
+  add_executable(drambender_xdma_device_resolver_test
+    tests/xdma_device_resolver_test.cpp
+  )
+  target_include_directories(drambender_xdma_device_resolver_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(drambender_xdma_device_resolver_test PRIVATE DRAMBender)
+  add_test(NAME drambender_xdma_device_resolver_test COMMAND drambender_xdma_device_resolver_test)
 
   if (DRAMBENDER_BUILD_BOARD_TESTS)
     add_executable(drambender_rw_test

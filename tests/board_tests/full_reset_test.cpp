@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <exception>
 #include <span>
+#include <string>
 #include <string_view>
 #include <thread>
 #include <vector>
@@ -27,8 +28,8 @@ constexpr int RAR = 5;
 constexpr int PATTERN_REG = 6;
 
 struct Options {
-  int board_id = 0;
-  int instance_id = 0;
+  std::string pci_bdf;
+  int xdma_channel = 0;
   int bank = 0;
   int row = 32;
   uint32_t pattern = 0x13579bdfu;
@@ -75,10 +76,10 @@ bool parse_args(int argc, char** argv, Options* opts) {
     }
 
     bool ok = true;
-    if (arg == "--board-id") {
-      ok = parse_int(argv[i + 1], &opts->board_id);
-    } else if (arg == "--instance-id") {
-      ok = parse_int(argv[i + 1], &opts->instance_id);
+    if (arg == "--pci-bdf") {
+      opts->pci_bdf = argv[i + 1];
+    } else if (arg == "--xdma-channel") {
+      ok = parse_int(argv[i + 1], &opts->xdma_channel);
     } else if (arg == "--bank") {
       ok = parse_int(argv[i + 1], &opts->bank);
     } else if (arg == "--row") {
@@ -99,7 +100,7 @@ bool parse_args(int argc, char** argv, Options* opts) {
     ++i;
   }
 
-  return true;
+  return !opts->pci_bdf.empty();
 }
 
 FinalProgram build_long_no_read_program() {
@@ -194,7 +195,7 @@ bool run_verified_read_write(IBoard& board, int bank, int row, uint32_t pattern)
 
 void print_usage(const char* argv0) {
   std::fprintf(stderr,
-               "Usage: %s [--board-id N] [--instance-id N] [--bank N] "
+               "Usage: %s --pci-bdf dddd:bb:ss.f [--xdma-channel N] [--bank N] "
                "[--row N] [--pattern HEX_OR_DEC]\n",
                argv0);
 }
@@ -209,7 +210,8 @@ int main(int argc, char** argv) {
   }
 
   try {
-    auto board = create_board(BoardType::DDR4, opts.board_id, opts.instance_id, HostInterface::XDMA);
+    auto board = create_board(
+        BoardType::DDR4, opts.pci_bdf, opts.xdma_channel, HostInterface::XDMA);
     board->reset_fpga();
 
     board->execute(build_long_no_read_program());

@@ -15,6 +15,7 @@
 #include <cstring>
 #include <exception>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -28,8 +29,6 @@ constexpr int k_cachelines_per_row = 128;
 constexpr int k_words_per_cacheline = 16;
 constexpr int k_column_stride = 8;
 
-constexpr int k_default_instance_id = 0;
-constexpr int k_default_board_id = 0;
 constexpr int k_default_bank = 0;
 constexpr int k_default_row = 0;
 constexpr uint32_t k_default_pattern = 0xDEADBEEFu;
@@ -42,8 +41,8 @@ constexpr int RAR = 5;
 constexpr int PATTERN_REG = 6;
 
 struct Options {
-  int board_id = k_default_board_id;
-  int instance_id = k_default_instance_id;
+  std::string pci_bdf;
+  int xdma_channel = 0;
   int bank = k_default_bank;
   int row = k_default_row;
   uint32_t pattern = k_default_pattern;
@@ -51,7 +50,7 @@ struct Options {
 
 void print_usage(const char* argv0) {
   std::fprintf(stderr,
-               "Usage: %s [--board-id N] [--instance-id N] [--bank N] [--row N] [--pattern HEX_OR_DEC]\n",
+               "Usage: %s --pci-bdf dddd:bb:ss.f [--xdma-channel N] [--bank N] [--row N] [--pattern HEX_OR_DEC]\n",
                argv0);
 }
 
@@ -89,8 +88,8 @@ bool parse_args(int argc, char** argv, Options* opts) {
       return false;
     }
     bool ok = true;
-    if (arg == "--board-id") ok = parse_int(argv[i + 1], &opts->board_id);
-    else if (arg == "--instance-id") ok = parse_int(argv[i + 1], &opts->instance_id);
+    if (arg == "--pci-bdf") opts->pci_bdf = argv[i + 1];
+    else if (arg == "--xdma-channel") ok = parse_int(argv[i + 1], &opts->xdma_channel);
     else if (arg == "--bank") ok = parse_int(argv[i + 1], &opts->bank);
     else if (arg == "--row") ok = parse_int(argv[i + 1], &opts->row);
     else if (arg == "--pattern") ok = parse_uint32_any_base(argv[i + 1], &opts->pattern);
@@ -106,7 +105,7 @@ bool parse_args(int argc, char** argv, Options* opts) {
     }
     ++i;
   }
-  return true;
+  return !opts->pci_bdf.empty();
 }
 
 FinalProgram build_write_program(int bank, int row, uint32_t pattern) {
@@ -182,11 +181,12 @@ int main(int argc, char** argv) {
   }
 
   try {
-    auto board = create_board(BoardType::DDR4, opts.board_id, opts.instance_id, HostInterface::XDMA);
+    auto board = create_board(
+        BoardType::DDR4, opts.pci_bdf, opts.xdma_channel, HostInterface::XDMA);
     board->reset_fpga();
 
-    std::printf("read_write: board=%d instance=%d bank=%d row=%d pattern=0x%08x\n",
-                opts.board_id, opts.instance_id, opts.bank, opts.row, opts.pattern);
+    std::printf("read_write: pci_bdf=%s xdma_channel=%d bank=%d row=%d pattern=0x%08x\n",
+                opts.pci_bdf.c_str(), opts.xdma_channel, opts.bank, opts.row, opts.pattern);
 
     const size_t total_words =
         static_cast<size_t>(k_cachelines_per_row) * k_words_per_cacheline;
