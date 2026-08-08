@@ -481,7 +481,7 @@ struct xdma_engine {
 	u8 addr_bits;		/* HW datapath address width */
 	u8 channel:2;		/* engine indices */
 	u8 streaming:1;
-	u8 device_open:1;	/* flag if engine node open, ST mode only */
+	u8 device_open:1;	/* exclusive endpoint-open claim */
 	u8 running:1;		/* flag if the driver started engine */
 	u8 non_incr_addr:1;	/* flag if non-incremental addressing used */
 	u8 eop_flush:1;		/* st c2h only, flush up the data with eop */

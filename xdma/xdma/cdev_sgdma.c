@@ -895,18 +895,41 @@ static int char_sgdma_open(struct inode *inode, struct file *file)
 {
 	struct xdma_cdev *xcdev;
 	struct xdma_engine *engine;
+	bool exclusive;
+	unsigned long flags;
+	int rv;
 
-	char_open(inode, file);
+	rv = char_open(inode, file);
+	if (rv < 0)
+		return rv;
 
 	xcdev = (struct xdma_cdev *)file->private_data;
-	engine = xcdev->engine;
+	rv = xcdev_check(__func__, xcdev, 1);
+	if (rv < 0)
+		return rv;
 
-	if (engine->streaming && engine->dir == DMA_FROM_DEVICE) {
-		if (engine->device_open == 1)
+	engine = xcdev->engine;
+	exclusive = engine->dir == DMA_TO_DEVICE ||
+		    (engine->streaming && engine->dir == DMA_FROM_DEVICE);
+
+	/*
+	 * H2C carries this stack's instruction/control stream, and streaming
+	 * C2H is a single readback stream.  Sharing either endpoint between
+	 * independent opens cannot be made safe at read()/write() boundaries.
+	 * Serialize the test-and-set with the engine lock; the old unlocked
+	 * sequence allowed two racing C2H opens to both succeed.
+	 */
+	if (exclusive) {
+		spin_lock_irqsave(&engine->lock, flags);
+		if (engine->device_open) {
+			spin_unlock_irqrestore(&engine->lock, flags);
 			return -EBUSY;
+		}
 		engine->device_open = 1;
 
-		engine->eop_flush = (file->f_flags & O_TRUNC) ? 1 : 0;
+		if (engine->dir == DMA_FROM_DEVICE)
+			engine->eop_flush = (file->f_flags & O_TRUNC) ? 1 : 0;
+		spin_unlock_irqrestore(&engine->lock, flags);
 	}
 
 	return 0;
@@ -916,21 +939,36 @@ static int char_sgdma_close(struct inode *inode, struct file *file)
 {
 	struct xdma_cdev *xcdev = (struct xdma_cdev *)file->private_data;
 	struct xdma_engine *engine;
+	bool exclusive;
+	unsigned long flags;
 	int rv;
+	int teardown_rv = 0;
 
 	rv = xcdev_check(__func__, xcdev, 1);
 	if (rv < 0)
 		return rv;
 
 	engine = xcdev->engine;
+	exclusive = engine->dir == DMA_TO_DEVICE ||
+		    (engine->streaming && engine->dir == DMA_FROM_DEVICE);
 
 	if (engine->streaming && engine->dir == DMA_FROM_DEVICE) {
-		engine->device_open = 0;
 		if (engine->cyclic_req)
-			return xdma_cyclic_transfer_teardown(engine);
+			teardown_rv = xdma_cyclic_transfer_teardown(engine);
 	}
 
-	return 0;
+	/*
+	 * Keep the endpoint claimed until C2H cyclic teardown has stopped DMA
+	 * and freed its ring.  Otherwise a new opener can race teardown and
+	 * start using partially dismantled engine state.
+	 */
+	if (exclusive) {
+		spin_lock_irqsave(&engine->lock, flags);
+		engine->device_open = 0;
+		spin_unlock_irqrestore(&engine->lock, flags);
+	}
+
+	return teardown_rv;
 }
 static const struct file_operations sgdma_fops = {
 	.owner = THIS_MODULE,

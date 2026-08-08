@@ -63,14 +63,17 @@ class XDMA : public IHostInterface {
       return;
     }
 
+    // Claim C2H first. The driver treats the streaming C2H endpoint as the
+    // execution-session lease, so another DRAM-Bender process cannot acquire
+    // the same channel while this instance proceeds to open H2C.
+    openFromCard_();
+
     const std::string to_fpga_file = devicePath_("h2c");
     m_to_card_fd_ = ::open(to_fpga_file.c_str(), O_RDWR | O_CLOEXEC);
     if (m_to_card_fd_ < 0) {
       throw std::system_error(errno, std::generic_category(),
                               "Failed to open XDMA host-to-card device " + to_fpga_file);
     }
-
-    openFromCard_();
 
     if (m_cancel_fd_ < 0) {
       m_cancel_fd_ = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
