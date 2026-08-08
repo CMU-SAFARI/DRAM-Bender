@@ -101,15 +101,18 @@ class IBoard {
    * @brief Copy queued readback bytes into a caller-owned buffer.
    *
    * The destination size must be a multiple of four bytes. The call blocks
-   * until that many bytes are available, the FPGA finishes too early, the
-   * receive timeout expires, or the receiver thread reports an error.
-   * A timeout, premature end, or asynchronous receiver error is rethrown after
-   * full_reset() discards the failed session. If recovery itself fails, the
-   * board handle becomes unusable and must be reopened.
+   * until that many bytes are available, the FPGA finishes too early, an
+   * optional timeout expires, or the receiver thread reports an error. By
+   * default there is no deadline, which permits retention programs with long
+   * silent intervals. A timeout, premature end, or asynchronous receiver error
+   * is rethrown after full_reset() discards the failed session. If recovery
+   * itself fails, the board handle becomes unusable and must be reopened.
    *
    * @return The number of bytes copied, which equals dst.size_bytes().
    */
-  virtual size_t receive(std::span<std::byte> dst);
+  virtual size_t receive(
+      std::span<std::byte> dst,
+      std::optional<std::chrono::milliseconds> timeout = std::nullopt);
 
   /**
    * @brief Binding-oriented variant of receive() with periodic interruption checks.
@@ -121,7 +124,8 @@ class IBoard {
    */
   virtual size_t receive_interruptibly(
       std::span<std::byte> dst,
-      const InterruptionPoint& interruption_point);
+      const InterruptionPoint& interruption_point,
+      std::optional<std::chrono::milliseconds> timeout = std::nullopt);
 
   /**
    * @brief Wait for the active readback session to finish.
@@ -169,7 +173,8 @@ class IBoard {
   void consumeMetadataPacketData_();
   void rethrowReceiverException_();
   size_t receiveImpl_(std::span<std::byte> dst,
-                      const InterruptionPoint& interruption_point);
+                      const InterruptionPoint& interruption_point,
+                      std::optional<std::chrono::milliseconds> timeout);
   void synchronizeImpl_(const InterruptionPoint& interruption_point);
   void joinReceiver_(bool rethrow_receiver_exception);
   void clearReceiveState_();

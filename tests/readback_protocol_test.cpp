@@ -15,6 +15,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -456,7 +457,7 @@ bool test_receive_timeout_full_resets_and_board_is_reusable() {
 
   std::array<std::byte, sizeof(uint32_t)> observed{};
   try {
-    (void)board.receive(observed);
+    (void)board.receive(observed, std::chrono::milliseconds(30));
     std::cerr << "expected receive timeout\n";
     return false;
   } catch (const std::runtime_error& error) {
@@ -476,6 +477,89 @@ bool test_receive_timeout_full_resets_and_board_is_reusable() {
     }
   }
   return verify_board_reuse(board, state);
+}
+
+bool test_unbounded_receive_waits_past_configured_control_timeout() {
+  auto state = std::make_shared<BlockingHostState>();
+  RecoveryTestBoard board(state, std::chrono::milliseconds(30));
+  board.execute(one_nop_program());
+
+  std::thread producer([state] {
+    std::this_thread::sleep_for(std::chrono::milliseconds(75));
+    std::vector<std::byte> payload(axi_datapath_byte_width);
+    payload[0] = b(0xef);
+    payload[1] = b(0xbe);
+    payload[2] = b(0xad);
+    payload[3] = b(0xde);
+    queue_stream(state, concat({metadata(payload.size(), true), payload}));
+  });
+
+  bool ok = true;
+  try {
+    std::array<std::byte, sizeof(uint32_t)> observed{};
+    (void)board.receive(observed);
+    board.synchronize();
+    if (observed[0] != b(0xef) || observed[1] != b(0xbe) ||
+        observed[2] != b(0xad) || observed[3] != b(0xde)) {
+      std::cerr << "unbounded receive returned incorrect delayed data\n";
+      ok = false;
+    }
+  } catch (const std::exception& error) {
+    std::cerr << "unbounded receive unexpectedly failed: " << error.what() << '\n';
+    ok = false;
+  }
+  producer.join();
+
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->cancel_receive_count != 0 || state->drain_count != 0) {
+      std::cerr << "unbounded delayed receive unexpectedly reset the board\n";
+      ok = false;
+    }
+  }
+  return ok;
+}
+
+bool test_huge_receive_timeout_saturates_instead_of_wrapping() {
+  auto state = std::make_shared<BlockingHostState>();
+  RecoveryTestBoard board(state, std::chrono::milliseconds(30));
+  board.execute(one_nop_program());
+
+  std::thread producer([state] {
+    std::this_thread::sleep_for(std::chrono::milliseconds(75));
+    std::vector<std::byte> payload(axi_datapath_byte_width);
+    payload[0] = b(0x04);
+    payload[1] = b(0x03);
+    payload[2] = b(0x02);
+    payload[3] = b(0x01);
+    queue_stream(state, concat({metadata(payload.size(), true), payload}));
+  });
+
+  bool ok = true;
+  try {
+    std::array<std::byte, sizeof(uint32_t)> observed{};
+    (void)board.receive(observed, std::chrono::milliseconds::max());
+    board.synchronize();
+    if (observed[0] != b(0x04) || observed[1] != b(0x03) ||
+        observed[2] != b(0x02) || observed[3] != b(0x01)) {
+      std::cerr << "huge-timeout receive returned incorrect delayed data\n";
+      ok = false;
+    }
+  } catch (const std::exception& error) {
+    std::cerr << "huge-timeout receive unexpectedly failed: " << error.what()
+              << '\n';
+    ok = false;
+  }
+  producer.join();
+
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (state->cancel_receive_count != 0 || state->drain_count != 0) {
+      std::cerr << "huge-timeout receive unexpectedly reset the board\n";
+      ok = false;
+    }
+  }
+  return ok;
 }
 
 bool test_interrupted_synchronize_full_resets_and_board_is_reusable() {
@@ -575,7 +659,7 @@ bool test_failed_automatic_reset_closes_board_and_preserves_timeout() {
 
   std::array<std::byte, sizeof(uint32_t)> observed{};
   try {
-    (void)board.receive(observed);
+    (void)board.receive(observed, std::chrono::milliseconds(30));
     std::cerr << "expected receive timeout with injected recovery failure\n";
     return false;
   } catch (const std::runtime_error& error) {
@@ -607,6 +691,8 @@ int main() {
   ok &= test_empty_last_metadata_remains_valid_packet();
   ok &= test_reserved_metadata_bits_are_malformed();
   ok &= test_receive_timeout_full_resets_and_board_is_reusable();
+  ok &= test_unbounded_receive_waits_past_configured_control_timeout();
+  ok &= test_huge_receive_timeout_saturates_instead_of_wrapping();
   ok &= test_interrupted_synchronize_full_resets_and_board_is_reusable();
   ok &= test_protocol_error_full_resets_and_board_is_reusable();
   ok &= test_send_error_full_resets_and_board_is_reusable();

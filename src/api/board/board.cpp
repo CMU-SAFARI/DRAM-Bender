@@ -22,6 +22,29 @@ namespace {
 
 inline constexpr std::chrono::milliseconds interruption_poll_interval{50};
 
+std::chrono::steady_clock::time_point saturating_deadline(
+    std::chrono::steady_clock::time_point now,
+    std::chrono::milliseconds timeout) {
+  using Clock = std::chrono::steady_clock;
+
+  const auto max_timeout =
+      std::chrono::duration_cast<std::chrono::milliseconds>(Clock::duration::max());
+  if (timeout > max_timeout) {
+    return Clock::time_point::max();
+  }
+
+  const auto clock_timeout =
+      std::chrono::duration_cast<Clock::duration>(timeout);
+  const auto now_since_epoch = now.time_since_epoch();
+  const auto max_since_epoch = Clock::time_point::max().time_since_epoch();
+  if (now_since_epoch > Clock::duration::zero() &&
+      clock_timeout > max_since_epoch - now_since_epoch) {
+    return Clock::time_point::max();
+  }
+
+  return now + clock_timeout;
+}
+
 }  // namespace
 
 IBoard::IBoard(std::unique_ptr<IHostInterface> host_interface,
@@ -219,19 +242,23 @@ void IBoard::execute(const FinalProgram& prog) {
   }
 }
 
-size_t IBoard::receive(std::span<std::byte> dst) {
-  return receiveImpl_(dst, {});
+size_t IBoard::receive(
+    std::span<std::byte> dst,
+    std::optional<std::chrono::milliseconds> timeout) {
+  return receiveImpl_(dst, {}, timeout);
 }
 
 size_t IBoard::receive_interruptibly(
     std::span<std::byte> dst,
-    const InterruptionPoint& interruption_point) {
-  return receiveImpl_(dst, interruption_point);
+    const InterruptionPoint& interruption_point,
+    std::optional<std::chrono::milliseconds> timeout) {
+  return receiveImpl_(dst, interruption_point, timeout);
 }
 
 size_t IBoard::receiveImpl_(
     std::span<std::byte> dst,
-    const InterruptionPoint& interruption_point) {
+    const InterruptionPoint& interruption_point,
+    std::optional<std::chrono::milliseconds> timeout) {
   ensureOpen_();
   if (dst.data() == nullptr && !dst.empty()) {
     throw std::invalid_argument("receive destination buffer cannot be null.");
@@ -239,15 +266,22 @@ size_t IBoard::receiveImpl_(
   if (dst.size_bytes() % sizeof(Word_t) != 0) {
     throw std::invalid_argument("receive expects a byte count that is a multiple of 4.");
   }
+  if (timeout.has_value() && timeout->count() < 0) {
+    throw std::invalid_argument("receive timeout cannot be negative.");
+  }
   if (dst.empty()) {
     return 0;
   }
 
   auto* dst_words = reinterpret_cast<Word_t*>(dst.data());
   const size_t num_words_to_read = dst.size_bytes() / sizeof(Word_t);
-  const auto deadline = std::chrono::steady_clock::now() + receive_timeout_;
+  const auto now = std::chrono::steady_clock::now();
+  const auto deadline =
+      timeout.has_value()
+          ? std::optional(saturating_deadline(now, *timeout))
+          : std::nullopt;
   auto next_interruption_check =
-      std::chrono::steady_clock::now() + interruption_poll_interval;
+      now + interruption_poll_interval;
 
   std::unique_lock<std::mutex> lock(m_recv_mutex_);
   while (m_recv_words_.size() < num_words_to_read) {
@@ -268,10 +302,15 @@ size_t IBoard::receiveImpl_(
           "Receive stream ended before the requested amount of data arrived.")));
     }
 
-    const auto wake_deadline = interruption_point
-                                   ? std::min(deadline, next_interruption_check)
-                                   : deadline;
-    m_recv_cv_.wait_until(lock, wake_deadline);
+    if (deadline.has_value() || interruption_point) {
+      auto wake_deadline = deadline.value_or(next_interruption_check);
+      if (deadline.has_value() && interruption_point) {
+        wake_deadline = std::min(*deadline, next_interruption_check);
+      }
+      m_recv_cv_.wait_until(lock, wake_deadline);
+    } else {
+      m_recv_cv_.wait(lock);
+    }
 
     auto now = std::chrono::steady_clock::now();
     if (interruption_point && now >= next_interruption_check) {
@@ -294,7 +333,7 @@ size_t IBoard::receiveImpl_(
       continue;
     }
 
-    if (now >= deadline) {
+    if (deadline.has_value() && now >= *deadline) {
       lock.unlock();
       recoverAndRethrow_(std::make_exception_ptr(std::runtime_error(
           "Timed out while waiting for readback data from the platform.")));

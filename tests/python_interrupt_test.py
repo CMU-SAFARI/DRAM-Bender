@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import math
 import os
 from pathlib import Path
 import signal
 import sys
 import threading
+import time
 import types
 from typing import Any
 
@@ -86,6 +88,44 @@ def test_ctrl_c_during_receive_into() -> None:
     assert_reusable(board)
 
 
+def test_explicit_receive_timeout_recovers_board() -> None:
+    board = _core._MockBoard(5_000)
+    board.start_blocked_receive()
+    observed = bytearray(4)
+    started = time.monotonic()
+    try:
+        board.receive_into(observed, timeout=0.025)
+    except RuntimeError as error:
+        assert "Timed out while waiting for readback data" in str(error)
+    else:
+        raise AssertionError("receive_into() ignored its explicit timeout")
+
+    elapsed = time.monotonic() - started
+    assert 0.015 <= elapsed < 2.0
+    assert board.drain_count == 1
+    assert not board.is_closed
+    assert_reusable(board)
+
+
+def test_receive_timeout_validation() -> None:
+    for invalid in (-1, math.inf, -math.inf, math.nan, 1e300):
+        board = _core._MockBoard()
+        try:
+            board.receive_into(bytearray(4), timeout=invalid)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"receive_into() accepted invalid timeout {invalid!r}")
+
+    board = _core._MockBoard()
+    try:
+        board.receive_into(bytearray(4), timeout=object())
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("receive_into() accepted a nonnumeric timeout")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--extension", type=Path)
@@ -93,4 +133,6 @@ if __name__ == "__main__":
     _core = load_core(args.extension)
     test_ctrl_c_during_synchronize()
     test_ctrl_c_during_receive_into()
+    test_explicit_receive_timeout_recovers_board()
+    test_receive_timeout_validation()
     print("python interruption recovery: PASS")

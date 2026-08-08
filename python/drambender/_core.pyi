@@ -215,11 +215,12 @@ class Board:
         """
         ...
 
-    def receive_into(self, arg: object, /) -> int:
+    def receive_into(self, buffer: object, timeout: float | None = None) -> int:
         """Copy queued readback data into a writable C-contiguous buffer.
 
-        The buffer size must be a multiple of four bytes. This blocks until the
-        buffer is full or the receive session fails.
+        The buffer size must be a multiple of four bytes. ``timeout`` is an
+        optional number of seconds; ``None`` waits without a deadline, including
+        across long retention intervals.
         """
         ...
 

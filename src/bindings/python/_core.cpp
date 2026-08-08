@@ -1,5 +1,6 @@
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -9,6 +10,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -187,7 +189,9 @@ class MockBoard : public IBoard {
     ensureOpen_();
   }
 
-  size_t receive(std::span<std::byte> dst) override {
+  size_t receive(
+      std::span<std::byte> dst,
+      std::optional<std::chrono::milliseconds> /*timeout*/) override {
     ensureOpen_();
     if (dst.data() == nullptr && !dst.empty()) {
       throw std::invalid_argument("receive destination buffer cannot be null.");
@@ -212,19 +216,20 @@ class MockBoard : public IBoard {
 
   size_t receive_interruptibly(
       std::span<std::byte> dst,
-      const InterruptionPoint& interruption_point) override {
+      const InterruptionPoint& interruption_point,
+      std::optional<std::chrono::milliseconds> timeout) override {
     bool block_receive = false;
     {
       std::lock_guard<std::mutex> lock(host_state_->mutex);
       block_receive = host_state_->block_receive;
     }
     if (block_receive) {
-      return IBoard::receive_interruptibly(dst, interruption_point);
+      return IBoard::receive_interruptibly(dst, interruption_point, timeout);
     }
 
     // The ordinary in-memory queue path never blocks. The binding performs
     // one Python signal check immediately after it returns.
-    return receive(dst);
+    return receive(dst, timeout);
   }
 
   void start_blocked_receive() {
@@ -277,15 +282,44 @@ class MockBoard : public IBoard {
   std::shared_ptr<MockHostState> host_state_;
 };
 
-size_t receive_into(IBoard& board, nb::handle dst) {
+std::optional<std::chrono::milliseconds> parse_receive_timeout(
+    nb::handle timeout) {
+  if (timeout.is_none()) {
+    return std::nullopt;
+  }
+
+  const double timeout_seconds = PyFloat_AsDouble(timeout.ptr());
+  if (PyErr_Occurred()) {
+    throw nb::python_error();
+  }
+  if (!std::isfinite(timeout_seconds) || timeout_seconds < 0.0) {
+    throw std::invalid_argument(
+        "receive_into timeout must be a finite nonnegative number of seconds or None.");
+  }
+
+  const long double timeout_milliseconds =
+      std::ceil(static_cast<long double>(timeout_seconds) * 1000.0L);
+  constexpr auto max_timeout =
+      std::numeric_limits<std::chrono::milliseconds::rep>::max();
+  if (timeout_milliseconds > static_cast<long double>(max_timeout)) {
+    throw std::invalid_argument("receive_into timeout is too large.");
+  }
+
+  return std::chrono::milliseconds(
+      static_cast<std::chrono::milliseconds::rep>(timeout_milliseconds));
+}
+
+size_t receive_into(IBoard& board, nb::handle dst, nb::handle timeout) {
   WritableBufferView buffer(dst);
+  const auto parsed_timeout = parse_receive_timeout(timeout);
 
   size_t bytes_received = 0;
   try {
     nb::gil_scoped_release release;
     bytes_received = board.receive_interruptibly(
         std::span(reinterpret_cast<std::byte*>(buffer.data()), buffer.size_bytes()),
-        python_interruption_point);
+        python_interruption_point,
+        parsed_timeout);
   } catch (const PythonSignalPending&) {
     // IBoard has already completed full_reset() before rethrowing the
     // interruption marker.
@@ -1148,11 +1182,14 @@ NB_MODULE(_core, m) {
            "full reset before KeyboardInterrupt is raised.")
       .def("receive_into",
            &receive_into,
+           nb::arg("buffer"),
+           nb::arg("timeout") = nb::none(),
            "Copy queued readback data into a writable C-contiguous buffer. "
-           "The buffer size must be a multiple of four bytes; the call blocks "
-           "until the buffer is full or the receive session fails. On Python's "
+           "The buffer size must be a multiple of four bytes. timeout is an "
+           "optional nonnegative number of seconds; None waits without a "
+           "deadline, including across long retention intervals. On Python's "
            "main thread, Ctrl+C performs a full reset before KeyboardInterrupt "
-           "is raised.")
+           "is raised. A timeout performs a full reset before raising.")
       .def("set_aref",
            [](IBoard& board, bool enabled) {
              nb::gil_scoped_release release;
