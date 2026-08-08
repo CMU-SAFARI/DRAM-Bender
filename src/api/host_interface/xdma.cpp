@@ -161,15 +161,13 @@ class XDMA : public IHostInterface {
     }
 
     while (true) {
-      if (!waitForReceiveReady_()) {
-        return 0;
-      }
-
-      // Cancellation may have raced with poll() returning C2H readiness.
       if (receiveCancelled_()) {
         return 0;
       }
 
+      // The cyclic C2H ring is initialized lazily by the driver's first
+      // read().  poll() cannot report readiness before that initialization,
+      // so always try the nonblocking read first and poll only after EAGAIN.
       const size_t request_size =
           std::min(recv_buffer_size_, std::max(c2h_read_quantum, dst.size()));
       ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get(), request_size);
@@ -177,6 +175,9 @@ class XDMA : public IHostInterface {
         continue;
       }
       if (rc < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        if (!waitForReceiveReady_()) {
+          return 0;
+        }
         continue;
       }
       if (rc < 0) {
