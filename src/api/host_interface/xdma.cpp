@@ -1,6 +1,7 @@
 #include "drambender/api/host_interface/host_interface.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
@@ -24,7 +25,6 @@ namespace {
 inline constexpr size_t max_zero_write_retries = 1'000'000;
 inline constexpr size_t max_drain_reads = 16'384;
 inline constexpr size_t c2h_read_quantum = 4096;
-inline constexpr int partial_receive_quiet_poll_ms = 100;
 inline constexpr int drain_quiet_poll_ms = 1;
 inline constexpr int drain_required_quiet_polls = 500;
 
@@ -123,6 +123,7 @@ class XDMA : public IHostInterface {
   }
 
   void begin_receive() override {
+    m_receive_cancelled_.store(false, std::memory_order_release);
     clearCancelEvent_();
     m_recv_pending_.clear();
   }
@@ -138,30 +139,40 @@ class XDMA : public IHostInterface {
       return 0;
     }
 
-    size_t total_copied = 0;
-    while (total_copied < dst.size()) {
-      const size_t buffered_count = m_recv_pending_.read(dst.subspan(total_copied));
-      if (buffered_count > 0) {
-        total_copied += buffered_count;
-        continue;
+    // recv() is a byte-stream "read some" operation. Packet boundaries belong
+    // to the metadata protocol above this transport and must never be inferred
+    // from a short read or a period with no C2H data.
+    //
+    // Check cancellation even when buffered or continuously arriving data is
+    // available. Otherwise the old fill-the-entire-destination loop could
+    // starve full_reset()/close() indefinitely while the FPGA kept producing
+    // readback data.
+    if (receiveCancelled_()) {
+      return 0;
+    }
+
+    const size_t buffered_count = m_recv_pending_.read(dst);
+    if (buffered_count > 0) {
+      return receiveCancelled_() ? 0 : buffered_count;
+    }
+
+    while (true) {
+      if (!waitForReceiveReady_()) {
+        return 0;
+      }
+
+      // Cancellation may have raced with poll() returning C2H readiness.
+      if (receiveCancelled_()) {
+        return 0;
       }
 
       const size_t request_size =
-          std::min(recv_buffer_size_, std::max(c2h_read_quantum, dst.size() - total_copied));
+          std::min(recv_buffer_size_, std::max(c2h_read_quantum, dst.size()));
       ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get(), request_size);
       if (rc < 0 && errno == EINTR) {
         continue;
       }
       if (rc < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-        if (total_copied > 0) {
-          if (!waitForReceiveReady_(partial_receive_quiet_poll_ms)) {
-            return total_copied;
-          }
-          continue;
-        }
-        if (!waitForReceiveReady_()) {
-          return 0;
-        }
         continue;
       }
       if (rc < 0) {
@@ -177,9 +188,11 @@ class XDMA : public IHostInterface {
       }
 
       m_recv_pending_.append(std::span<const std::byte>(m_recv_buf_.get(), recv_count));
+      if (receiveCancelled_()) {
+        return 0;
+      }
+      return m_recv_pending_.read(dst);
     }
-
-    return total_copied;
   }
 
   void cancel_receive() override {
@@ -187,6 +200,7 @@ class XDMA : public IHostInterface {
       return;
     }
 
+    m_receive_cancelled_.store(true, std::memory_order_release);
     const uint64_t value = 1;
     while (true) {
       const ssize_t rc = ::write(m_cancel_fd_, &value, sizeof(value));
@@ -286,24 +300,20 @@ class XDMA : public IHostInterface {
     openFromCard_();
   }
 
-  bool waitForReceiveReady_(int timeout_ms = -1) {
+  bool waitForReceiveReady_() {
     while (true) {
       pollfd fds[2] = {
           {.fd = m_from_card_fd_, .events = POLLIN, .revents = 0},
           {.fd = m_cancel_fd_, .events = POLLIN, .revents = 0},
       };
 
-      const int poll_rc = ::poll(fds, 2, timeout_ms);
+      const int poll_rc = ::poll(fds, 2, -1);
       if (poll_rc < 0) {
         if (errno == EINTR) {
           continue;
         }
         throw std::system_error(errno, std::generic_category(), "XDMA receive poll failed");
       }
-      if (poll_rc == 0) {
-        return false;
-      }
-
       if ((fds[1].revents & POLLIN) != 0) {
         clearCancelEvent_();
         return false;
@@ -333,6 +343,10 @@ class XDMA : public IHostInterface {
   std::string devicePath_(std::string_view direction) const {
     return "/dev/xdma" + std::to_string(board_id_) + "_" + std::string(direction) + "_" +
            std::to_string(instance_id_);
+  }
+
+  bool receiveCancelled_() const noexcept {
+    return m_receive_cancelled_.load(std::memory_order_acquire);
   }
 
   void clearCancelEvent_() {
@@ -370,6 +384,7 @@ class XDMA : public IHostInterface {
   int m_to_card_fd_ = -1;
   int m_from_card_fd_ = -1;
   int m_cancel_fd_ = -1;
+  std::atomic<bool> m_receive_cancelled_{false};
 };
 
 }  // namespace

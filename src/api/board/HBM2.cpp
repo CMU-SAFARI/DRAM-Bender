@@ -22,11 +22,7 @@ HBM2::HBM2(int board_id, int instance_id, HostInterface host_interface)
            create_host_interface(host_interface, board_id, instance_id)) {}
 
 HBM2::HBM2(int board_id, int instance_id, std::unique_ptr<IHostInterface> host_interface)
-    : IBoard(std::move(host_interface),
-             2048,
-             1024,
-             std::chrono::seconds(5),
-             ReadbackProtocol::MetadataPackets),
+    : IBoard(std::move(host_interface)),
       m_board_id_(board_id),
       m_instance_id_(instance_id) {}
 

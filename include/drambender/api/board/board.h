@@ -48,11 +48,6 @@ constexpr std::string_view to_string(BoardType board_type) noexcept {
  */
 class IBoard {
  protected:
-  enum class ReadbackProtocol {
-    RawStream,
-    MetadataPackets,
-  };
-
   struct ReadbackPacket {
     std::vector<std::byte> payload;
     bool is_last;
@@ -61,8 +56,7 @@ class IBoard {
   explicit IBoard(std::unique_ptr<IHostInterface> host_interface,
                   int max_num_insts_per_prog = 2048,
                   int readback_buffer_size = 1024,
-                  std::chrono::milliseconds receive_timeout = std::chrono::seconds(5),
-                  ReadbackProtocol readback_protocol = ReadbackProtocol::RawStream);
+                  std::chrono::milliseconds receive_timeout = std::chrono::seconds(5));
 
   IHostInterface& hostInterface() const;
   int readback_buffer_size() const noexcept;
@@ -76,7 +70,6 @@ class IBoard {
   std::vector<std::byte> m_send_buffer_;
   const int readback_buffer_size_;
   const std::chrono::milliseconds receive_timeout_;
-  const ReadbackProtocol readback_protocol_;
 
  public:
   virtual ~IBoard();
@@ -145,7 +138,6 @@ class IBoard {
 
  private:
   void consumeData_();
-  void consumeRawStreamData_();
   void consumeMetadataPacketData_();
   void rethrowReceiverException_();
   void joinReceiver_(bool rethrow_receiver_exception);

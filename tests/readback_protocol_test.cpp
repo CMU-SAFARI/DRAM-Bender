@@ -117,8 +117,7 @@ class PacketTestBoard : public DRAMBender::IBoard {
       : DRAMBender::IBoard(std::move(host),
                            2048,
                            1024,
-                           std::chrono::seconds(5),
-                           ReadbackProtocol::MetadataPackets) {}
+                           std::chrono::seconds(5)) {}
 
   bool expect_packet(const std::vector<std::byte>& payload, bool is_last) {
     const auto packet = receiveReadbackPacket_();
@@ -138,24 +137,20 @@ class PacketTestBoard : public DRAMBender::IBoard {
     return true;
   }
 
-  bool expect_end_marker() {
-    const auto packet = receiveReadbackPacket_();
-    if (packet.has_value()) {
-      std::cerr << "expected empty end marker, got a packet\n";
+  bool expect_protocol_error(const std::string& expected_message) {
+    try {
+      (void)receiveReadbackPacket_();
+      std::cerr << "expected protocol error, but packet parsing succeeded\n";
       return false;
+    } catch (const std::runtime_error& error) {
+      if (error.what() != expected_message) {
+        std::cerr << "protocol error mismatch: expected '" << expected_message
+                  << "', got '" << error.what() << "'\n";
+        return false;
+      }
     }
     return true;
   }
-};
-
-class RawStreamTestBoard : public DRAMBender::IBoard {
- public:
-  explicit RawStreamTestBoard(std::unique_ptr<DRAMBender::IHostInterface> host)
-      : DRAMBender::IBoard(std::move(host),
-                           2048,
-                           1024,
-                           std::chrono::seconds(5),
-                           ReadbackProtocol::RawStream) {}
 };
 
 bool test_byte_stream_buffer_preserves_unused_bytes() {
@@ -215,7 +210,38 @@ bool test_metadata_split_across_recv_calls() {
   return board.expect_packet(payload, true);
 }
 
-bool test_driver_sized_chunk_parses_as_hbm2_packet() {
+bool test_board_consumes_metadata_packets_by_default() {
+  const auto payload = bytes({
+      0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+      0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+      0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+  });
+  auto stream = concat({metadata(payload.size(), false),
+                        payload,
+                        metadata(0, true)});
+  PacketTestBoard board(std::make_unique<FakeHostInterface>(
+      std::vector<std::vector<std::byte>>{std::move(stream)}));
+
+  DRAMBender::Program program;
+  program.add_inst(DRAMBender::all_nops());
+  board.execute(program.conclude());
+
+  std::vector<std::byte> observed(payload.size());
+  if (board.receive(observed) != observed.size()) {
+    std::cerr << "metadata receive returned an unexpected byte count\n";
+    return false;
+  }
+  board.synchronize();
+
+  if (observed != payload) {
+    std::cerr << "metadata payload mismatch\n";
+    return false;
+  }
+  return true;
+}
+
+bool test_driver_sized_chunk_parses_as_metadata_packet() {
   const auto payload = bytes({
       0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
       0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
@@ -230,10 +256,11 @@ bool test_driver_sized_chunk_parses_as_hbm2_packet() {
   return board.expect_packet(payload, true);
 }
 
-bool test_empty_nonlast_metadata_ends_session() {
+bool test_empty_nonlast_metadata_is_malformed() {
   PacketTestBoard board(std::make_unique<FakeHostInterface>(
       std::vector<std::vector<std::byte>>{metadata(0, false)}));
-  return board.expect_end_marker();
+  return board.expect_protocol_error(
+      "Platform readback metadata declares an empty non-final packet.");
 }
 
 bool test_empty_last_metadata_remains_valid_packet() {
@@ -242,40 +269,14 @@ bool test_empty_last_metadata_remains_valid_packet() {
   return board.expect_packet({}, true);
 }
 
-bool test_raw_stream_strips_final_trailer() {
-  const auto payload = bytes({
-      0xef, 0xbe, 0xad, 0xde,
-      0xef, 0xbe, 0xad, 0xde,
-      0xef, 0xbe, 0xad, 0xde,
-      0xef, 0xbe, 0xad, 0xde,
-  });
-  const std::vector<std::byte> trailer(axi_datapath_byte_width, std::byte{0});
-  const auto raw_transfer = concat({payload, trailer});
+bool test_reserved_metadata_bits_are_malformed() {
+  auto packet = metadata(axi_datapath_byte_width, true);
+  packet[2] = b(0x80);
 
-  RawStreamTestBoard board(std::make_unique<FakeHostInterface>(
-      std::vector<std::vector<std::byte>>{raw_transfer}));
-
-  DRAMBender::Program program;
-  program.add_inst(DRAMBender::all_nops());
-  board.execute(program.conclude());
-
-  std::vector<std::byte> observed(payload.size());
-  if (board.receive(std::span<std::byte>(observed.data(), observed.size())) != observed.size()) {
-    std::cerr << "raw receive returned an unexpected byte count\n";
-    return false;
-  }
-  try {
-    board.synchronize();
-  } catch (const std::exception& error) {
-    std::cerr << "raw stream synchronize failed: " << error.what() << '\n';
-    return false;
-  }
-
-  if (observed != payload) {
-    std::cerr << "raw stream payload mismatch\n";
-    return false;
-  }
-  return true;
+  PacketTestBoard board(std::make_unique<FakeHostInterface>(
+      std::vector<std::vector<std::byte>>{std::move(packet)}));
+  return board.expect_protocol_error(
+      "Platform readback metadata contains nonzero reserved bits.");
 }
 
 }  // namespace
@@ -284,9 +285,10 @@ int main() {
   bool ok = true;
   ok &= test_byte_stream_buffer_preserves_unused_bytes();
   ok &= test_metadata_split_across_recv_calls();
-  ok &= test_driver_sized_chunk_parses_as_hbm2_packet();
-  ok &= test_empty_nonlast_metadata_ends_session();
+  ok &= test_board_consumes_metadata_packets_by_default();
+  ok &= test_driver_sized_chunk_parses_as_metadata_packet();
+  ok &= test_empty_nonlast_metadata_is_malformed();
   ok &= test_empty_last_metadata_remains_valid_packet();
-  ok &= test_raw_stream_strips_final_trailer();
+  ok &= test_reserved_metadata_bits_are_malformed();
   return ok ? 0 : 1;
 }
