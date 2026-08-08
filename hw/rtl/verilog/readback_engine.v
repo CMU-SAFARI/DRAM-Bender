@@ -143,7 +143,11 @@ module readback_engine(
         fifo_size_ns = fifo_size_r - axi_expected_trans_r;
 
     // the most complex single unit of information to maintain
+`ifdef HBM_BENDER
     if (read_seq_incoming & ~hbm_discard_readback_data) begin
+`else
+    if (read_seq_incoming) begin
+`endif
       // read seq incoming, but also finished sending a chunk of data
       if ((axi_trans_count_r == axi_expected_trans_r) & ((sender_state_r == SEND_DATA_S) | (sender_state_r == SEND_DATA_FLUSH_S)))
         expected_fifo_size_ns = expected_fifo_size_r + (incoming_reads << 1'b1) - axi_expected_trans_r;
