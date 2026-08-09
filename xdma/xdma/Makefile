@@ -18,7 +18,11 @@ $(warning XVC_FLAGS: $(XVC_FLAGS).)
 
 topdir := $(shell cd $(src)/.. && pwd)
 
-TARGET_MODULE:=xdma
+# Keep the userspace ABI and PCI driver name "xdma", but give this fork a
+# unique kernel-module identity.  Ubuntu ships an unrelated in-tree module
+# named xdma, so using xdma.ko here makes modinfo/modprobe provenance
+# ambiguous.
+TARGET_MODULE:=drambender_xdma
 
 ccflags-y := -I$(src)/../include $(XVC_FLAGS)
 ifeq ($(DEBUG),1)

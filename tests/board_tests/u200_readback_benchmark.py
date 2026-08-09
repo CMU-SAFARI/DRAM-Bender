@@ -591,7 +591,7 @@ def main() -> int:
         "git_dirty": bool(git_output("status", "--porcelain") not in ("", "unknown")),
         "package": package_provenance(),
         "pci_device": sysfs_device_provenance(args.pci_bdf),
-        "xdma_module": module_provenance("xdma"),
+        "xdma_module": module_provenance("drambender_xdma"),
         "adapter": "new_repo_python_nanobind",
         "stack_label": args.stack_label,
         "driver_label": args.driver_label,

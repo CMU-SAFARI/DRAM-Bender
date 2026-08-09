@@ -1,0 +1,2 @@
+# Permit members of the dedicated DRAM-Bender group to use every XDMA endpoint.
+SUBSYSTEM=="xdma", KERNEL=="xdma*", GROUP="drambender", MODE="0660"

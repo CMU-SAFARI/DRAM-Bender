@@ -146,6 +146,12 @@ endif()
 if (BUILD_TESTING)
   enable_testing()
 
+  add_test(
+    NAME drambender_driver_deployment_test
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/driver_deployment_test.sh"
+            "${CMAKE_CURRENT_SOURCE_DIR}"
+  )
+
   add_executable(drambender_program_metadata_test
     tests/program_metadata_test.cpp
   )

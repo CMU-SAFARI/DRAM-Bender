@@ -273,7 +273,9 @@ def run_parent(endpoints: list[tuple[str, int]], output: Path) -> int:
             "script_sha256": hashlib.sha256(script_path.read_bytes()).hexdigest(),
             "extension": str(core_path),
             "extension_sha256": hashlib.sha256(core_path.read_bytes()).hexdigest(),
-            "driver_srcversion": Path("/sys/module/xdma/srcversion").read_text().strip(),
+            "driver_srcversion": Path(
+                "/sys/module/drambender_xdma/srcversion"
+            ).read_text().strip(),
         }, sort_keys=True) + "\n")
         for index, endpoint in enumerate(endpoints):
             bdf, channel = endpoint

@@ -85,9 +85,11 @@ make -C "${SCRIPT_DIR}/xdma" \
   DEBUG="${DEBUG}" \
   -j"${JOBS}"
 
-echo "Built ${SCRIPT_DIR}/xdma/xdma.ko"
+MODULE_PATH="${SCRIPT_DIR}/xdma/drambender_xdma.ko"
+
+echo "Built ${MODULE_PATH}"
 
 if command -v modinfo >/dev/null 2>&1; then
-  echo "Module vermagic:"
-  modinfo -F vermagic "${SCRIPT_DIR}/xdma/xdma.ko" || true
+  echo "Module name: $(modinfo -F name "${MODULE_PATH}" || true)"
+  echo "Module vermagic: $(modinfo -F vermagic "${MODULE_PATH}" || true)"
 fi

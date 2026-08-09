@@ -1239,7 +1239,7 @@ std::string provenance_json(const Options& options) {
          << ",\"executable_sha256\":"
          << (have_executable ? json_quote(sha256_file(executable)) : "null")
          << ",\"pci_device\":" << sysfs_device_json(options.pci_bdf)
-         << ",\"xdma_module\":" << module_json("xdma")
+         << ",\"xdma_module\":" << module_json("drambender_xdma")
          << ",\"stack_label\":" << json_quote(options.stack_label)
          << ",\"driver_label\":" << json_quote(options.driver_label)
          << ",\"bitstream\":{"

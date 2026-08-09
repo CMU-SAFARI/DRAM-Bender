@@ -112,17 +112,15 @@ Directory and file description:
 Usage:
   - Change directory to the driver directory.
         cd xdma
-  - Compile and install the kernel module driver.
-        make install
+  - Compile the DRAM-Bender module with the supported wrapper.
+        ./build_driver.sh
   - Change directory to the tools directory.
         cd tools
   - Compile the provided example test tools.
         make
-  - Load the kernel module driver:
-	a. modprobe xdma
-	b. using the provided script.
-		cd tests
-	./load_driver.sh
+  - Load it with the supported wrapper. This also enforces the streaming-credit
+    mode required by metadata-v1 readback.
+        sudo ./load_driver.sh
   - Run the provided test script to generate basic DMA traffic.
         ./run_test.sh
 
@@ -132,8 +130,8 @@ Usage:
 		./xdma_mm.sh 0000:01:00.0 | tee /tmp/xdma_mm.log
 
   - Check driver Version number
-        modinfo xdma (or)
-        modinfo ../xdma/xdma.ko
+        modinfo drambender_xdma (or)
+        modinfo ../xdma/drambender_xdma.ko
 
 Updates and Backward Compaitiblity:
   - The following features were added to the PCIe DMA IP and driver in Vivado
@@ -152,7 +150,7 @@ Frequently asked questions:
   Q: How do I uninstall the kernel module driver?
   A: Use the following commands to uninstall the driver.
        - Uninstall the kernel module.
-             rmmod -s xdma
+             rmmod -s drambender_xdma
 
   Q: How do I modify the PCIe Device IDs recognized by the kernel module driver?
   A: The xdma/xdma_mod.c file constains the pci_device_id struct that identifies
@@ -160,17 +158,15 @@ Frequently asked questions:
      format:
          { PCI_DEVICE(0x10ee, 0x8038), },
      Add, remove, or modify the PCIe Device IDs in this struct as desired. Then
-     uninstall the existing xdma kernel module, compile the driver again, and
+     uninstall the existing DRAM-Bender kernel module, compile the driver again, and
      re-install the driver using the load_driver.sh script.
 
   Q: By default the driver uses interupts to signal when DMA transfers are
      completed. How do I modify the driver to use polling rather than
      interrupts to determine when DMA transactions are completed?
-  A: The driver can be changed from being interrupt driven (default) to being
-     polling driven (poll mode) when the kernel module is inserted. To do this
-     modify the load_driver.sh file as follows:
-        Change: insmod xdma/xdma.ko
-        To:     insmod xdma/xdma.ko poll_mode=1
+  A: Select polling through the supported loader so required readback credit
+     mode remains enabled:
+        sudo ./load_driver.sh poll_mode=1
      Note: Interrupt vs Poll mode will apply to all DMA channels. If desired the
      driver can be modified such that some channels are interrupt driven while
      others are polling driven. Refer to the poll mode section of PG195 for

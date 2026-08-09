@@ -677,7 +677,9 @@ def provenance(cases: list[Case], delay_cycles: int) -> dict[str, Any]:
         "script_sha256": hashlib.sha256(script_path.read_bytes()).hexdigest(),
         "extension": str(extension_path),
         "extension_sha256": hashlib.sha256(extension_path.read_bytes()).hexdigest(),
-        "driver_srcversion": optional_text(Path("/sys/module/xdma/srcversion")),
+        "driver_srcversion": optional_text(
+            Path("/sys/module/drambender_xdma/srcversion")
+        ),
         "delay_cycles": delay_cycles,
         "delay_seconds_at_6ns": delay_cycles * FABRIC_CYCLE_NS / 1e9,
         "target": {

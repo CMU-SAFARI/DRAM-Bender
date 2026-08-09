@@ -45,8 +45,17 @@ fi
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/dkms.conf"
 
-dkms remove -m "${PACKAGE_NAME}" -v "${PACKAGE_VERSION}" --all
+REGISTERED_STATUS="$(dkms status -m "${PACKAGE_NAME}" -v "${PACKAGE_VERSION}" 2>/dev/null || true)"
+if [[ -n "${REGISTERED_STATUS//[[:space:]]/}" ]]; then
+  dkms remove -m "${PACKAGE_NAME}" -v "${PACKAGE_VERSION}" --all
+else
+  echo "DKMS package ${PACKAGE_NAME}/${PACKAGE_VERSION} is not registered."
+fi
+rm -f "/etc/modprobe.d/drambender-xdma.conf"
 
 if [[ "${REMOVE_SOURCE}" -eq 1 ]]; then
   rm -rf "/usr/src/${PACKAGE_NAME}-${PACKAGE_VERSION}"
 fi
+
+echo "Removed the DKMS package and modprobe configuration."
+echo "A currently loaded drambender_xdma module remains loaded until it is deliberately removed or the host reboots."
