@@ -502,6 +502,7 @@ struct xdma_engine {
 	dma_addr_t cyclic_result_bus;	/* bus addr for transfer */
 	struct xdma_request_cb *cyclic_req;
 	struct sg_table cyclic_sgt;
+	struct scatterlist **cyclic_sg_by_index;
 	u8 eop_found;
 	unsigned int cyclic_pages;
 	unsigned int cyclic_credit_window;

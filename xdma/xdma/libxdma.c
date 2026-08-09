@@ -3329,18 +3329,13 @@ static int transfer_monitor_cyclic(struct xdma_engine *engine,
 	return 0;
 }
 
-static struct scatterlist *sglist_index(struct sg_table *sgt, unsigned int idx)
+static struct scatterlist *cyclic_sg_index(struct xdma_engine *engine,
+					   unsigned int idx)
 {
-	struct scatterlist *sg = sgt->sgl;
-	unsigned int i;
-
-	if (idx >= sgt->orig_nents)
+	if (!engine->cyclic_sg_by_index || idx >= engine->cyclic_pages)
 		return NULL;
 
-	for (i = 0; i < idx; i++, sg = sg_next(sg))
-		;
-
-	return sg;
+	return engine->cyclic_sg_by_index[idx];
 }
 
 static int copy_cyclic_to_user(struct xdma_engine *engine,
@@ -3365,7 +3360,7 @@ static int copy_cyclic_to_user(struct xdma_engine *engine,
 	dbg_tfr("%s, pkt_len %u, head %u, user buf idx %u.\n",
 		engine->name, pkt_length, head, engine->user_buffer_index);
 
-	sg = sglist_index(&engine->cyclic_sgt, head);
+	sg = cyclic_sg_index(engine, head);
 	if (!sg) {
 		pr_info("%s, head %u OOR, sgl %u.\n",
 			engine->name, head, engine->cyclic_sgt.orig_nents);
@@ -3643,6 +3638,7 @@ int xdma_cyclic_transfer_setup(struct xdma_engine *engine)
 {
 	struct xdma_dev *xdev;
 	struct xdma_transfer *xfer;
+	struct scatterlist *sg;
 	dma_addr_t bus;
 	unsigned long flags;
 	unsigned int pages;
@@ -3706,6 +3702,23 @@ int xdma_cyclic_transfer_setup(struct xdma_engine *engine)
 		goto err_out;
 	}
 
+	engine->cyclic_sg_by_index =
+		kvcalloc(pages, sizeof(*engine->cyclic_sg_by_index),
+			 GFP_KERNEL);
+	if (!engine->cyclic_sg_by_index) {
+		rc = -ENOMEM;
+		goto err_out;
+	}
+
+	sg = engine->cyclic_sgt.sgl;
+	for (i = 0; i < pages; i++, sg = sg_next(sg)) {
+		if (!sg) {
+			rc = -EIO;
+			goto err_out;
+		}
+		engine->cyclic_sg_by_index[i] = sg;
+	}
+
 	engine->cyclic_req = xdma_init_request(&engine->cyclic_sgt, 0);
 	if (!engine->cyclic_req) {
 		pr_info("%s cyclic request OOM.\n", engine->name);
@@ -3751,6 +3764,7 @@ int xdma_cyclic_transfer_setup(struct xdma_engine *engine)
 err_out:
 	{
 		struct xdma_request_cb *cyclic_req = NULL;
+		struct scatterlist **cyclic_sg_by_index = NULL;
 		int free_sgt = 0;
 
 		spin_lock_irqsave(&engine->lock, flags);
@@ -3763,11 +3777,14 @@ err_out:
 			cyclic_req = engine->cyclic_req;
 			engine->cyclic_req = NULL;
 		}
+		cyclic_sg_by_index = engine->cyclic_sg_by_index;
+		engine->cyclic_sg_by_index = NULL;
 		free_sgt = engine->cyclic_sgt.orig_nents != 0;
 		spin_unlock_irqrestore(&engine->lock, flags);
 
 		if (cyclic_req)
 			xdma_request_free(cyclic_req);
+		kvfree(cyclic_sg_by_index);
 		if (free_sgt)
 			sgt_free_with_pages(&engine->cyclic_sgt, engine->dir,
 					    xdev->pdev);
@@ -3830,6 +3847,7 @@ int xdma_cyclic_transfer_teardown(struct xdma_engine *engine)
 	struct xdma_dev *xdev;
 	struct xdma_transfer *transfer;
 	struct xdma_request_cb *cyclic_req = NULL;
+	struct scatterlist **cyclic_sg_by_index = NULL;
 	int free_sgt = 0;
 	unsigned long flags;
 
@@ -3863,6 +3881,8 @@ int xdma_cyclic_transfer_teardown(struct xdma_engine *engine)
 		cyclic_req = engine->cyclic_req;
 		engine->cyclic_req = NULL;
 	}
+	cyclic_sg_by_index = engine->cyclic_sg_by_index;
+	engine->cyclic_sg_by_index = NULL;
 
 	free_sgt = engine->cyclic_sgt.orig_nents != 0;
 
@@ -3880,6 +3900,7 @@ int xdma_cyclic_transfer_teardown(struct xdma_engine *engine)
 
 	if (cyclic_req)
 		xdma_request_free(cyclic_req);
+	kvfree(cyclic_sg_by_index);
 	if (free_sgt)
 		sgt_free_with_pages(&engine->cyclic_sgt, engine->dir,
 				    xdev->pdev);
