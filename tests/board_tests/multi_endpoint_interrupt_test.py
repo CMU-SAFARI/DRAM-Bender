@@ -237,6 +237,28 @@ def finish_child(process: subprocess.Popen[str], timeout: float) -> tuple[int, s
     return process.returncode, stdout, stderr
 
 
+def cleanup_children(
+    children: tuple[tuple[str, subprocess.Popen[str] | None], ...],
+    timeout: float = 2.0,
+) -> list[str]:
+    """Kill and reap active children without masking the caller's exception."""
+    errors: list[str] = []
+    for label, child in children:
+        if child is None:
+            continue
+        try:
+            if child.poll() is None:
+                child.kill()
+            child.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            errors.append(
+                f"{label} child pid={child.pid} did not exit within {timeout:.1f}s"
+            )
+        except Exception as exc:
+            errors.append(f"{label} child cleanup failed: {type(exc).__name__}: {exc}")
+    return errors
+
+
 def run_parent(endpoints: list[tuple[str, int]], output: Path) -> int:
     failures = 0
     with output.open("x", encoding="utf-8") as stream:
@@ -291,14 +313,24 @@ def run_parent(endpoints: list[tuple[str, int]], output: Path) -> int:
                 record["sigkill"] = "pass"
                 record["recovery_output"] = [json.loads(line) for line in recovery.stdout.splitlines() if line]
                 record["status"] = "pass"
-            except BaseException as exc:
+            except KeyboardInterrupt:
+                cleanup_errors = cleanup_children((
+                    ("SIGINT", sigint_child),
+                    ("SIGKILL", kill_child),
+                ))
+                for error in cleanup_errors:
+                    print(f"warning: {error}", file=sys.stderr, flush=True)
+                raise
+            except Exception as exc:
                 failures += 1
                 record["status"] = "fail"
                 record["error"] = f"{type(exc).__name__}: {exc}"
-                for child in (sigint_child, kill_child):
-                    if child is not None and child.poll() is None:
-                        child.kill()
-                        child.wait(timeout=2.0)
+                cleanup_errors = cleanup_children((
+                    ("SIGINT", sigint_child),
+                    ("SIGKILL", kill_child),
+                ))
+                if cleanup_errors:
+                    record["cleanup_errors"] = cleanup_errors
             record["elapsed_seconds"] = time.monotonic() - case_started
             stream.write(json.dumps(record, sort_keys=True) + "\n")
             stream.flush()
