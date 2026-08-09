@@ -33,6 +33,7 @@ require_literal xdma/xdma/Makefile 'TARGET_MODULE:=drambender_xdma'
 require_literal xdma/README.md 'Linux `5.4` and `7.0`'
 require_literal xdma/dkms.conf 'PACKAGE_VERSION="0.1.0"'
 require_literal xdma/dkms.conf 'BUILT_MODULE_NAME[0]="drambender_xdma"'
+require_literal xdma/dkms.conf "MAKE[0]=\"'make' -C xdma"
 require_literal xdma/load_driver.sh 'MODULE_NAME="drambender_xdma"'
 require_literal xdma/xdma/xdma_mod.c '#define DRV_MODULE_NAME'
 require_literal xdma/xdma/xdma_mod.c '"xdma"'
