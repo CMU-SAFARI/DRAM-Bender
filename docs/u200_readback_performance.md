@@ -45,7 +45,7 @@ This comparison uses DRAM-Bender itself. It does not use or modify
 - Declared/programmed U200 raw-RBE file SHA-256:
   `da2b70e964fb67e928147b8c22cd2dbb38c4217b5bce7c45a01a4d47eaa234e4`
 
-### Final metadata-v1 candidate
+### Measured metadata-v1 stack
 
 - Driver fix commit: `ca9792d` (`Make cyclic receive lookup constant time`)
 - Host/API fix commit: `422acca` (`Reduce readback buffering copies`)
@@ -65,6 +65,11 @@ This comparison uses DRAM-Bender itself. It does not use or modify
 The bitstream files and programming logs establish the intended images, but
 the running FPGA exposes no build-ID register with which the host can attest
 the loaded image cryptographically.
+
+Later deployment commits `f00e425` and `80500f6` give this driver a unique
+module name and add DKMS/udev packaging; they do not change its DMA/readback
+data path. The performance measurements therefore remain applicable to the
+final packaged stack without another legacy-image reboot cycle.
 
 ### Common test environment
 
@@ -250,17 +255,19 @@ their sanitizer logs are not included in the persisted benchmark artifacts.
 
 ## New-kernel and multicard status
 
-The O(1) driver patch builds unchanged against fpga99's Ubuntu 24.04 kernel
-7.0.0-28-generic as well as fpga28's 5.4 kernel. It was built in an isolated
-temporary checkout on fpga99; it was not loaded for readback qualification
-because the available six U200 cards use RDIMMs and a compatible metadata-v1
-RDIMM image was not yet available.
+The same O(1) driver and API were subsequently qualified on fpga99's Ubuntu
+24.04 kernel `7.0.0-28-generic` with the dual-RDIMM metadata-v1 image: six U200
+cards, both populated channels per card, and twelve concurrent BDF/channel
+endpoints. Native C++ delivered 27.558 GiB/s across all twelve endpoints,
+97.79% of the isolated sum; Release Python retained 97.72% of native. Across
+the performance matrix, 202,000 timed 512-KiB transfers completed with zero
+mismatched words and no ring-position sawtooth.
 
-The BDF/channel selector and endpoint exclusivity changes are separate prior
-commits. On fpga99, channel-0 endpoint ownership and independent-card opens
-were already checked with the base updated driver. Full multicard readback and
-performance qualification must be repeated after a compatible RDIMM image is
-available. This report does not claim that pending hardware result.
+The final deployment uses the unique module name `drambender_xdma`, DKMS,
+streaming credit mode, and persistent `root:drambender 0660` device nodes. A
+host reboot auto-loaded that module and a post-boot 12 x 25 endpoint test
+passed. Full provenance, fuzz, interruption, sibling-reset, retention, and
+scaling results are in `docs/fpga99_dual_rdimm_qualification.md`.
 
 ## Reproduction artifacts
 
@@ -292,7 +299,6 @@ and correctness/recovery tests pass. Do not shrink the production ring merely
 to hide the old lookup bug, and do not require a physically contiguous 32 MiB
 allocation.
 
-The next release-critical step is the compatible U200 RDIMM image followed by
-correctness, interruption, dual-channel, and multicard scaling tests on both
-populated channels of every fpga99 card. Treat any further receive-quantum or
+The U200 RDIMM correctness, interruption, dual-channel, reboot-deployment, and
+multicard-scaling gates are now complete. Treat any further receive-quantum or
 RBE packet-coalescing optimization as optional and measure it independently.
