@@ -479,7 +479,7 @@ void print_usage(const char* argv0) {
   std::fprintf(
       stderr,
       "Usage: %s --pci-bdf dddd:bb:ss.f --stack-label TEXT --driver-label TEXT "
-      "--bitstream-label TEXT [--xdma-channel 0] [--bank N] [--start-row N] "
+      "--bitstream-label TEXT [--xdma-channel 0|1] [--bank N] [--start-row N] "
       "[--seed HEX_OR_DEC] [--warmups N] [--iterations N] "
       "[--workloads completion,64B,8KiB,64KiB,512KiB] "
       "[--bitstream-file PATH] [--output PATH] [--program-manifest PATH] "
@@ -551,8 +551,8 @@ bool parse_args(int argc, char** argv, Options* options) {
     std::fprintf(stderr, "--pci-bdf and all three provenance labels are required\n");
     return false;
   }
-  if (options->xdma_channel != 0) {
-    std::fprintf(stderr, "This U200 benchmark is restricted to XDMA channel 0\n");
+  if (options->xdma_channel < 0 || options->xdma_channel > 1) {
+    std::fprintf(stderr, "--xdma-channel must be 0 or 1\n");
     return false;
   }
   if (options->bank < 0 || options->bank > k_max_bank || options->warmups < 0 ||

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seeded channel-0 DDR4 readback and retention-transport qualification.
+"""Seeded DDR4 readback and retention-transport qualification.
 
 This is a correctness test, not a performance benchmark.  It exercises
 metadata-v1 framing over many payload sizes, caller receive partitions,
@@ -720,8 +720,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=parse_int, default=DEFAULT_SEED)
     parser.add_argument("--results", type=Path)
     args = parser.parse_args()
-    if args.xdma_channel != 0:
-        parser.error("this qualification harness intentionally supports only xdma_channel=0")
+    if args.xdma_channel not in (0, 1):
+        parser.error("--xdma-channel must be 0 or 1")
     if not 0 <= args.seed <= 0xFFFFFFFFFFFFFFFF:
         parser.error("seed must fit in an unsigned 64-bit integer")
     return args
@@ -734,7 +734,7 @@ def main() -> int:
         f"ddr4-readback-fuzz-{platform.node()}-{int(time.time())}.jsonl"
     )
     print(
-        f"DDR4 metadata-v1 fuzz: bdf={args.pci_bdf} channel=0 "
+        f"DDR4 metadata-v1 fuzz: bdf={args.pci_bdf} channel={args.xdma_channel} "
         f"profile={args.profile} seed=0x{args.seed:016x}"
     )
     print(f"Results: {results_path}")
@@ -745,7 +745,7 @@ def main() -> int:
         with open_board(
             TARGET,
             pci_bdf=args.pci_bdf,
-            xdma_channel=0,
+            xdma_channel=args.xdma_channel,
             host_interface=HostInterface.XDMA,
         ) as board:
             board.full_reset()

@@ -7,7 +7,7 @@ outside that region.  Every payload iteration is nevertheless checked against
 deterministic row- and lane-distinct data before the next iteration starts.
 
 This benchmark is deliberately restricted to an explicit PCI BDF and XDMA
-channel 0.  It emits JSON Lines containing provenance, every warm-up and
+channel 0 or 1.  It emits JSON Lines containing provenance, every warm-up and
 measurement sample, and aggregate latency/throughput statistics.  Use
 ``--dry-run-only`` to validate all generated FPGA programs without opening a
 board.
@@ -518,8 +518,8 @@ def parse_args() -> argparse.Namespace:
     )
     args = parser.parse_args()
 
-    if args.xdma_channel != 0:
-        parser.error("this benchmark is intentionally restricted to XDMA channel 0")
+    if args.xdma_channel not in (0, 1):
+        parser.error("--xdma-channel must be 0 or 1")
     if not 0 <= args.bank <= MAX_DDR4_BANK:
         parser.error(f"--bank must be in range 0..{MAX_DDR4_BANK}")
     if args.warmups < 0:
