@@ -124,6 +124,14 @@ if (DRAMBENDER_BUILD_EXAMPLES)
 endif()
 
 if (DRAMBENDER_BUILD_BOARD_BENCHMARKS)
+  add_executable(drambender_u200_readback_benchmark
+    tests/board_tests/u200_readback_benchmark.cpp
+  )
+  target_link_libraries(drambender_u200_readback_benchmark PRIVATE DRAMBender)
+  target_compile_options(drambender_u200_readback_benchmark PRIVATE
+    -Wall -Wextra -Wpedantic
+  )
+
   add_executable(drambender_board_single_sided_rowhammer_bench
     tests/jit_benchmark/single_sided_rowhammer_bench.cpp
   )
