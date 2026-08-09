@@ -28,6 +28,16 @@ class ByteStreamBuffer {
     bytes_.insert(bytes_.end(), bytes.begin(), bytes.end());
   }
 
+  size_t copyPrefixAndBufferSurplus(std::span<const std::byte> bytes,
+                                    std::span<std::byte> dst) {
+    const size_t count = std::min(dst.size(), bytes.size());
+    append(bytes.subspan(count));
+    if (count > 0) {
+      std::memcpy(dst.data(), bytes.data(), count);
+    }
+    return count;
+  }
+
   size_t read(std::span<std::byte> dst) {
     const size_t count = std::min(dst.size(), pending());
     if (count == 0) {

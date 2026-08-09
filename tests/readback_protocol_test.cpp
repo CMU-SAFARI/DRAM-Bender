@@ -1,6 +1,7 @@
 #include "drambender/api/board/board.h"
 #include "drambender/api/host_interface/host_interface.h"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <condition_variable>
@@ -296,11 +297,10 @@ bool test_byte_stream_buffer_preserves_unused_bytes() {
     chunk[index] = b(static_cast<uint8_t>(index & 0xffU));
   }
 
-  buffer.append(chunk);
   std::array<std::byte, 32> first{};
   std::array<std::byte, 16> second{};
-  if (buffer.read(first) != first.size()) {
-    std::cerr << "failed to read first logical chunk\n";
+  if (buffer.copyPrefixAndBufferSurplus(chunk, first) != first.size()) {
+    std::cerr << "failed to deliver the direct prefix\n";
     return false;
   }
   if (buffer.pending() != chunk.size() - first.size()) {
@@ -321,6 +321,30 @@ bool test_byte_stream_buffer_preserves_unused_bytes() {
   for (size_t index = 0; index < second.size(); ++index) {
     if (second[index] != chunk[first.size() + index]) {
       std::cerr << "second logical read data mismatch\n";
+      return false;
+    }
+  }
+
+  buffer.clear();
+  std::array<std::byte, 64> larger_dst{};
+  larger_dst.fill(b(0xa5));
+  constexpr size_t short_count = 17;
+  if (buffer.copyPrefixAndBufferSurplus(
+          std::span<const std::byte>(chunk).first(short_count),
+          larger_dst) != short_count ||
+      buffer.pending() != 0) {
+    std::cerr << "short direct prefix left unexpected surplus\n";
+    return false;
+  }
+  for (size_t index = 0; index < short_count; ++index) {
+    if (larger_dst[index] != chunk[index]) {
+      std::cerr << "short direct prefix data mismatch\n";
+      return false;
+    }
+  }
+  for (size_t index = short_count; index < larger_dst.size(); ++index) {
+    if (larger_dst[index] != b(0xa5)) {
+      std::cerr << "short direct prefix overwrote the destination tail\n";
       return false;
     }
   }
@@ -407,6 +431,124 @@ bool test_board_consumes_metadata_packets_by_default() {
 
   if (observed != payload) {
     std::cerr << "metadata payload mismatch\n";
+    return false;
+  }
+  return true;
+}
+
+bool test_receive_queue_preserves_partial_data_across_sessions() {
+  std::vector<std::byte> first_payload(4 * axi_datapath_byte_width);
+  std::vector<std::byte> second_payload(3 * axi_datapath_byte_width);
+  for (size_t index = 0; index < first_payload.size(); ++index) {
+    first_payload[index] = b(static_cast<uint8_t>((index * 17U + 3U) & 0xffU));
+  }
+  for (size_t index = 0; index < second_payload.size(); ++index) {
+    second_payload[index] =
+        b(static_cast<uint8_t>((index * 29U + 0x51U) & 0xffU));
+  }
+
+  auto first_stream =
+      concat({metadata(first_payload.size(), true), first_payload});
+  auto second_stream = concat({
+      metadata(axi_datapath_byte_width, false),
+      std::vector<std::byte>(
+          second_payload.begin(),
+          second_payload.begin() +
+              static_cast<std::ptrdiff_t>(axi_datapath_byte_width)),
+      metadata(axi_datapath_byte_width, false),
+      std::vector<std::byte>(
+          second_payload.begin() +
+              static_cast<std::ptrdiff_t>(axi_datapath_byte_width),
+          second_payload.begin() +
+              static_cast<std::ptrdiff_t>(2 * axi_datapath_byte_width)),
+      metadata(axi_datapath_byte_width, true),
+      std::vector<std::byte>(
+          second_payload.begin() +
+              static_cast<std::ptrdiff_t>(2 * axi_datapath_byte_width),
+          second_payload.end()),
+  });
+
+  PacketTestBoard board(std::make_unique<FakeHostInterface>(
+      std::vector<std::vector<std::byte>>{
+          std::move(first_stream),
+          std::move(second_stream),
+      }));
+
+  board.execute(one_nop_program());
+  board.synchronize();
+
+  std::array<std::byte, 3 * axi_datapath_byte_width> first_observed{};
+  if (board.receive(first_observed) != first_observed.size() ||
+      !std::equal(first_observed.begin(),
+                  first_observed.end(),
+                  first_payload.begin())) {
+    std::cerr << "partial receive from first session returned incorrect data\n";
+    return false;
+  }
+
+  // The unread final beat from the first session must remain at the front of
+  // the queue while three packets from the second session are appended.
+  board.execute(one_nop_program());
+  board.synchronize();
+
+  std::vector<std::byte> expected(
+      first_payload.begin() +
+          static_cast<std::ptrdiff_t>(3 * axi_datapath_byte_width),
+      first_payload.end());
+  expected.insert(expected.end(), second_payload.begin(), second_payload.end());
+
+  std::array<std::byte, 52> observed_prefix{};
+  std::array<std::byte, 76> observed_suffix{};
+  if (board.receive(observed_prefix) != observed_prefix.size() ||
+      board.receive(observed_suffix) != observed_suffix.size()) {
+    std::cerr << "cross-session receive returned an unexpected byte count\n";
+    return false;
+  }
+
+  std::vector<std::byte> observed(observed_prefix.begin(), observed_prefix.end());
+  observed.insert(observed.end(), observed_suffix.begin(), observed_suffix.end());
+  if (observed != expected) {
+    std::cerr << "partial cross-packet receive reordered or lost queued data\n";
+    return false;
+  }
+  return true;
+}
+
+bool test_receive_queue_bulk_copies_large_multi_packet_payload() {
+  constexpr size_t packet_bytes = 64 * 1024;
+  constexpr size_t packet_count = 8;
+  constexpr size_t total_bytes = packet_bytes * packet_count;
+
+  std::vector<std::byte> expected(total_bytes);
+  for (size_t index = 0; index < expected.size(); ++index) {
+    expected[index] =
+        b(static_cast<uint8_t>((index * 37U + (index >> 8U) + 0x29U) & 0xffU));
+  }
+
+  std::vector<std::byte> stream;
+  stream.reserve(total_bytes + packet_count * axi_datapath_byte_width);
+  for (size_t packet_index = 0; packet_index < packet_count; ++packet_index) {
+    const auto meta = metadata(packet_bytes, packet_index + 1 == packet_count);
+    stream.insert(stream.end(), meta.begin(), meta.end());
+    const auto payload_begin =
+        expected.begin() + static_cast<std::ptrdiff_t>(packet_index * packet_bytes);
+    stream.insert(stream.end(),
+                  payload_begin,
+                  payload_begin + static_cast<std::ptrdiff_t>(packet_bytes));
+  }
+
+  PacketTestBoard board(std::make_unique<FakeHostInterface>(
+      std::vector<std::vector<std::byte>>{std::move(stream)}));
+  board.execute(one_nop_program());
+
+  std::vector<std::byte> observed(total_bytes);
+  if (board.receive(observed) != observed.size()) {
+    std::cerr << "large receive returned an unexpected byte count\n";
+    return false;
+  }
+  board.synchronize();
+  if (observed != expected) {
+    std::cerr << "large multi-packet receive reordered or lost data\n";
     return false;
   }
   return true;
@@ -686,6 +828,8 @@ int main() {
   ok &= test_metadata_split_across_recv_calls();
   ok &= test_metadata_randomized_fragmentation();
   ok &= test_board_consumes_metadata_packets_by_default();
+  ok &= test_receive_queue_preserves_partial_data_across_sessions();
+  ok &= test_receive_queue_bulk_copies_large_multi_packet_payload();
   ok &= test_driver_sized_chunk_parses_as_metadata_packet();
   ok &= test_empty_nonlast_metadata_is_malformed();
   ok &= test_empty_last_metadata_remains_valid_packet();

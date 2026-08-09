@@ -5,7 +5,6 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -178,9 +177,14 @@ class IBoard {
   void synchronizeImpl_(const InterruptionPoint& interruption_point);
   void joinReceiver_(bool rethrow_receiver_exception);
   void clearReceiveState_();
+  size_t queuedReceiveBytesLocked_() const noexcept;
+  void compactReceiveBufferIfUsefulLocked_();
   [[noreturn]] void recoverAndRethrow_(std::exception_ptr original_exception);
 
-  std::deque<Word_t> m_recv_words_;
+  // Protected by m_recv_mutex_. Bytes before m_recv_offset_ have already been
+  // delivered; bytes in [m_recv_offset_, m_recv_bytes_.size()) remain queued.
+  std::vector<std::byte> m_recv_bytes_;
+  size_t m_recv_offset_ = 0;
   std::mutex m_recv_mutex_;
   std::condition_variable m_recv_cv_;
   std::thread m_receiver_thread_;

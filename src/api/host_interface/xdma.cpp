@@ -175,7 +175,13 @@ class XDMA : public IHostInterface {
       // so always try the nonblocking read first and poll only after EAGAIN.
       const size_t request_size =
           std::min(recv_buffer_size_, std::max(c2h_read_quantum, dst.size()));
-      ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get(), request_size);
+      // Cyclic C2H copies from the driver's page-aligned ring with
+      // copy_to_user(), so the caller's address need not be page-aligned. Keep
+      // the staging buffer only when the logical destination is too small for
+      // the unchanged driver read request.
+      const bool read_directly = dst.size() >= request_size;
+      std::byte* const read_dst = read_directly ? dst.data() : m_recv_buf_.get();
+      ssize_t rc = ::read(m_from_card_fd_, read_dst, request_size);
       if (rc < 0 && errno == EINTR) {
         continue;
       }
@@ -197,11 +203,33 @@ class XDMA : public IHostInterface {
         throw std::runtime_error("XDMA read exceeded the requested receive size.");
       }
 
-      m_recv_pending_.append(std::span<const std::byte>(m_recv_buf_.get(), recv_count));
+      if (read_directly) {
+        if (receiveCancelled_()) {
+          // Preserve the old cancellation behavior: bytes consumed from the
+          // driver remain pending until begin_receive() or drain() discards
+          // the aborted session.
+          m_recv_pending_.append(dst.first(recv_count));
+          return 0;
+        }
+        return recv_count;
+      }
+
+      const std::span<const std::byte> received(m_recv_buf_.get(), recv_count);
       if (receiveCancelled_()) {
+        m_recv_pending_.append(received);
         return 0;
       }
-      return m_recv_pending_.read(dst);
+
+      const size_t delivered =
+          m_recv_pending_.copyPrefixAndBufferSurplus(received, dst);
+      if (receiveCancelled_()) {
+        // Cancellation may race the small prefix/surplus copies. Reconstruct
+        // the pre-delivery pending state before reporting cancellation.
+        m_recv_pending_.clear();
+        m_recv_pending_.append(received);
+        return 0;
+      }
+      return delivered;
     }
   }
 

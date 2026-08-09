@@ -173,10 +173,38 @@ void IBoard::joinReceiver_(bool rethrow_receiver_exception) {
   }
 }
 
+size_t IBoard::queuedReceiveBytesLocked_() const noexcept {
+  return m_recv_bytes_.size() - m_recv_offset_;
+}
+
+void IBoard::compactReceiveBufferIfUsefulLocked_() {
+  if (m_recv_offset_ == 0) {
+    return;
+  }
+
+  const size_t queued_bytes = queuedReceiveBytesLocked_();
+  if (queued_bytes == 0) {
+    m_recv_bytes_.clear();
+    m_recv_offset_ = 0;
+    return;
+  }
+
+  if (m_recv_offset_ < m_recv_bytes_.size() / 2) {
+    return;
+  }
+
+  std::memmove(m_recv_bytes_.data(),
+               m_recv_bytes_.data() + static_cast<std::ptrdiff_t>(m_recv_offset_),
+               queued_bytes);
+  m_recv_bytes_.resize(queued_bytes);
+  m_recv_offset_ = 0;
+}
+
 void IBoard::clearReceiveState_() {
   {
     std::lock_guard<std::mutex> lock(m_recv_mutex_);
-    m_recv_words_.clear();
+    m_recv_bytes_.clear();
+    m_recv_offset_ = 0;
     m_receive_complete_ = true;
     m_receive_started_ = false;
     m_receiver_exception_ = nullptr;
@@ -273,18 +301,17 @@ size_t IBoard::receiveImpl_(
     return 0;
   }
 
-  auto* dst_words = reinterpret_cast<Word_t*>(dst.data());
-  const size_t num_words_to_read = dst.size_bytes() / sizeof(Word_t);
+  const size_t bytes_to_read = dst.size_bytes();
   const auto now = std::chrono::steady_clock::now();
-  const auto deadline =
-      timeout.has_value()
-          ? std::optional(saturating_deadline(now, *timeout))
-          : std::nullopt;
+  std::optional<std::chrono::steady_clock::time_point> deadline;
+  if (timeout.has_value()) {
+    deadline.emplace(saturating_deadline(now, *timeout));
+  }
   auto next_interruption_check =
       now + interruption_poll_interval;
 
   std::unique_lock<std::mutex> lock(m_recv_mutex_);
-  while (m_recv_words_.size() < num_words_to_read) {
+  while (queuedReceiveBytesLocked_() < bytes_to_read) {
     if (m_receiver_exception_) {
       std::exception_ptr exception = m_receiver_exception_;
       m_receiver_exception_ = nullptr;
@@ -292,7 +319,7 @@ size_t IBoard::receiveImpl_(
       recoverAndRethrow_(exception);
     }
 
-    if (!m_receive_started_ && m_recv_words_.empty()) {
+    if (!m_receive_started_ && queuedReceiveBytesLocked_() == 0) {
       throw std::logic_error("No receive operation is currently active.");
     }
 
@@ -328,7 +355,7 @@ size_t IBoard::receiveImpl_(
     // Give data and receiver terminal states precedence over a deadline that
     // became due in the same wake-up. The top of the loop reports the precise
     // protocol/short-stream result (or copies newly available data).
-    if (m_recv_words_.size() >= num_words_to_read || m_receiver_exception_ ||
+    if (queuedReceiveBytesLocked_() >= bytes_to_read || m_receiver_exception_ ||
         m_receive_complete_) {
       continue;
     }
@@ -340,9 +367,13 @@ size_t IBoard::receiveImpl_(
     }
   }
 
-  for (size_t word_id = 0; word_id < num_words_to_read; ++word_id) {
-    dst_words[word_id] = m_recv_words_.front();
-    m_recv_words_.pop_front();
+  std::memcpy(dst.data(),
+              m_recv_bytes_.data() + static_cast<std::ptrdiff_t>(m_recv_offset_),
+              bytes_to_read);
+  m_recv_offset_ += bytes_to_read;
+  if (m_recv_offset_ == m_recv_bytes_.size()) {
+    m_recv_bytes_.clear();
+    m_recv_offset_ = 0;
   }
 
   return dst.size_bytes();
@@ -419,12 +450,12 @@ void IBoard::consumeMetadataPacketData_() {
     }
 
     if (!packet->payload.empty()) {
-      std::vector<Word_t> words(packet->payload.size() / sizeof(Word_t));
-      std::memcpy(words.data(), packet->payload.data(), packet->payload.size());
-
       {
         std::lock_guard<std::mutex> lock(m_recv_mutex_);
-        m_recv_words_.insert(m_recv_words_.end(), words.begin(), words.end());
+        compactReceiveBufferIfUsefulLocked_();
+        m_recv_bytes_.insert(m_recv_bytes_.end(),
+                             packet->payload.begin(),
+                             packet->payload.end());
       }
       m_recv_cv_.notify_all();
     }
