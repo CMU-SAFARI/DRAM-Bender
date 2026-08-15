@@ -128,7 +128,7 @@ set_property -dict {PACKAGE_PIN E16  IOSTANDARD SSTL12_DCI     } [get_ports c0_d
 set_property -dict {PACKAGE_PIN D15  IOSTANDARD SSTL12_DCI     } [get_ports c0_ddr4_adr[14]  ]; # Bank 70  VCCO - VCC1V2 Net "DDR4_C3_ADR14"     - IO_T2U_N12_70
 set_property -dict {PACKAGE_PIN F14  IOSTANDARD SSTL12_DCI     } [get_ports c0_ddr4_adr[2]   ]; # Bank 70  VCCO - VCC1V2 Net "DDR4_C3_ADR2"      - IO_L18N_T2U_N11_AD2N_70
 set_property -dict {PACKAGE_PIN F15  IOSTANDARD SSTL12_DCI     } [get_ports c0_ddr4_adr[16]  ]; # Bank 70  VCCO - VCC1V2 Net "DDR4_C3_ADR16"     - IO_L18P_T2U_N10_AD2P_70
-# set_property -dict {PACKAGE_PIN G16  IOSTANDARD SSTL12_DCI     } [get_ports c0_ddr4_adr[17]  ]; # Bank 70  VCCO - VCC1V2 Net "DDR4_C3_ADR16"     - IO_L18P_T2U_N10_AD2P_70
+ set_property -dict {PACKAGE_PIN G16  IOSTANDARD SSTL12_DCI     } [get_ports c0_ddr4_adr[17]  ]; # Bank 70  VCCO - VCC1V2 Net "DDR4_C3_ADR16"     - IO_L18P_T2U_N10_AD2P_70
 set_property -dict {PACKAGE_PIN E13  IOSTANDARD SSTL12_DCI     } [get_ports c0_ddr4_adr[7]   ]; # Bank 70  VCCO - VCC1V2 Net "DDR4_C3_ADR7"      - IO_L15N_T2L_N5_AD11N_70
 set_property -dict {PACKAGE_PIN F13  IOSTANDARD SSTL12_DCI     } [get_ports c0_ddr4_adr[8]   ]; # Bank 70  VCCO - VCC1V2 Net "DDR4_C3_ADR8"      - IO_L15P_T2L_N4_AD11P_70
 set_property -dict {PACKAGE_PIN H13  IOSTANDARD SSTL12_DCI     } [get_ports c0_ddr4_act_n    ]; # Bank 70  VCCO - VCC1V2 Net "DDR4_C3_ACT_B"     - IO_L14N_T2L_N3_GC_70
