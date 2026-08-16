@@ -1,13 +1,21 @@
-# XDMA Driver Source
+# XDMA Driver (Modified Fork)
 
-This directory contains the Xilinx XDMA driver source imported from
-DRAM-BenderV2 `sources/xdma_driver`.
+This directory contains a **modified fork** of the Xilinx XDMA driver from
+`dma_ip_drivers`, branch `2020.2`. This is not the stock Xilinx driver.
 
-The driver is not built as part of the default pyDRAMBender software build. It
-should be built and loaded only on Linux hosts that are intentionally being
-prepared for FPGA hardware access.
+DRAM Bender requires this fork. The metadata-v1 readback path depends on a
+credit-based read path that the stock driver does not contain. See
+[CHANGES-vs-upstream.md](CHANGES-vs-upstream.md) for the full list of changes.
 
-Routine Python/C++ package builds should not build, install, or load this
+The kernel module is named `drambender_xdma`, not `xdma`.
+
+> **Warning.** Do not load the stock Xilinx `xdma` driver together with
+> `drambender_xdma`. Both drivers match the same PCI IDs, and the bind order is
+> not deterministic.
+
+The driver is not built during the default DRAM Bender software build. Build
+and load it only on a Linux host that you prepare for FPGA hardware access.
+Routine Python and C++ package builds do not build, install, or load this
 driver.
 
 ## Supported Kernel Range

@@ -137,6 +137,13 @@ automatically.
 
 ### Install the XDMA driver
 
+> **Note.** This repository ships a **modified fork** of the Xilinx XDMA driver
+> (`dma_ip_drivers`, branch `2020.2`), not the stock driver. The kernel module
+> is named `drambender_xdma`, and DRAM Bender readback depends on the fork's
+> credit-based read path. See [xdma/CHANGES-vs-upstream.md](xdma/CHANGES-vs-upstream.md).
+> Do not load the stock Xilinx `xdma` driver at the same time; both match the
+> same PCI IDs and the bind order is not deterministic.
+
 DRAM Bender uses a streaming XDMA interface for host-to-card programs and
 card-to-host readback. Build it explicitly for the running kernel and load the
 result directly from this checkout:

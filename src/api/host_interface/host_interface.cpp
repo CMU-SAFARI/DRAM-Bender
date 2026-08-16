@@ -23,11 +23,14 @@ std::unique_ptr<IHostInterface> create_host_interface(HostInterface host_interfa
       interface->init();
       return interface;
     }
+    // QDMA and Ethernet are reserved for planned backends. Only XDMA is
+    // implemented today. See the HostInterface enum documentation.
     case HostInterface::QDMA:
-      throw std::runtime_error("HostInterface::QDMA is declared but not implemented in this pass.");
+      throw std::runtime_error(
+          "HostInterface::QDMA is not implemented yet. Use HostInterface::XDMA.");
     case HostInterface::Ethernet:
       throw std::runtime_error(
-          "HostInterface::Ethernet is declared but not implemented in this pass.");
+          "HostInterface::Ethernet is not implemented yet. Use HostInterface::XDMA.");
   }
 
   throw std::runtime_error("Unsupported host interface: " +

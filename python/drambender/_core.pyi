@@ -6,6 +6,8 @@ from . import instructions as instructions
 from drambender.api.execution import TimingSummary
 
 
+# Only XDMA is implemented today. QDMA and Ethernet are reserved for planned
+# backends; open_board() raises for them.
 class HostInterface(enum.Enum):
     XDMA = 0
 

@@ -18,6 +18,6 @@ jupyter>=1.0
 ipykernel>=6.25
 ipywidgets>=8.0
 
-# Optional: pyright CLI for the type-checker smoke pass referenced in
-# docs/codex_review_API.md. Uncomment if you want to run it locally.
+# Optional: pyright CLI for the type-checker smoke pass.
+# Uncomment if you want to run it locally.
 # pyright>=1.1

@@ -9,10 +9,12 @@
 
 namespace DRAMBender {
 
+// Host transport backend. Only XDMA is implemented today. QDMA and Ethernet
+// are reserved for planned backends; create_host_interface() throws for them.
 enum class HostInterface {
   XDMA,
-  QDMA,
-  Ethernet,
+  QDMA,      // reserved, not implemented yet
+  Ethernet,  // reserved, not implemented yet
 };
 
 constexpr std::string_view to_string(HostInterface host_interface) noexcept {
