@@ -104,11 +104,11 @@
 #set_property PACKAGE_PIN BK10     [get_ports "SYSCLK2_P"] ;# Bank  68 VCCO - VCC1V8   - IO_L11P_T1U_N8_GC_68
 #set_property IOSTANDARD  LVDS 	  [get_ports "SYSCLK2_P"] ;# Bank  68 VCCO - VCC1V8   - IO_L11P_T1U_N8_GC_68
 
-set_property PACKAGE_PIN BL10     [get_ports c0_sys_clk_n] ;# Bank  68 VCCO - VCC1V8   - IO_L11N_T1U_N9_GC_68
-set_property IOSTANDARD  LVDS 	  [get_ports c0_sys_clk_n] ;# Bank  68 VCCO - VCC1V8   - IO_L11N_T1U_N9_GC_68
-set_property PACKAGE_PIN BK10     [get_ports c0_sys_clk_p] ;# Bank  68 VCCO - VCC1V8   - IO_L11P_T1U_N8_GC_68
-set_property IOSTANDARD  LVDS 	  [get_ports c0_sys_clk_p] ;# Bank  68 VCCO - VCC1V8   - IO_L11P_T1U_N8_GC_68
-
+set_property IOSTANDARD LVDS [get_ports c0_sys_clk_n]
+set_property PACKAGE_PIN BK10 [get_ports c0_sys_clk_p]
+set_property PACKAGE_PIN BL10 [get_ports c0_sys_clk_n]
+set_property IOSTANDARD LVDS [get_ports c0_sys_clk_p]
+set_property DQS_BIAS TRUE [get_ports c0_sys_clk_p]
 
 
 
@@ -136,8 +136,8 @@ set_property IOSTANDARD  LVDS 	  [get_ports c0_sys_clk_p] ;# Bank  68 VCCO - VCC
 #set_property PACKAGE_PIN AP13     [get_ports "PCIE_SYSCLK1_P"] ;# Bank 225 - MGTREFCLK1P_225
 
 
-set_property PACKAGE_PIN AL14     [get_ports clk_ref_n] ;# Bank 227 - MGTREFCLK0N_227
-set_property PACKAGE_PIN AL15     [get_ports clk_ref_p] ;# Bank 227 - MGTREFCLK0P_227
+set_property PACKAGE_PIN AL14 [get_ports clk_ref_n]
+set_property PACKAGE_PIN AL15 [get_ports clk_ref_p]
 
 #set_property PACKAGE_PIN AK12     [get_ports "PCIE_SYSCLK0_N"] ;# Bank 227 - MGTREFCLK1N_227
 #set_property PACKAGE_PIN AK13     [get_ports "PCIE_SYSCLK0_P"] ;# Bank 227 - MGTREFCLK1P_227
@@ -146,7 +146,7 @@ set_property PACKAGE_PIN AL15     [get_ports clk_ref_p] ;# Bank 227 - MGTREFCLK0
 #create_clock -period 10.000 -name SYSCLK3         [get_ports "SYSCLK3_P"]
 
 
-create_clock -period 10.000 -name SYSCLK2         [get_ports "c0_sys_clk_p"]
+create_clock -period 10.000 -name SYSCLK2 [get_ports c0_sys_clk_p]
 
 
 
@@ -162,8 +162,27 @@ create_clock -period 10.000 -name SYSCLK2         [get_ports "c0_sys_clk_p"]
 
 
 #create_clock -period 10.000 -name PCIEREFCLK0     [get_ports "PCIE_REFCLK0_P"]
-create_clock -period 10.000 -name PCIEREFCLK0     [get_ports "clk_ref_p"]
+create_clock -period 10.000 -name PCIEREFCLK0 [get_ports clk_ref_p]
 #create_clock -period 10.000 -name PCIESYSCLK0     [get_ports "PCIE_SYSCLK0_P"]
+
+set_clock_groups -asynchronous -group [get_clocks c0_sys_clk_p -include_generated_clocks]
+set_clock_groups -asynchronous -group [get_clocks pcie_ref_clk0 -include_generated_clocks]
+
+set_property PACKAGE_PIN BJ42 [get_ports {satellite_uart_rxd[0]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {satellite_uart_rxd[0]}]
+set_property PACKAGE_PIN BH42 [get_ports {satellite_uart_txd[0]}]
+set_property -dict {IOSTANDARD LVCMOS18 DRIVE 4} [get_ports {satellite_uart_txd[0]}]
+
+
+set_property PACKAGE_PIN BE46 [get_ports {satellite_gpio[0]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {satellite_gpio[0]}]
+set_property PACKAGE_PIN BF46 [get_ports {satellite_gpio[3]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {satellite_gpio[3]}]
+set_property PACKAGE_PIN BF45 [get_ports {satellite_gpio[2]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {satellite_gpio[2]}]
+set_property PACKAGE_PIN BH46 [get_ports {satellite_gpio[1]}]
+set_property IOSTANDARD LVCMOS18 [get_ports {satellite_gpio[1]}]
+
 ##################################################################################################################################################################
 ##
 ##    SI_RSTBB           Active low reset output from FPGA to Si5394B input
@@ -177,8 +196,8 @@ create_clock -period 10.000 -name PCIEREFCLK0     [get_ports "clk_ref_p"]
 #set_property PACKAGE_PIN BM8      [get_ports "SI_RSTBB"] ;# Bank  68 VCCO - VCC1V8   - IO_L10N_T1U_N7_QBC_AD4N_68
 #set_property IOSTANDARD  LVCMOS18 [get_ports "SI_RSTBB"] ;# Bank  68 VCCO - VCC1V8   - IO_L10N_T1U_N7_QBC_AD4N_68
 
-set_property PACKAGE_PIN BM8      [get_ports sys_rst_l ] ;# Bank  68 VCCO - VCC1V8   - IO_L10N_T1U_N7_QBC_AD4N_68
-set_property IOSTANDARD  LVCMOS18 [get_ports sys_rst_l ] ;# Bank  68 VCCO - VCC1V8   - IO_L10N_T1U_N7_QBC_AD4N_68
+set_property PACKAGE_PIN BM8 [get_ports sys_rst_l]
+set_property IOSTANDARD LVCMOS18 [get_ports sys_rst_l]
 
 #set_property PACKAGE_PIN BM9      [get_ports "SI_INTRB"] ;# Bank  68 VCCO - VCC1V8   - IO_L9P_T1L_N4_AD12P_68
 #set_property IOSTANDARD  LVCMOS18 [get_ports "SI_INTRB"] ;# Bank  68 VCCO - VCC1V8   - IO_L9P_T1L_N4_AD12P_68
@@ -210,9 +229,9 @@ set_property IOSTANDARD  LVCMOS18 [get_ports sys_rst_l ] ;# Bank  68 VCCO - VCC1
 #set_property PACKAGE_PIN BE45     [get_ports "HBM_CATTRIP_LS"] ;# Bank  65 VCCO - VCC1V8   - IO_L22P_T3U_N6_DBC_AD0P_D04_65
 #set_property IOSTANDARD  LVCMOS18 [get_ports "HBM_CATTRIP_LS"] ;# Bank  65 VCCO - VCC1V8   - IO_L22P_T3U_N6_DBC_AD0P_D04_65
 
-set_property PACKAGE_PIN BE45     [get_ports icc] ;# Bank  65 VCCO - VCC1V8   - IO_L22P_T3U_N6_DBC_AD0P_D04_65
-set_property IOSTANDARD  LVCMOS18 [get_ports icc] ;# Bank  65 VCCO - VCC1V8   - IO_L22P_T3U_N6_DBC_AD0P_D04_65
-
+set_property PACKAGE_PIN BE45 [get_ports icc]
+set_property -dict {IOSTANDARD LVCMOS18 DRIVE 4} [get_ports icc]
+#set_property PULLTYPE PULLDOWN [get_ports icc]
 
 
 #set_property PACKAGE_PIN BF41     [get_ports "PCIE_PERST_LS_65"] ;# Bank  65 VCCO - VCC1V8   - IO_T3U_N12_PERSTN0_65
@@ -223,8 +242,8 @@ set_property IOSTANDARD  LVCMOS18 [get_ports icc] ;# Bank  65 VCCO - VCC1V8   - 
 #set_property PACKAGE_PIN BF41     [get_ports "PCIE_PERST_LS_65"] ;# Bank  65 VCCO - VCC1V8   - IO_T3U_N12_PERSTN0_65
 #set_property IOSTANDARD  LVCMOS18 [get_ports "PCIE_PERST_LS_65"] ;# Bank  65 VCCO - VCC1V8   - IO_T3U_N12_PERSTN0_65
 
-set_property PACKAGE_PIN BF41     [get_ports pcie_rst] ;# Bank  65 VCCO - VCC1V8   - IO_T3U_N12_PERSTN0_65
-set_property IOSTANDARD  LVCMOS18 [get_ports pcie_rst] ;# Bank  65 VCCO - VCC1V8   - IO_T3U_N12_PERSTN0_65
+set_property PACKAGE_PIN BF41 [get_ports pcie_rst]
+set_property IOSTANDARD LVCMOS18 [get_ports pcie_rst]
 
 #set_property PACKAGE_PIN BG43     [get_ports "PEX_PWRBRKN_FPGA_65"] ;# Bank  65 VCCO - VCC1V8   - IO_L17N_T2U_N9_AD10N_D15_65
 #set_property IOSTANDARD  LVCMOS18 [get_ports "PEX_PWRBRKN_FPGA_65"] ;# Bank  65 VCCO - VCC1V8   - IO_L17N_T2U_N9_AD10N_D15_65
@@ -504,38 +523,46 @@ set_property IOSTANDARD  LVCMOS18 [get_ports pcie_rst] ;# Bank  65 VCCO - VCC1V8
 
 
 
-set_property PACKAGE_PIN AU1      [get_ports pci_exp_rxn[7]] ;# Bank 226 - MGTYRXN0_226
-set_property PACKAGE_PIN AT3      [get_ports pci_exp_rxn[6]] ;# Bank 226 - MGTYRXN1_226
-set_property PACKAGE_PIN AR1      [get_ports pci_exp_rxn[5]] ;# Bank 226 - MGTYRXN2_226
-set_property PACKAGE_PIN AP3      [get_ports pci_exp_rxn[4]] ;# Bank 226 - MGTYRXN3_226
-set_property PACKAGE_PIN AU2      [get_ports pci_exp_rxp[7]] ;# Bank 226 - MGTYRXP0_226
-set_property PACKAGE_PIN AT4      [get_ports pci_exp_rxp[6]] ;# Bank 226 - MGTYRXP1_226
-set_property PACKAGE_PIN AR2      [get_ports pci_exp_rxp[5]] ;# Bank 226 - MGTYRXP2_226
-set_property PACKAGE_PIN AP4      [get_ports pci_exp_rxp[4]] ;# Bank 226 - MGTYRXP3_226
-set_property PACKAGE_PIN AU10     [get_ports pci_exp_txn[7]] ;# Bank 226 - MGTYTXN0_226
-set_property PACKAGE_PIN AT8      [get_ports pci_exp_txn[6]] ;# Bank 226 - MGTYTXN1_226
-set_property PACKAGE_PIN AR6      [get_ports pci_exp_txn[5]] ;# Bank 226 - MGTYTXN2_226
-set_property PACKAGE_PIN AR10     [get_ports pci_exp_txn[4]] ;# Bank 226 - MGTYTXN3_226
-set_property PACKAGE_PIN AU11     [get_ports pci_exp_txp[7]] ;# Bank 226 - MGTYTXP0_226
-set_property PACKAGE_PIN AT9      [get_ports pci_exp_txp[6]] ;# Bank 226 - MGTYTXP1_226
-set_property PACKAGE_PIN AR7      [get_ports pci_exp_txp[5]] ;# Bank 226 - MGTYTXP2_226
-set_property PACKAGE_PIN AR11     [get_ports pci_exp_txp[4]] ;# Bank 226 - MGTYTXP3_226
-set_property PACKAGE_PIN AN1      [get_ports pci_exp_rxn[3]] ;# Bank 227 - MGTYRXN0_227
-set_property PACKAGE_PIN AN5      [get_ports pci_exp_rxn[2]] ;# Bank 227 - MGTYRXN1_227
-set_property PACKAGE_PIN AM3      [get_ports pci_exp_rxn[1]] ;# Bank 227 - MGTYRXN2_227
-set_property PACKAGE_PIN AL1      [get_ports pci_exp_rxn[0]] ;# Bank 227 - MGTYRXN3_227
-set_property PACKAGE_PIN AN2      [get_ports pci_exp_rxp[3]] ;# Bank 227 - MGTYRXP0_227
-set_property PACKAGE_PIN AN6      [get_ports pci_exp_rxp[2]] ;# Bank 227 - MGTYRXP1_227
-set_property PACKAGE_PIN AM4      [get_ports pci_exp_rxp[1]] ;# Bank 227 - MGTYRXP2_227
-set_property PACKAGE_PIN AL2      [get_ports pci_exp_rxp[0]] ;# Bank 227 - MGTYRXP3_227
-set_property PACKAGE_PIN AP8      [get_ports pci_exp_txn[3]] ;# Bank 227 - MGTYTXN0_227
-set_property PACKAGE_PIN AN10     [get_ports pci_exp_txn[2]] ;# Bank 227 - MGTYTXN1_227
-set_property PACKAGE_PIN AM8      [get_ports pci_exp_txn[1]] ;# Bank 227 - MGTYTXN2_227
-set_property PACKAGE_PIN AL10     [get_ports pci_exp_txn[0]] ;# Bank 227 - MGTYTXN3_227
-set_property PACKAGE_PIN AP9      [get_ports pci_exp_txp[3]] ;# Bank 227 - MGTYTXP0_227
-set_property PACKAGE_PIN AN11     [get_ports pci_exp_txp[2]] ;# Bank 227 - MGTYTXP1_227
-set_property PACKAGE_PIN AM9      [get_ports pci_exp_txp[1]] ;# Bank 227 - MGTYTXP2_227
-set_property PACKAGE_PIN AL11     [get_ports pci_exp_txp[0]] ;# Bank 227 - MGTYTXP3_227
+set_property LOC GTYE4_CHANNEL_X1Y8 [get_cells {xdma_i/inst/pcie4c_ip_i/inst/xdma_pcie4c_ip_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/gt_wizard.gtwizard_top_i/xdma_pcie4c_ip_gt_i/inst/gen_gtwizard_gtye4_top.xdma_pcie4c_ip_gt_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[26].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[0].GTYE4_CHANNEL_PRIM_INST}]
+set_property PACKAGE_PIN AU2 [get_ports {pci_exp_rxp[7]}]
+set_property PACKAGE_PIN AU1 [get_ports {pci_exp_rxn[7]}]
+set_property PACKAGE_PIN AU11 [get_ports {pci_exp_txp[7]}]
+set_property PACKAGE_PIN AU10 [get_ports {pci_exp_txn[7]}]
+set_property LOC GTYE4_CHANNEL_X1Y9 [get_cells {xdma_i/inst/pcie4c_ip_i/inst/xdma_pcie4c_ip_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/gt_wizard.gtwizard_top_i/xdma_pcie4c_ip_gt_i/inst/gen_gtwizard_gtye4_top.xdma_pcie4c_ip_gt_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[26].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[1].GTYE4_CHANNEL_PRIM_INST}]
+set_property PACKAGE_PIN AT4 [get_ports {pci_exp_rxp[6]}]
+set_property PACKAGE_PIN AT3 [get_ports {pci_exp_rxn[6]}]
+set_property PACKAGE_PIN AT9 [get_ports {pci_exp_txp[6]}]
+set_property PACKAGE_PIN AT8 [get_ports {pci_exp_txn[6]}]
+set_property LOC GTYE4_CHANNEL_X1Y10 [get_cells {xdma_i/inst/pcie4c_ip_i/inst/xdma_pcie4c_ip_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/gt_wizard.gtwizard_top_i/xdma_pcie4c_ip_gt_i/inst/gen_gtwizard_gtye4_top.xdma_pcie4c_ip_gt_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[26].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[2].GTYE4_CHANNEL_PRIM_INST}]
+set_property PACKAGE_PIN AR2 [get_ports {pci_exp_rxp[5]}]
+set_property PACKAGE_PIN AR1 [get_ports {pci_exp_rxn[5]}]
+set_property PACKAGE_PIN AR7 [get_ports {pci_exp_txp[5]}]
+set_property PACKAGE_PIN AR6 [get_ports {pci_exp_txn[5]}]
+set_property LOC GTYE4_CHANNEL_X1Y11 [get_cells {xdma_i/inst/pcie4c_ip_i/inst/xdma_pcie4c_ip_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/gt_wizard.gtwizard_top_i/xdma_pcie4c_ip_gt_i/inst/gen_gtwizard_gtye4_top.xdma_pcie4c_ip_gt_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[26].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[3].GTYE4_CHANNEL_PRIM_INST}]
+set_property PACKAGE_PIN AP4 [get_ports {pci_exp_rxp[4]}]
+set_property PACKAGE_PIN AP3 [get_ports {pci_exp_rxn[4]}]
+set_property PACKAGE_PIN AR11 [get_ports {pci_exp_txp[4]}]
+set_property PACKAGE_PIN AR10 [get_ports {pci_exp_txn[4]}]
+set_property LOC GTYE4_CHANNEL_X1Y12 [get_cells {xdma_i/inst/pcie4c_ip_i/inst/xdma_pcie4c_ip_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/gt_wizard.gtwizard_top_i/xdma_pcie4c_ip_gt_i/inst/gen_gtwizard_gtye4_top.xdma_pcie4c_ip_gt_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[27].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[0].GTYE4_CHANNEL_PRIM_INST}]
+set_property PACKAGE_PIN AN2 [get_ports {pci_exp_rxp[3]}]
+set_property PACKAGE_PIN AN1 [get_ports {pci_exp_rxn[3]}]
+set_property PACKAGE_PIN AP9 [get_ports {pci_exp_txp[3]}]
+set_property PACKAGE_PIN AP8 [get_ports {pci_exp_txn[3]}]
+set_property LOC GTYE4_CHANNEL_X1Y13 [get_cells {xdma_i/inst/pcie4c_ip_i/inst/xdma_pcie4c_ip_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/gt_wizard.gtwizard_top_i/xdma_pcie4c_ip_gt_i/inst/gen_gtwizard_gtye4_top.xdma_pcie4c_ip_gt_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[27].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[1].GTYE4_CHANNEL_PRIM_INST}]
+set_property PACKAGE_PIN AN6 [get_ports {pci_exp_rxp[2]}]
+set_property PACKAGE_PIN AN5 [get_ports {pci_exp_rxn[2]}]
+set_property PACKAGE_PIN AN11 [get_ports {pci_exp_txp[2]}]
+set_property PACKAGE_PIN AN10 [get_ports {pci_exp_txn[2]}]
+set_property LOC GTYE4_CHANNEL_X1Y14 [get_cells {xdma_i/inst/pcie4c_ip_i/inst/xdma_pcie4c_ip_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/gt_wizard.gtwizard_top_i/xdma_pcie4c_ip_gt_i/inst/gen_gtwizard_gtye4_top.xdma_pcie4c_ip_gt_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[27].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[2].GTYE4_CHANNEL_PRIM_INST}]
+set_property PACKAGE_PIN AM4 [get_ports {pci_exp_rxp[1]}]
+set_property PACKAGE_PIN AM3 [get_ports {pci_exp_rxn[1]}]
+set_property PACKAGE_PIN AM9 [get_ports {pci_exp_txp[1]}]
+set_property PACKAGE_PIN AM8 [get_ports {pci_exp_txn[1]}]
+set_property LOC GTYE4_CHANNEL_X1Y15 [get_cells {xdma_i/inst/pcie4c_ip_i/inst/xdma_pcie4c_ip_gt_top_i/diablo_gt.diablo_gt_phy_wrapper/gt_wizard.gtwizard_top_i/xdma_pcie4c_ip_gt_i/inst/gen_gtwizard_gtye4_top.xdma_pcie4c_ip_gt_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[27].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[3].GTYE4_CHANNEL_PRIM_INST}]
+set_property PACKAGE_PIN AL2 [get_ports {pci_exp_rxp[0]}]
+set_property PACKAGE_PIN AL1 [get_ports {pci_exp_rxn[0]}]
+set_property PACKAGE_PIN AL11 [get_ports {pci_exp_txp[0]}]
+set_property PACKAGE_PIN AL10 [get_ports {pci_exp_txn[0]}]
 #set_property PACKAGE_PIN AU14     [get_ports "N45904402"] ;# Bank 225 - MGTRREF_RS
 ##################################################################################################################################################################
 ##

@@ -172,7 +172,13 @@ module maintenance_controller#(parameter tCK = 1500)(
 
   wire periodic_rd_timer_one = maint_prescaler_tick_r_lcl && (periodic_rd_timer_r == ONE[0+:PERIODIC_RD_TIMER_WIDTH]);
 
+  `ifndef HBM_BENDER
+  wire periodic_rd_request = ~rst && (/*((PERIODIC_RD_TIMER_DIV != 0) && ~dfi_init_complete) ||*/
+                      (~per_rd_ack && (per_rd_request || periodic_rd_timer_one)));
+  `else
   wire periodic_rd_request = 1'b0;
+  `endif
+
   always @(posedge clk) begin
     if(~init_calib_complete)
       periodic_rd_timer_r <= PERIODIC_RD_TIMER_DIV[0+:PERIODIC_RD_TIMER_WIDTH];
