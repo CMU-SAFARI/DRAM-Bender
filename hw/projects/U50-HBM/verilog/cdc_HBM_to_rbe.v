@@ -1,4 +1,4 @@
-// Since we are moving from a fast to slow clock domain,
+// Since we are moving from a fast to slow clock domain, 
 // We need to implement this circuitry that will essentially "stretch" the signals coming from the fast clock domain
 // This will make sure that a pulse (in the worst case) will always be captured by the circuitry in the slow clock domain
 
@@ -6,7 +6,7 @@ module cdc_HBM_to_rbe(
         input dfi_clk,
         input dfi_rst_n,
         input fab_clk,
-
+        
         // HBM TO DRAM BENDER INTERFACE
         //input dfi_0_init_complete,
         input [255 : 0] dfi_0_dw_rddata_p0,
@@ -16,9 +16,9 @@ module cdc_HBM_to_rbe(
         output [255 : 0] o_dfi_0_dw_rddata_p0,
         output [255 : 0] o_dfi_0_dw_rddata_p1,
         output o_dfi_0_dw_rddata_valid
-
+        
     );
-
+    
     reg [255 : 0] dfi_0_dw_rddata_p0_r;
     reg [255 : 0] dfi_0_dw_rddata_p1_r;
     reg wr_en_r;
@@ -27,11 +27,11 @@ module cdc_HBM_to_rbe(
     wire [255:0] w_dfi_0_dw_rddata_p1;
     wire [511:0] w_dfi_0_dw_rddata;
     wire w_wr_en;
-
+    
     wire fifo_full;
     wire fifo_empty;
     wire fifo_valid;
-
+    
     always @ (posedge dfi_clk)
     begin
         if (~dfi_rst_n) begin
@@ -62,12 +62,12 @@ module cdc_HBM_to_rbe(
     assign w_dfi_0_dw_rddata_p0     = dfi_0_dw_rddata_p0_r;
     assign w_dfi_0_dw_rddata_p1     = dfi_0_dw_rddata_p1_r;
     assign w_wr_en                  = wr_en_r;
-
+    
     assign o_dfi_0_dw_rddata_p0     = w_dfi_0_dw_rddata[255:0];
     assign o_dfi_0_dw_rddata_p1     = w_dfi_0_dw_rddata[511:256];
     assign o_dfi_0_dw_rddata_valid  = fifo_valid;
-
-
+    
+    
     cdc_fifo cdc_fifo0 (
         .srst(~dfi_rst_n),
         .wr_clk(dfi_clk),
@@ -82,7 +82,7 @@ module cdc_HBM_to_rbe(
         //.wr_rst_busy(), // not needed
         //.rd_rst_busy()
     );
-
-
-
+    
+       
+        
 endmodule
