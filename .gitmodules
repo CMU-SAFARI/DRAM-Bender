@@ -1,0 +1,3 @@
+[submodule "hw/prebuilt"]
+	path = hw/prebuilt
+	url = git@gitlab.ethz.ch:safari/dram-bender-prebuilt-bitstreams.git
