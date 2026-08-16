@@ -227,7 +227,7 @@ module maintenance_controller#(parameter tCK = 1500)(
 
         always @(/*AS*/init_calib_complete or zq_request_r)
   `ifndef HBM_BENDER
-            zq_request = 1'b0;
+            zq_request = init_calib_complete && zq_request_r;
   `else
             zq_request = 1'b0;
   `endif
@@ -252,7 +252,7 @@ module maintenance_controller#(parameter tCK = 1500)(
       if(autoref_timer_r > 1 && maint_prescaler_tick_r_lcl) // you were here
         autoref_timer  = autoref_timer_r - ONE[PERIODIC_REF_TIMER_WIDTH-1:0];
       else if(autoref_timer_r == 1) begin
-        pr_ref_request = `LOW;
+        pr_ref_request = `HIGH;
         if(ref_ack)
           autoref_timer = PERIODIC_REF_TIMER_DIV[PERIODIC_REF_TIMER_WIDTH-1:0];
       end

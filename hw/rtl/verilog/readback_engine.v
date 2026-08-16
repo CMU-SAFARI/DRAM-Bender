@@ -47,8 +47,18 @@ module readback_engine(
   wire fifo_wr_en = (rd_valid | hbm_temp_rd) & (~hbm_discard_readback_data);
   `else
   wire [511:0] fifo_wr_data= {rd_data[255:0],rd_data[511:256]};
-  wire fifo_wr_en = rd_valid;
+  wire fifo_wr_en = rd_valid & (~ignore_read_r);
   `endif
+
+  
+  // Periodic-operation handling.
+  // Periodic reads generate DRAM read responses that should not be
+  // returned to the host, and periodic operations generate a flush
+  // that should not be interpreted as program completion.
+  reg rd_flag_r, rd_flag_ns;
+  reg rd_valid_r;
+  reg ignore_read_r, ignore_read_ns;
+  reg ignore_flush_r, ignore_flush_ns;
 
   wire fifo_rd_en;
   wire [255:0] fifo_rd_data;
@@ -129,8 +139,32 @@ module readback_engine(
 
     process_flush_ns = process_flush_r;
 
-    if (flush) // ASSUME THIS IS SET ONLY FOR ONE CYCLE
-      process_flush_ns = 1'b1;
+    // Periodic-operation state
+    ignore_read_ns  = ignore_read_r;
+    ignore_flush_ns = ignore_flush_r;
+    rd_flag_ns      = rd_flag_r;
+
+    // A periodic operation generates a flush that should not be
+    // interpreted as program completion. A periodic read also
+    // generates read data that should not reach the host.
+    if (per_rd_init || per_zq_init || per_ref_init) begin
+        ignore_read_ns  = per_rd_init;
+        ignore_flush_ns = 1'b1;
+    end
+
+    // Stop ignoring reads once the response(s) corresponding to the
+    // periodic read have arrived.
+
+    if (rd_valid_r)
+        ignore_read_ns = 1'b0;
+
+    // ASSUME flush is set only for one cycle.
+    if (flush) begin
+        if (ignore_flush_r)
+            ignore_flush_ns = 1'b0;
+        else
+            process_flush_ns = 1'b1;
+    end
 
     // every write to FIFO increments FIFO size by two due to async I/O width
     if (fifo_wr_en) begin
@@ -218,6 +252,12 @@ module readback_engine(
       sender_state_r                <=          IDLE_S;
       allowed_nreads_r              <=          12'b0;
       process_flush_r               <=          1'b0;
+      
+      ignore_read_r                 <=          1'b0;
+      ignore_flush_r                <=          1'b0;
+      rd_flag_r                     <=          1'b0;
+      rd_valid_r                    <=          1'b0;
+      
     end
     else begin
       cycle_counter_r               <=          cycle_counter_ns;
@@ -228,6 +268,11 @@ module readback_engine(
       sender_state_r                <=          sender_state_ns;
       allowed_nreads_r              <=          allowed_nreads_ns;
       process_flush_r               <=          process_flush_ns;
+      ignore_read_r                 <=          ignore_read_ns;
+      ignore_flush_r                <=          ignore_flush_ns;
+      rd_flag_r                     <=          rd_flag_ns;
+      rd_valid_r                    <=          rd_valid;
+      
     end
   end
 
