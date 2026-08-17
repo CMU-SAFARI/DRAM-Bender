@@ -17,11 +17,41 @@
 
 namespace DRAMBender {
 
-HBM2::HBM2(std::string pci_bdf, int xdma_channel, HostInterface host_interface)
-    : HBM2(create_host_interface(host_interface, std::move(pci_bdf), xdma_channel)) {}
+namespace {
+// Instruction buffer depth per board.
+constexpr int k_u50_instruction_capacity = 32768;    // 32 K
+constexpr int k_u55c_instruction_capacity = 131072;  // 128 K
 
-HBM2::HBM2(std::unique_ptr<IHostInterface> host_interface)
-    : IBoard(std::move(host_interface)) {}
+constexpr HBM2Capabilities k_u50_capabilities{
+    .num_sids = 1,
+    .broadcast_supported = false,
+    .instruction_capacity = k_u50_instruction_capacity,
+    .power_supported = false,
+};
+
+constexpr HBM2Capabilities k_u55c_capabilities{
+    .num_sids = 2,
+    .broadcast_supported = true,
+    .instruction_capacity = k_u55c_instruction_capacity,
+    .power_supported = true,
+};
+}  // namespace
+
+HBM2::HBM2(std::unique_ptr<IHostInterface> host_interface, HBM2Capabilities capabilities)
+    : IBoard(std::move(host_interface), capabilities.instruction_capacity),
+      capabilities_(capabilities) {}
+
+HBM2U50::HBM2U50(std::string pci_bdf, int xdma_channel, HostInterface host_interface)
+    : HBM2U50(create_host_interface(host_interface, std::move(pci_bdf), xdma_channel)) {}
+
+HBM2U50::HBM2U50(std::unique_ptr<IHostInterface> host_interface)
+    : HBM2(std::move(host_interface), k_u50_capabilities) {}
+
+HBM2U55C::HBM2U55C(std::string pci_bdf, int xdma_channel, HostInterface host_interface)
+    : HBM2U55C(create_host_interface(host_interface, std::move(pci_bdf), xdma_channel)) {}
+
+HBM2U55C::HBM2U55C(std::unique_ptr<IHostInterface> host_interface)
+    : HBM2(std::move(host_interface), k_u55c_capabilities) {}
 
 HBMTemperature HBM2::read_temperature() {
   synchronize();
@@ -104,6 +134,12 @@ void HBM2::discard_readback_data(bool discard) {
 }
 
 void HBM2::set_broadcast_channels(std::span<const int> channels) {
+  if (!capabilities_.broadcast_supported) {
+    throw std::runtime_error(
+        "This HBM2 board does not support command broadcast. Select a single "
+        "channel with SEL_CH instead.");
+  }
+
   uint32_t channel_mask = 0;
   for (int channel : channels) {
     if (channel < 0 || channel > 15) {

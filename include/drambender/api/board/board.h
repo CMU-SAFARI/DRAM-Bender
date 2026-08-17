@@ -26,15 +26,18 @@ inline constexpr size_t axi_datapath_byte_width = 32;
 
 enum class BoardType {
   DDR4,
-  HBM2,
+  HBM2_U50,
+  HBM2_U55C,
 };
 
 constexpr std::string_view to_string(BoardType board_type) noexcept {
   switch (board_type) {
     case BoardType::DDR4:
       return "DDR4";
-    case BoardType::HBM2:
-      return "HBM2";
+    case BoardType::HBM2_U50:
+      return "HBM2_U50";
+    case BoardType::HBM2_U55C:
+      return "HBM2_U55C";
   }
 
   return "Unknown";

@@ -545,8 +545,10 @@ std::unique_ptr<IBoard> create_board(BoardType board_type,
   switch (board_type) {
     case BoardType::DDR4:
       return std::make_unique<DDR4>(std::move(pci_bdf), xdma_channel, host_interface);
-    case BoardType::HBM2:
-      return std::make_unique<HBM2>(std::move(pci_bdf), xdma_channel, host_interface);
+    case BoardType::HBM2_U50:
+      return std::make_unique<HBM2U50>(std::move(pci_bdf), xdma_channel, host_interface);
+    case BoardType::HBM2_U55C:
+      return std::make_unique<HBM2U55C>(std::move(pci_bdf), xdma_channel, host_interface);
   }
 
   throw std::runtime_error("Unsupported board type requested.");

@@ -12,7 +12,15 @@ import sys
 
 import numpy as np
 
-from drambender.api import FinalProgram, HBM2, HBM2Target, ProgramBuilder
+from drambender.api import (
+    FinalProgram,
+    HBM2Target,
+    HBM2U50,
+    HBM2U50Target,
+    HBM2U55C,
+    HBM2U55Target,
+    ProgramBuilder,
+)
 from drambender.api.program.instructions import ACT, NOP, PRE, RD, SEL_CH, WR
 
 
@@ -276,6 +284,7 @@ def run_row_sweep(
 def main() -> int:
     parser = argparse.ArgumentParser(description="HBM2 latest-U55-SID read/write test")
     parser.add_argument("--pci-bdf", required=True)
+    parser.add_argument("--board", choices=("u50", "u55c"), default="u55c")
     parser.add_argument("--xdma-channel", type=int, default=0)
     parser.add_argument("--channel", type=int, default=0)
     parser.add_argument("--pseudo-channel", type=int, default=0)
@@ -337,7 +346,10 @@ def main() -> int:
         print("iterations must be greater than 0", file=sys.stderr)
         return 2
 
-    target = HBM2Target(
+    target_cls, board_cls = (
+        (HBM2U50Target, HBM2U50) if args.board == "u50" else (HBM2U55Target, HBM2U55C)
+    )
+    target = target_cls(
         channel=args.channel,
         pseudo_channel=args.pseudo_channel,
         sid=args.sid,
@@ -369,7 +381,7 @@ def main() -> int:
     )
 
     try:
-        with HBM2(args.pci_bdf, args.xdma_channel) as board:
+        with board_cls(args.pci_bdf, args.xdma_channel) as board:
             if not args.skip_temperature:
                 try:
                     temp = board.read_temperature()

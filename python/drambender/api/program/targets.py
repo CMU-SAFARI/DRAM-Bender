@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import operator
-from typing import Any
+from typing import Any, ClassVar
 
 from drambender._jit import ScalarAffineRef, ScalarParamRef, ScalarSentinel
 
@@ -61,22 +61,55 @@ class DDR4Target:
 
 @dataclass(frozen=True)
 class HBM2Target:
-    """HBM2 target settings for the latest U55 SID bitstream."""
+    """Shared base for HBM2 targets.
+
+    This class is abstract. Use :class:`HBM2U50Target` or
+    :class:`HBM2U55Target`, which set the per-board capabilities (SID count,
+    broadcast support, and instruction buffer depth).
+    """
 
     channel: int = 0
     pseudo_channel: int = 0
-    sid: int = 1
+    sid: int = 0
     columns_per_row: int = 32
     column_stride: int = 1
     words_per_cacheline: int = 16
 
+    # Per-board capabilities. Subclasses override these class attributes.
+    num_sids: ClassVar[int] = 1
+    broadcast_supported: ClassVar[bool] = False
+    instruction_capacity: ClassVar[int] = 32768
+
     def __post_init__(self) -> None:
-        _validate_int_field(self.channel, name="HBM2Target.channel", minimum=0, maximum=15)
-        _validate_int_field(self.pseudo_channel, name="HBM2Target.pseudo_channel", minimum=0, maximum=1)
-        _validate_int_field(self.sid, name="HBM2Target.sid", minimum=0, maximum=1)
-        _validate_int_field(self.columns_per_row, name="HBM2Target.columns_per_row", minimum=1)
-        _validate_int_field(self.column_stride, name="HBM2Target.column_stride", minimum=1)
-        _validate_int_field(self.words_per_cacheline, name="HBM2Target.words_per_cacheline", minimum=1)
+        if type(self) is HBM2Target:
+            raise TypeError(
+                "HBM2Target is abstract; use HBM2U50Target or HBM2U55Target."
+            )
+        name = type(self).__name__
+        _validate_int_field(self.channel, name=f"{name}.channel", minimum=0, maximum=15)
+        _validate_int_field(self.pseudo_channel, name=f"{name}.pseudo_channel", minimum=0, maximum=1)
+        _validate_int_field(self.sid, name=f"{name}.sid", minimum=0, maximum=self.num_sids - 1)
+        _validate_int_field(self.columns_per_row, name=f"{name}.columns_per_row", minimum=1)
+        _validate_int_field(self.column_stride, name=f"{name}.column_stride", minimum=1)
+        _validate_int_field(self.words_per_cacheline, name=f"{name}.words_per_cacheline", minimum=1)
+
+
+@dataclass(frozen=True)
+class HBM2U50Target(HBM2Target):
+    """Alveo U50 HBM2 target: 1 SID, no broadcast, 32 K instruction buffer."""
+
+    num_sids: ClassVar[int] = 1
+    broadcast_supported: ClassVar[bool] = False
+    instruction_capacity: ClassVar[int] = 32768
+
+
+@dataclass(frozen=True)
+class HBM2U55Target(HBM2Target):
+    """Alveo U55C HBM2 target: 2 SIDs, broadcast, 128 K instruction buffer."""
+
+    num_sids: ClassVar[int] = 2
+    broadcast_supported: ClassVar[bool] = True
+    instruction_capacity: ClassVar[int] = 131072
 
     @property
     def rank(self) -> int:
@@ -121,5 +154,7 @@ def normalize_target(target: Any | None):
 __all__ = [
     "DDR4Target",
     "HBM2Target",
+    "HBM2U50Target",
+    "HBM2U55Target",
     "normalize_target",
 ]

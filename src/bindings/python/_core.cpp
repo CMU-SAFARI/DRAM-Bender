@@ -964,7 +964,8 @@ NB_MODULE(_core, m) {
 
   nb::enum_<BoardType>(m, "BoardType")
       .value("DDR4", BoardType::DDR4)
-      .value("HBM2", BoardType::HBM2);
+      .value("HBM2_U50", BoardType::HBM2_U50)
+      .value("HBM2_U55C", BoardType::HBM2_U55C);
 
   nb::enum_<PC_TYPE>(m, "PCType")
       .value("WRITE", PC_TYPE::WRITE)
@@ -1242,11 +1243,7 @@ NB_MODULE(_core, m) {
   nb::class_<HBM2, IBoard>(
       m,
       "HBM2",
-      "HBM2-backed DRAM Bender board.")
-      .def(nb::init<std::string, int, HostInterface>(),
-           nb::arg("pci_bdf"),
-           nb::arg("xdma_channel") = 0,
-           nb::arg("host_interface") = HostInterface::XDMA)
+      "Shared base for HBM2 boards. Construct HBM2U50 or HBM2U55C.")
       .def("read_temperature",
            [](HBM2& board) {
              nb::gil_scoped_release release;
@@ -1266,7 +1263,27 @@ NB_MODULE(_core, m) {
              board.set_broadcast_channels(channels);
            },
            nb::arg("channels"),
-           "Configure the optional HBM command broadcast channel mask.");
+           "Configure the command broadcast channel mask (U55C only).")
+      .def_prop_ro("num_sids", &HBM2::num_sids)
+      .def_prop_ro("broadcast_supported", &HBM2::broadcast_supported);
+
+  nb::class_<HBM2U50, HBM2>(
+      m,
+      "HBM2U50",
+      "Alveo U50 HBM2 board: 1 SID, no broadcast, 32 K instructions.")
+      .def(nb::init<std::string, int, HostInterface>(),
+           nb::arg("pci_bdf"),
+           nb::arg("xdma_channel") = 0,
+           nb::arg("host_interface") = HostInterface::XDMA);
+
+  nb::class_<HBM2U55C, HBM2>(
+      m,
+      "HBM2U55C",
+      "Alveo U55C HBM2 board: 2 SIDs, broadcast, 128 K instructions.")
+      .def(nb::init<std::string, int, HostInterface>(),
+           nb::arg("pci_bdf"),
+           nb::arg("xdma_channel") = 0,
+           nb::arg("host_interface") = HostInterface::XDMA);
 
   nb::class_<MockBoard, IBoard>(m, "_MockBoard")
       .def(nb::init<int>(), nb::arg("receive_timeout_ms") = 5000)

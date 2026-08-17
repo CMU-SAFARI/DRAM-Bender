@@ -118,9 +118,9 @@ class ProgramBuilder:
     accept a name string (auto-allocated on first use, see :meth:`alloc_reg`)
     or an integer id (0–15).
 
-    ``target=`` is required. Pass ``DDR4Target(...)`` or ``HBM2Target(...)`` to
-    make omitted ranks and HBM channel selection target-aware while keeping
-    every DRAM command explicit.
+    ``target=`` is required. Pass ``DDR4Target(...)``, ``HBM2U50Target(...)``,
+    or ``HBM2U55Target(...)`` to make omitted ranks and HBM channel selection
+    target-aware while keeping every DRAM command explicit.
 
     Scalar arithmetic and control-flow instructions take one fabric cycle
     (6 ns on the supported FPGA variants). DRAM mini-operations live inside
@@ -134,8 +134,8 @@ class ProgramBuilder:
     def __init__(self, *, target=_TARGET_UNSET) -> None:
         if target is self._TARGET_UNSET or target is None:
             raise TypeError(
-                "ProgramBuilder requires an explicit target=DDR4Target(...) "
-                "or target=HBM2Target(...)."
+                "ProgramBuilder requires an explicit target=DDR4Target(...), "
+                "target=HBM2U50Target(...), or target=HBM2U55Target(...)."
             )
         self.target = normalize_target(target)
         self._registers = _RegisterFile()

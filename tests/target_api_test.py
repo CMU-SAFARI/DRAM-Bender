@@ -12,6 +12,8 @@ from drambender.api import (
     DDR4,
     DDR4Target,
     HBM2Target,
+    HBM2U50Target,
+    HBM2U55Target,
     HostInterface,
     ProgramBuilder,
     open_board,
@@ -90,7 +92,7 @@ def test_target_rank_default_and_explicit_override() -> None:
 
 
 def test_hbm2_target_selects_channel_bank_and_rank() -> None:
-    target = HBM2Target(channel=3, pseudo_channel=1, sid=1)
+    target = HBM2U55Target(channel=3, pseudo_channel=1, sid=1)
     p = ProgramBuilder(target=target)
     p.LI(target.physical_bank(2), "BAR")
     p.LI(9, "RAR")
@@ -133,7 +135,7 @@ def test_open_board_accepts_targets_and_board_type() -> None:
     board_api._native_open_board = fake_native_open_board
     try:
         open_board(DDR4Target(), "0000:01:00.0", 0, HostInterface.XDMA)
-        open_board(HBM2Target(), "0000:81:00.0", 1, HostInterface.XDMA)
+        open_board(HBM2U55Target(), "0000:81:00.0", 1, HostInterface.XDMA)
         open_board(BoardType.DDR4, "0001:01:00.0", 2, HostInterface.XDMA)
     finally:
         board_api._native_open_board = original_native_open_board
@@ -141,7 +143,7 @@ def test_open_board_accepts_targets_and_board_type() -> None:
     _assert(
         calls == [
             (BoardType.DDR4, "0000:01:00.0", 0, HostInterface.XDMA),
-            (BoardType.HBM2, "0000:81:00.0", 1, HostInterface.XDMA),
+            (BoardType.HBM2_U55C, "0000:81:00.0", 1, HostInterface.XDMA),
             (BoardType.DDR4, "0001:01:00.0", 2, HostInterface.XDMA),
         ],
         f"unexpected open_board dispatch calls: {calls}",
@@ -204,7 +206,7 @@ def test_configured_ddr4_builtins() -> None:
 
 
 def test_configured_hbm2_builtins() -> None:
-    target = HBM2Target(channel=3, pseudo_channel=1, sid=1)
+    target = HBM2U55Target(channel=3, pseudo_channel=1, sid=1)
     programs = builtin_programs.configure(target=target)
     pattern = (0xDEADBEEF,) * target.words_per_cacheline
     write_program = programs.write_row(2, 7, pattern)
@@ -225,7 +227,7 @@ def test_configured_hbm2_builtins() -> None:
 
 @program_template
 def _jit_hbm2_physical_bank_template(bank: int):
-    target = HBM2Target(channel=0, pseudo_channel=1, sid=1)
+    target = HBM2U55Target(channel=0, pseudo_channel=1, sid=1)
     p = ProgramBuilder(target=target)
     p.LI(target.physical_bank(bank), "BAR")
     p.LI(0, "RAR")
@@ -241,12 +243,39 @@ def test_jit_physical_bank_affine_scalar() -> None:
     _assert(pre_event.rank == 1, f"JIT target rank {pre_event.rank}, expected 1")
 
 
+def test_hbm2_board_variant_capabilities() -> None:
+    u50 = HBM2U50Target(channel=2, sid=0)
+    _assert(u50.num_sids == 1, "U50 num_sids should be 1")
+    _assert(u50.broadcast_supported is False, "U50 must not support broadcast")
+    _assert(u50.instruction_capacity == 32768, "U50 instruction capacity should be 32K")
+
+    try:
+        HBM2U50Target(sid=1)
+    except ValueError as exc:
+        _assert("sid" in str(exc), f"U50 sid=1 should be rejected: {exc}")
+    else:
+        raise AssertionError("HBM2U50Target(sid=1) should fail")
+
+    u55 = HBM2U55Target(channel=2, sid=1)
+    _assert(u55.num_sids == 2, "U55C num_sids should be 2")
+    _assert(u55.broadcast_supported is True, "U55C must support broadcast")
+    _assert(u55.instruction_capacity == 131072, "U55C instruction capacity should be 128K")
+
+    try:
+        HBM2Target()
+    except TypeError as exc:
+        _assert("abstract" in str(exc), f"HBM2Target should be abstract: {exc}")
+    else:
+        raise AssertionError("HBM2Target() should fail")
+
+
 def main() -> int:
     tests = (
         test_builder_requires_explicit_target,
         test_explicit_ddr4_target_builds,
         test_target_rank_default_and_explicit_override,
         test_hbm2_target_selects_channel_bank_and_rank,
+        test_hbm2_board_variant_capabilities,
         test_legacy_sel_ch_and_ddr4_rejection,
         test_open_board_accepts_targets_and_board_type,
         test_native_board_selector_requires_complete_bdf,

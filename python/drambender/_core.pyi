@@ -18,7 +18,9 @@ class HostInterface(enum.Enum):
 class BoardType(enum.Enum):
     DDR4 = 0
 
-    HBM2 = 1
+    HBM2_U50 = 1
+
+    HBM2_U55C = 2
 
 class PCType(enum.Enum):
     WRITE = 0
@@ -263,9 +265,7 @@ class DDR4(Board):
     def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 
 class HBM2(Board):
-    """HBM2-backed DRAM Bender board."""
-
-    def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
+    """Shared base for HBM2 boards. Construct HBM2U50 or HBM2U55C."""
 
     def read_temperature(self) -> HBMTemperature:
         """Read the current HBM stack temperatures in degrees Celsius."""
@@ -276,8 +276,24 @@ class HBM2(Board):
         ...
 
     def set_broadcast_channels(self, channels: list[int]) -> None:
-        """Configure the optional HBM command broadcast channel mask."""
+        """Configure the command broadcast channel mask (U55C only)."""
         ...
+
+    @property
+    def num_sids(self) -> int: ...
+
+    @property
+    def broadcast_supported(self) -> bool: ...
+
+class HBM2U50(HBM2):
+    """Alveo U50 HBM2 board: 1 SID, no broadcast, 32 K instructions."""
+
+    def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
+
+class HBM2U55C(HBM2):
+    """Alveo U55C HBM2 board: 2 SIDs, broadcast, 128 K instructions."""
+
+    def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 
 def open_board(board_type: BoardType, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> Board:
     """Open a DRAM Bender board.
