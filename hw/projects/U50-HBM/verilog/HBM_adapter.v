@@ -73,6 +73,8 @@ module HBM_adapter(
     wire [511:0]  o_wrdata;
     wire [127:0]  fifo_data;
     wire [63:0]   o_fifo_data;
+    wire [31:0]   fifo_ch_sel_oh_in;
+    wire [15:0]   fifo_ch_sel_oh_out;
     
     assign o_dfi_0_dw_rddata_p0     = w_dfi_0_dw_rddata_p0;
     assign o_dfi_0_dw_rddata_p1     = w_dfi_0_dw_rddata_p1;
@@ -112,6 +114,7 @@ module HBM_adapter(
       .BA4_4(BA4_4)
       */
       .fifo_data(fifo_data),
+      .fifo_ch_sel_oh(fifo_ch_sel_oh_in),
       .wrdata(wrdata)
       
     );
@@ -128,6 +131,20 @@ module HBM_adapter(
         //.empty(),
         //.wr_rst_busy(),
         //.rd_rst_busy()
+    );
+
+    ch_sel_oh_fifo ch_sel_oh_fifo (
+      .srst(~dfi_rst_n),
+      .wr_clk(fab_clk),
+      .rd_clk(dfi_clk),
+      .din(fifo_ch_sel_oh_in),
+      .wr_en(1'b1),
+      .rd_en(1'b1),
+      .dout(fifo_ch_sel_oh_out)
+      //.full(),
+      //.empty(),
+      //.wr_rst_busy(),
+      //.rd_rst_busy()
     );
     
     wrdata_fifo wrdata_fifo (
@@ -174,6 +191,7 @@ module HBM_adapter(
 		.cmd_type(o_fifo_data[0 +: 2*`CMD_TYPE_WIDTH]),
 		.BA4(o_fifo_data[2*`ROW_ADDR_WIDTH + 2*`CMD_TYPE_WIDTH + 2*`COL_ADDR_WIDTH + 2*`BA_ADDR_WIDTH +: 2*`PC_WIDTH]),
 		.channel_id(o_fifo_data[2*`ROW_ADDR_WIDTH + 2*`CMD_TYPE_WIDTH + 2*`COL_ADDR_WIDTH + 2*`BA_ADDR_WIDTH + 2*`PC_WIDTH  +: 2*`HBM_CH_WIDTH]),
+    .channel_id_oh(fifo_ch_sel_oh_out),
 		
 		.dfi_clk(dfi_clk),
     	.dfi_rst_n(dfi_rst_n),

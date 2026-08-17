@@ -49,6 +49,7 @@ module cmd_gen #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRAM_CM
       //output 	[4*`PC_WIDTH-1:0]		   BA4_4, // indicates target PC
       
       output [127:0]             fifo_data,
+      output [31:0]              fifo_ch_sel_oh,
       output [1023:0]            wrdata    // have one output of 1024 bit for fifo, the other signals are now wires. Make sure to layout data as needed.
       
     );
@@ -68,6 +69,7 @@ module cmd_gen #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRAM_CM
     reg	[4*`CMD_TYPE_WIDTH-1:0]	   cmd_type_r;
     reg [4*`PC_WIDTH-1:0]	       BA4_r;
     reg [4*`HBM_CH_WIDTH-1:0]  channel_id_r; 
+    reg [31:0]                 ch_sel_oh_ns, ch_sel_oh_r;
     
     integer i;
     
@@ -96,6 +98,7 @@ module cmd_gen #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRAM_CM
                                     
     assign wrdata[511:0]    = wrdata_r; // here we are writing double the data redundantly. If we can fix it its better.
     assign wrdata[1023:512] = wrdata_r;
+    assign fifo_ch_sel_oh = ch_sel_oh_r;
     
     
     always @ (*)
@@ -107,6 +110,7 @@ module cmd_gen #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRAM_CM
         BA4_ns = {4*`PC_WIDTH{1'b0}};
         wrdata_ns = {512{1'b0}};
         channel_id_ns = {4*`HBM_CH_WIDTH{1'b0}};
+        ch_sel_oh_ns = {2{16'b1 << hbm_ch[`HBM_CH_WIDTH-1:0]}};
         
         for(i = 0 ; i < 4 ; i = i + 1) begin
             if (ddr_write[i]) begin
@@ -169,6 +173,7 @@ module cmd_gen #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRAM_CM
 		  wrdata_r <= {512{1'b0}};
 		  cmd_type_r <= {4*`CMD_TYPE_WIDTH{1'b1}};
 		  channel_id_r <= {4*`HBM_CH_WIDTH{1'b0}};
+      ch_sel_oh_r <= {2{16'b1}};
 		end
 		else begin
           row_addr_r <= row_addr_ns;
@@ -180,8 +185,10 @@ module cmd_gen #(parameter CKE_WIDTH = 1, RANK_WIDTH = 1, DQ_WIDTH = 64, DRAM_CM
           
           if (hbm_sel_ch[3] | hbm_sel_ch[2] | hbm_sel_ch[1] | hbm_sel_ch[0]) begin // only update channel_id when we have a select channel command. It always needs to be the first command out of the 4.
             channel_id_r <= channel_id_ns;
+            ch_sel_oh_r <= ch_sel_oh_ns;
           end else begin    // otherwise, keep value from last select channel command
             channel_id_r <= channel_id_r;
+            ch_sel_oh_r <= ch_sel_oh_r;
           end
 		end
   	end

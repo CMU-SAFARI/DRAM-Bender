@@ -10,6 +10,7 @@ module controller_top (
 		input	[2*`CMD_TYPE_WIDTH-1:0]	    cmd_type,
 		input 	[2*`PC_WIDTH-1:0]		    BA4, // indicates target PC
 		input   [2*`HBM_CH_WIDTH-1:0]   channel_id,
+		input   [15:0]                  channel_id_oh,
 		
 		input            	dfi_clk,
     	input           	dfi_rst_n,
@@ -35,7 +36,7 @@ module controller_top (
     
 
     // CHANNEL 0
-	/*wire dfi_0_init_start;
+	wire dfi_0_init_start;
 	wire [1 : 0] dfi_0_aw_ck_p0;
 	wire [1 : 0] dfi_0_aw_cke_p0;
 	wire [11 : 0] dfi_0_aw_row_p0;
@@ -438,7 +439,7 @@ module controller_top (
 	wire dfi_7_phyupd_ack;
 	//wire dfi_7_clk_init;
 	wire w_dfi_7_init_complete;
-	wire w_dfi_7_out_rst_n;*/
+	wire w_dfi_7_out_rst_n;
 	
 	
 	// CHANNEL 8
@@ -858,14 +859,14 @@ module controller_top (
 	assign hbm0_temp = DRAM_0_STAT_TEMP;
 	assign hbm1_temp = DRAM_1_STAT_TEMP;
 	
-	/*wire w_0_ready;
+	wire w_0_ready;
 	wire w_1_ready;
 	wire w_2_ready;
 	wire w_3_ready;
 	wire w_4_ready;
 	wire w_5_ready;
 	wire w_6_ready;
-	wire w_7_ready;*/
+	wire w_7_ready;
 	wire w_8_ready;
 	wire w_9_ready;
 	wire w_10_ready;
@@ -875,14 +876,14 @@ module controller_top (
 	wire w_14_ready;
 	wire w_15_ready;
 	
-	/*wire [2*`CMD_TYPE_WIDTH-1:0]	w_0_cmd_type;
+	wire [2*`CMD_TYPE_WIDTH-1:0]	w_0_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_1_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_2_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_3_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_4_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_5_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_6_cmd_type;
-	wire [2*`CMD_TYPE_WIDTH-1:0]	w_7_cmd_type;*/
+	wire [2*`CMD_TYPE_WIDTH-1:0]	w_7_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_8_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_9_cmd_type;
 	wire [2*`CMD_TYPE_WIDTH-1:0]	w_10_cmd_type;
@@ -920,11 +921,12 @@ module controller_top (
 		.cmd_type(cmd_type),
 		.BA4(BA4), // indicates target PC
 		.channel_id(channel_id[3:0]),
+		.channel_id_oh(channel_id_oh),
 		
 		.dfi_clk(dfi_clk),
     	.dfi_rst_n(dfi_rst_n),
         
-        /*.dfi_0_init_complete(w_dfi_0_init_complete),
+        .dfi_0_init_complete(w_dfi_0_init_complete),
 		.dfi_0_dw_rddata_p0(w_dfi_0_dw_rddata_p0),
 		.dfi_0_dw_rddata_p1(w_dfi_0_dw_rddata_p1),
 		.dfi_0_dw_rddata_valid(w_dfi_0_dw_rddata_valid),
@@ -978,7 +980,7 @@ module controller_top (
 		.dfi_7_dw_rddata_p1(w_dfi_7_dw_rddata_p1),
 		.dfi_7_dw_rddata_valid(w_dfi_7_dw_rddata_valid),
 		.dfi_7_out_rst_n(w_dfi_7_out_rst_n),
-	    .ready_7(w_7_ready),*/
+	    .ready_7(w_7_ready),
 	    
 	    .dfi_8_init_complete(w_dfi_8_init_complete),
 		.dfi_8_dw_rddata_p0(w_dfi_8_dw_rddata_p0),
@@ -1043,14 +1045,14 @@ module controller_top (
 		.o_ch_dfi_out_rst_n(w_ch_dfi_out_rst_n),
 		.o_ch_ready(w_ch_ready),
 		
-		/*.o_0_cmd_type(w_0_cmd_type),
+		.o_0_cmd_type(w_0_cmd_type),
 		.o_1_cmd_type(w_1_cmd_type),
 		.o_2_cmd_type(w_2_cmd_type),
 		.o_3_cmd_type(w_3_cmd_type),
 		.o_4_cmd_type(w_4_cmd_type),
 		.o_5_cmd_type(w_5_cmd_type),
 		.o_6_cmd_type(w_6_cmd_type),
-		.o_7_cmd_type(w_7_cmd_type),*/
+		.o_7_cmd_type(w_7_cmd_type),
 		.o_8_cmd_type(w_8_cmd_type),
 		.o_9_cmd_type(w_9_cmd_type),
 		.o_10_cmd_type(w_10_cmd_type),
@@ -1067,7 +1069,7 @@ module controller_top (
 		.o_BA4(o_BA4) // indicates target PC
     );
     
-    /*HBM_interface HBM_interface_CH0 (
+    HBM_interface HBM_interface_CH0 (
 		.row_addr					    	   (o_row_addr),
 		.col_addr							   (o_col_addr),
 		.ba_addr							   (o_ba_addr),
@@ -1506,7 +1508,7 @@ module controller_top (
 		.dfi_ctrlupd_ack                       (dfi_7_ctrlupd_ack),
     	.dfi_phyupd_req                        (dfi_7_phyupd_req),
     	.ready                                 (w_7_ready)
-    );*/
+    );
     
     HBM_interface HBM_interface_CH8 (
 		.row_addr					    	   (o_row_addr),
@@ -1955,7 +1957,7 @@ module controller_top (
 	  	,.HBM_REF_CLK_1                (HBM_REF_CLK_1)
 	  	
 
-	  	/*,.dfi_0_clk                    (dfi_clk)
+		,.dfi_0_clk                    (dfi_clk)
 	  	,.dfi_0_rst_n                  (dfi_rst_n   )
 	  	,.dfi_0_init_start             (dfi_0_init_start         )
 	  	,.dfi_0_aw_ck_p0               (dfi_0_aw_ck_p0           )
@@ -1997,13 +1999,13 @@ module controller_top (
 	  	,.dfi_0_dw_rddata_dm_p1        (dfi_0_dw_rddata_dm_p1 )
 	  	,.dfi_0_dw_rddata_dbi_p1       (dfi_0_dw_rddata_dbi_p1)
 	  	,.dfi_0_dw_rddata_par_p1       (dfi_0_dw_rddata_par_p1)
-	  	,.dfi_0_dbi_byte_disable       ( *//* Not Connected *//*  )
+//		,.dfi_0_dbi_byte_disable       ( *//* Not Connected *//*  )
 	  	,.dfi_0_dw_rddata_valid        (w_dfi_0_dw_rddata_valid)
-	  	,.dfi_0_dw_derr_n              ( *//* Not Connected *//*  )
-	  	,.dfi_0_aw_aerr_n              ( *//* Not Connected *//*  )
+//		,.dfi_0_dw_derr_n              ( *//* Not Connected *//*  )
+//		,.dfi_0_aw_aerr_n              ( *//* Not Connected *//*  )
 	  	,.dfi_0_ctrlupd_req            (dfi_0_ctrlupd_req)
 	  	,.dfi_0_phyupd_ack             (dfi_0_phyupd_ack )
-	  	,.dfi_0_clk_init               ( *//* Not Connected *//*  )
+//		,.dfi_0_clk_init               ( *//* Not Connected *//*  )
 	  	,.dfi_0_init_complete          (w_dfi_0_init_complete)
 	  	,.dfi_0_out_rst_n              (w_dfi_0_out_rst_n    )
 
@@ -2050,13 +2052,13 @@ module controller_top (
 	  	,.dfi_1_dw_rddata_dm_p1        (dfi_1_dw_rddata_dm_p1 )
 	  	,.dfi_1_dw_rddata_dbi_p1       (dfi_1_dw_rddata_dbi_p1)
 	  	,.dfi_1_dw_rddata_par_p1       (dfi_1_dw_rddata_par_p1)
-	  	,.dfi_1_dbi_byte_disable       ( *//* Not Connected *//*  )
+//		,.dfi_1_dbi_byte_disable       ( *//* Not Connected *//*  )
 	  	,.dfi_1_dw_rddata_valid        (w_dfi_1_dw_rddata_valid)
-	  	,.dfi_1_dw_derr_n              ( *//* Not Connected *//*  )
-	  	,.dfi_1_aw_aerr_n              ( *//* Not Connected *//*  )
+//		,.dfi_1_dw_derr_n              ( *//* Not Connected *//*  )
+//		,.dfi_1_aw_aerr_n              ( *//* Not Connected *//*  )
 	  	,.dfi_1_ctrlupd_req            (dfi_1_ctrlupd_req)
 	  	,.dfi_1_phyupd_ack             (dfi_1_phyupd_ack )
-	  	,.dfi_1_clk_init               ( *//* Not Connected *//*  )
+//		,.dfi_1_clk_init               ( *//* Not Connected *//*  )
 	  	,.dfi_1_init_complete          (w_dfi_1_init_complete)
 	  	,.dfi_1_out_rst_n              (w_dfi_1_out_rst_n    )
 	  	
@@ -2103,13 +2105,13 @@ module controller_top (
 	  	,.dfi_2_dw_rddata_dm_p1        (dfi_2_dw_rddata_dm_p1 )
 	  	,.dfi_2_dw_rddata_dbi_p1       (dfi_2_dw_rddata_dbi_p1)
 	  	,.dfi_2_dw_rddata_par_p1       (dfi_2_dw_rddata_par_p1)
-	  	,.dfi_2_dbi_byte_disable       ( *//* Not Connected *//*  )
+//		,.dfi_2_dbi_byte_disable       ( *//* Not Connected *//*  )
 	  	,.dfi_2_dw_rddata_valid        (w_dfi_2_dw_rddata_valid)
-	  	,.dfi_2_dw_derr_n              ( *//* Not Connected *//*  )
-	  	,.dfi_2_aw_aerr_n              ( *//* Not Connected *//*  )
+//		,.dfi_2_dw_derr_n              ( *//* Not Connected *//*  )
+//		,.dfi_2_aw_aerr_n              ( *//* Not Connected *//*  )
 	  	,.dfi_2_ctrlupd_req            (dfi_2_ctrlupd_req)
 	  	,.dfi_2_phyupd_ack             (dfi_2_phyupd_ack )
-	  	,.dfi_2_clk_init               ( *//* Not Connected *//*  )
+//		,.dfi_2_clk_init               ( *//* Not Connected *//*  )
 	  	,.dfi_2_init_complete          (w_dfi_2_init_complete)
 	  	,.dfi_2_out_rst_n              (w_dfi_2_out_rst_n    )
 	  	
@@ -2156,13 +2158,13 @@ module controller_top (
 	  	,.dfi_3_dw_rddata_dm_p1        (dfi_3_dw_rddata_dm_p1 )
 	  	,.dfi_3_dw_rddata_dbi_p1       (dfi_3_dw_rddata_dbi_p1)
 	  	,.dfi_3_dw_rddata_par_p1       (dfi_3_dw_rddata_par_p1)
-	  	,.dfi_3_dbi_byte_disable       ( *//* Not Connected *//*  )
+//		,.dfi_3_dbi_byte_disable       ( *//* Not Connected *//*  )
 	  	,.dfi_3_dw_rddata_valid        (w_dfi_3_dw_rddata_valid)
-	  	,.dfi_3_dw_derr_n              ( *//* Not Connected *//*  )
-	  	,.dfi_3_aw_aerr_n              ( *//* Not Connected *//*  )
+//		,.dfi_3_dw_derr_n              ( *//* Not Connected *//*  )
+//		,.dfi_3_aw_aerr_n              ( *//* Not Connected *//*  )
 	  	,.dfi_3_ctrlupd_req            (dfi_3_ctrlupd_req)
 	  	,.dfi_3_phyupd_ack             (dfi_3_phyupd_ack )
-	  	,.dfi_3_clk_init               ( *//* Not Connected *//*  )
+//		,.dfi_3_clk_init               ( *//* Not Connected *//*  )
 	  	,.dfi_3_init_complete          (w_dfi_3_init_complete)
 	  	,.dfi_3_out_rst_n              (w_dfi_3_out_rst_n    )
 	  	
@@ -2209,13 +2211,13 @@ module controller_top (
 	  	,.dfi_4_dw_rddata_dm_p1        (dfi_4_dw_rddata_dm_p1 )
 	  	,.dfi_4_dw_rddata_dbi_p1       (dfi_4_dw_rddata_dbi_p1)
 	  	,.dfi_4_dw_rddata_par_p1       (dfi_4_dw_rddata_par_p1)
-	  	,.dfi_4_dbi_byte_disable       ( *//* Not Connected *//*  )
+//		,.dfi_4_dbi_byte_disable       ( *//* Not Connected *//*  )
 	  	,.dfi_4_dw_rddata_valid        (w_dfi_4_dw_rddata_valid)
-	  	,.dfi_4_dw_derr_n              ( *//* Not Connected *//*  )
-	  	,.dfi_4_aw_aerr_n              ( *//* Not Connected *//*  )
+//		,.dfi_4_dw_derr_n              ( *//* Not Connected *//*  )
+//		,.dfi_4_aw_aerr_n              ( *//* Not Connected *//*  )
 	  	,.dfi_4_ctrlupd_req            (dfi_4_ctrlupd_req)
 	  	,.dfi_4_phyupd_ack             (dfi_4_phyupd_ack )
-	  	,.dfi_4_clk_init               ( *//* Not Connected *//*  )
+//		,.dfi_4_clk_init               ( *//* Not Connected *//*  )
 	  	,.dfi_4_init_complete          (w_dfi_4_init_complete)
 	  	,.dfi_4_out_rst_n              (w_dfi_4_out_rst_n    )
 	  	
@@ -2262,13 +2264,13 @@ module controller_top (
 	  	,.dfi_5_dw_rddata_dm_p1        (dfi_5_dw_rddata_dm_p1 )
 	  	,.dfi_5_dw_rddata_dbi_p1       (dfi_5_dw_rddata_dbi_p1)
 	  	,.dfi_5_dw_rddata_par_p1       (dfi_5_dw_rddata_par_p1)
-	  	,.dfi_5_dbi_byte_disable       ( *//* Not Connected *//*  )
+//		,.dfi_5_dbi_byte_disable       ( *//* Not Connected *//*  )
 	  	,.dfi_5_dw_rddata_valid        (w_dfi_5_dw_rddata_valid)
-	  	,.dfi_5_dw_derr_n              ( *//* Not Connected *//*  )
-	  	,.dfi_5_aw_aerr_n              ( *//* Not Connected *//*  )
+//		,.dfi_5_dw_derr_n              ( *//* Not Connected *//*  )
+//		,.dfi_5_aw_aerr_n              ( *//* Not Connected *//*  )
 	  	,.dfi_5_ctrlupd_req            (dfi_5_ctrlupd_req)
 	  	,.dfi_5_phyupd_ack             (dfi_5_phyupd_ack )
-	  	,.dfi_5_clk_init               ( *//* Not Connected *//*  )
+//		,.dfi_5_clk_init               ( *//* Not Connected *//*  )
 	  	,.dfi_5_init_complete          (w_dfi_5_init_complete)
 	  	,.dfi_5_out_rst_n              (w_dfi_5_out_rst_n    )
 	  	
@@ -2315,13 +2317,13 @@ module controller_top (
 	  	,.dfi_6_dw_rddata_dm_p1        (dfi_6_dw_rddata_dm_p1 )
 	  	,.dfi_6_dw_rddata_dbi_p1       (dfi_6_dw_rddata_dbi_p1)
 	  	,.dfi_6_dw_rddata_par_p1       (dfi_6_dw_rddata_par_p1)
-	  	,.dfi_6_dbi_byte_disable       ( *//* Not Connected *//*  )
+//		,.dfi_6_dbi_byte_disable       ( *//* Not Connected *//*  )
 	  	,.dfi_6_dw_rddata_valid        (w_dfi_6_dw_rddata_valid)
-	  	,.dfi_6_dw_derr_n              ( *//* Not Connected *//*  )
-	  	,.dfi_6_aw_aerr_n              ( *//* Not Connected *//*  )
+//		,.dfi_6_dw_derr_n              ( *//* Not Connected *//*  )
+//		,.dfi_6_aw_aerr_n              ( *//* Not Connected *//*  )
 	  	,.dfi_6_ctrlupd_req            (dfi_6_ctrlupd_req)
 	  	,.dfi_6_phyupd_ack             (dfi_6_phyupd_ack )
-	  	,.dfi_6_clk_init               ( *//* Not Connected *//*  )
+//		,.dfi_6_clk_init               ( *//* Not Connected *//*  )
 	  	,.dfi_6_init_complete          (w_dfi_6_init_complete)
 	  	,.dfi_6_out_rst_n              (w_dfi_6_out_rst_n    )
 	  	
@@ -2368,15 +2370,15 @@ module controller_top (
 	  	,.dfi_7_dw_rddata_dm_p1        (dfi_7_dw_rddata_dm_p1 )
 	  	,.dfi_7_dw_rddata_dbi_p1       (dfi_7_dw_rddata_dbi_p1)
 	  	,.dfi_7_dw_rddata_par_p1       (dfi_7_dw_rddata_par_p1)
-	  	,.dfi_7_dbi_byte_disable       ( *//* Not Connected *//*  )
+//		,.dfi_7_dbi_byte_disable       ( *//* Not Connected *//*  )
 	  	,.dfi_7_dw_rddata_valid        (w_dfi_7_dw_rddata_valid)
-	  	,.dfi_7_dw_derr_n              ( *//* Not Connected *//*  )
-	  	,.dfi_7_aw_aerr_n              ( *//* Not Connected *//*  )
+//		,.dfi_7_dw_derr_n              ( *//* Not Connected *//*  )
+//		,.dfi_7_aw_aerr_n              ( *//* Not Connected *//*  )
 	  	,.dfi_7_ctrlupd_req            (dfi_7_ctrlupd_req)
 	  	,.dfi_7_phyupd_ack             (dfi_7_phyupd_ack )
-	  	,.dfi_7_clk_init               ( *//* Not Connected *//*  )
+//		,.dfi_7_clk_init               ( *//* Not Connected *//*  )
 	  	,.dfi_7_init_complete          (w_dfi_7_init_complete)
-	  	,.dfi_7_out_rst_n              (w_dfi_7_out_rst_n    )*/
+		,.dfi_7_out_rst_n              (w_dfi_7_out_rst_n    )
 	  	
 
 	  	,.dfi_8_clk                    (dfi_clk)
