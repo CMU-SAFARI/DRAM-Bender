@@ -110,20 +110,26 @@ matching headers and rebuild the driver.
 
 ### Obtain a bitstream
 
-Prebuilt bitstreams will be distributed separately from the source tree:
+Prebuilt bitstreams live in a separate repository,
+[CMU-SAFARI/dram-bender-bitstreams](https://github.com/CMU-SAFARI/dram-bender-bitstreams),
+included here as the `hw/prebuilt` submodule. Fetch them with:
 
-- [Alveo U200 bitstreams](TODO-U200-BITSTREAM-URL)
-- [Alveo U50 bitstreams](TODO-U50-BITSTREAM-URL)
-- [Alveo U55C bitstreams](TODO-U55C-BITSTREAM-URL)
+```bash
+git submodule update --init hw/prebuilt
+```
 
-> **TODO before public release:** Replace the links above with the public
-> release locations. Each release should list the supported memory
-> configuration, Vivado version, and SHA-256 checksum for every `.bit` and
-> `.ltx` file.
+The submodule provides one directory per supported board:
 
-Place downloaded files under the matching directory in `hw/prebuilt/`. For a
-U200 host with one JTAG target, the programming helper expects a bitstream and
-an optional probes file with the same base name:
+- `hw/prebuilt/XCU200/` — Alveo U200 (DDR4)
+- `hw/prebuilt/XCU50/` — Alveo U50 (HBM2)
+- `hw/prebuilt/XCU55/` — Alveo U55C (HBM2)
+
+See the bitstreams repository for the supported memory configuration, the
+Vivado version, and the checksum of each `.bit` and `.ltx` file.
+
+The bitstreams are now in place under `hw/prebuilt/`. For a U200 host with one
+JTAG target, the programming helper expects a bitstream and an optional probes
+file with the same base name:
 
 ```bash
 export VIVADO_EXEC=/path/to/vivado_or_vivado_lab
