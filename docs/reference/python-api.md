@@ -11,7 +11,12 @@ feature set.
 | Object | Board | Key fields |
 |---|---|---|
 | `drambender.api.DDR4Target` | U200 | `cachelines_per_row`, `column_stride`, `words_per_cacheline`, `rank` |
-| `drambender.api.HBM2Target` | U50, U55C | `channel`, `pseudo_channel`, `sid`, `columns_per_row`, `column_stride`, `words_per_cacheline` |
+| `drambender.api.HBM2U50Target` | U50 | `channel`, `pseudo_channel`, `sid` (1 SID, no broadcast) |
+| `drambender.api.HBM2U55Target` | U55C | `channel`, `pseudo_channel`, `sid` (2 SIDs, broadcast) |
+
+`HBM2Target` is the abstract base of the two HBM2 targets (useful for
+`isinstance` checks); it cannot be instantiated. The HBM2 targets default to
+`columns_per_row=32`, `column_stride=1`, and `words_per_cacheline=16`.
 
 The `channel`, `pseudo_channel`, and `sid` fields select locations within
 HBM2. They are unrelated to `xdma_channel`, which selects a host DMA endpoint.

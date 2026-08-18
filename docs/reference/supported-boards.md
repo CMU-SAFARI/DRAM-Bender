@@ -5,8 +5,8 @@ The following boards are officially supported and maintained:
 | Board | Memory | Python program target | Vivado | Project |
 |---|---|---|---|---|
 | AMD/Xilinx Alveo U200 | External DDR4 UDIMM or RDIMM | `DDR4Target` | 2024.2 | [`hw/projects/U200`](../../hw/projects/U200) |
-| AMD/Xilinx Alveo U50 | On-board HBM2 | `HBM2Target` | 2024.2 | [`hw/projects/U50-HBM`](../../hw/projects/U50-HBM) |
-| AMD/Xilinx Alveo U55C | On-board HBM2 | `HBM2Target` | 2024.2 | [`hw/projects/U55-HBM`](../../hw/projects/U55-HBM) |
+| AMD/Xilinx Alveo U50 | On-board HBM2 | `HBM2U50Target` | 2024.2 | [`hw/projects/U50-HBM`](../../hw/projects/U50-HBM) |
+| AMD/Xilinx Alveo U55C | On-board HBM2 | `HBM2U55Target` | 2024.2 | [`hw/projects/U55-HBM`](../../hw/projects/U55-HBM) |
 
 C++ applications use `DRAMBender::DDR4` for U200 and `DRAMBender::HBM2` for
 U50/U55C.

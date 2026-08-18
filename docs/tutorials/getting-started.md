@@ -153,13 +153,27 @@ differs, edit the target constants near the top of the example before running
 it.
 
 The Python program-building interface is shared by DDR4 and HBM2. The same
-`write_row` and `read_row` templates accept either `DDR4Target` or
-`HBM2Target`. An HBM2 target carries channel, pseudo-channel, and stack
-selections; set them to match the bitstream and experiment. Its raw readback
-layout differs from DDR4.
+`write_row` and `read_row` templates accept either a `DDR4Target` or an HBM2
+target (`HBM2U50Target`, `HBM2U55Target`). An HBM2 target carries channel,
+pseudo-channel, and stack (SID) selections; set them to match the bitstream
+and experiment. Its raw readback layout differs from DDR4.
 
-> **TODO before public release:** Add a release-facing
-> [U50/U55C HBM2 read/write example](TODO-HBM2-READ-WRITE-EXAMPLE-URL).
+For U50/U55C, run the HBM2 counterpart
+[`examples/read_write_hbm2.py`](../../examples/read_write_hbm2.py):
+
+```bash
+python examples/read_write_hbm2.py \
+    --pci-bdf 0000:01:00.0 \
+    --board u55c \
+    --channel 0 \
+    --pseudo-channel 0 \
+    --sid 0 \
+    --pattern 0xDEADBEEF
+```
+
+It writes and reads one row at the selected HBM2 location. Each 64-byte
+column readback carries both pseudo-channels, so the example verifies the
+32-byte half belonging to the selected pseudo-channel.
 
 ## Next steps
 

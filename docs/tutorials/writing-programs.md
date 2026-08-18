@@ -12,12 +12,13 @@ you do not have one, start with [Getting started](getting-started.md).
 
 ## Describe the memory target
 
-Use `DDR4Target` for U200 and `HBM2Target` for U50/U55C. Target objects carry
-the geometry and address-selection information used by target-aware program
-templates.
+Use `DDR4Target` for U200, `HBM2U50Target` for U50, and `HBM2U55Target` for
+U55C. (`HBM2Target` is their abstract base; it cannot be instantiated
+directly.) Target objects carry the geometry and address-selection
+information used by target-aware program templates.
 
 ```python
-from drambender.api import DDR4Target, HBM2Target
+from drambender.api import DDR4Target, HBM2U55Target
 
 ddr4_target = DDR4Target(
     cachelines_per_row=128,
@@ -26,15 +27,15 @@ ddr4_target = DDR4Target(
     rank=0,
 )
 
-hbm2_target = HBM2Target(
+hbm2_target = HBM2U55Target(
     channel=0,
     pseudo_channel=0,
     sid=0,
-    columns_per_row=32,
-    column_stride=1,
-    words_per_cacheline=16,
 )
 ```
+
+The HBM2 targets default to `columns_per_row=32`, `column_stride=1`, and
+`words_per_cacheline=16`; override them only when the bitstream differs.
 
 `xdma_channel` selects a host DMA endpoint. The `channel`, `pseudo_channel`,
 and `sid` fields in `HBM2Target` select locations within HBM2. They are
