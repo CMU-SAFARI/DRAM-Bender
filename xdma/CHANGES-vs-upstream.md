@@ -4,7 +4,9 @@ This driver is a modified fork of the Xilinx XDMA driver from `dma_ip_drivers`.
 This file lists the changes to the driver module sources.
 
 DRAM Bender requires this fork.
-The metadata-v1 readback path depends on the credit-based read path below.
+The metadata-v1 readback path (DRAM Bender's readback framing protocol; see
+[docs/explanation/readback-protocol.md](../docs/explanation/readback-protocol.md))
+depends on the credit-based read path below.
 The stock Xilinx driver does not contain that path.
 
 ## Baseline

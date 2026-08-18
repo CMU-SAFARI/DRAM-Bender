@@ -3,8 +3,10 @@
 This directory contains a **modified fork** of the Xilinx XDMA driver from
 `dma_ip_drivers`, branch `2020.2`. This is not the stock Xilinx driver.
 
-DRAM Bender requires this fork. The metadata-v1 readback path depends on a
-credit-based read path that the stock driver does not contain. See
+DRAM Bender requires this fork. The metadata-v1 readback path (DRAM Bender's
+readback framing protocol; see
+[docs/explanation/readback-protocol.md](../docs/explanation/readback-protocol.md))
+depends on a credit-based read path that the stock driver does not contain. See
 [CHANGES-vs-upstream.md](CHANGES-vs-upstream.md) for the full list of changes.
 
 The kernel module is named `drambender_xdma`, not `xdma`.
@@ -30,7 +32,7 @@ The compatibility layer centralizes kernel API differences such as:
 - `get_user_pages_fast()` flags
 - `access_ok()`
 - selected RHEL/backport-aware compatibility macros already present in the
-  imported V2 driver
+  imported upstream driver sources
 
 ## Prerequisites
 
