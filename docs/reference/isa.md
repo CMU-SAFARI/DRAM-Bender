@@ -61,12 +61,26 @@ The user-facing DRAM mini-operations include:
 
 ## Timing model
 
-Four mini-operation slots make command placement explicit. The default Python
-timing model uses a 1.5 ns DRAM slot and four slots per fabric cycle. Pass a
-different timing configuration to the VM when inspecting an image with a
-different clock. Most scalar instructions consume one fabric cycle, while a
-branch resolves in six fabric cycles. Include these cycles when calculating
-command spacing.
+Four mini-operation slots make command placement explicit. The duration of one
+DRAM command slot depends on the board design:
+
+| Board | DRAM command clock | Slot duration |
+|---|---|---|
+| Alveo U200 | 666.67 MHz | 1.5 ns |
+| Alveo U50 | 600 MHz | 1.67 ns (5/3 ns) |
+| Alveo U55C | 600 MHz | 1.67 ns (5/3 ns) |
+
+The software VM defaults to the U200 timing: a 1.5 ns DRAM slot and four slots
+per fabric cycle. It does not switch with the program's target. When
+inspecting a U50/U55C program, pass the slot duration explicitly:
+
+```python
+result = program.dry_run(max_instructions=1_000_000, dram_inst_latency=5 / 3)
+trace = program.trace_dram_commands(dram_inst_latency=5 / 3)
+```
+
+Most scalar instructions consume one fabric cycle, while a branch resolves in
+six fabric cycles. Include these cycles when calculating command spacing.
 
 The programmer is responsible for meeting, measuring, or deliberately
 violating the relevant DRAM timing constraints. The FPGA does not turn an
