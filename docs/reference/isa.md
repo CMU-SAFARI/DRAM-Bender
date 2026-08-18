@@ -6,7 +6,14 @@ pipeline executes these instructions, see
 
 ## Program size limit
 
-The software accepts programs containing at most 2,048 submitted instructions.
+The maximum number of submitted instructions per program depends on the board:
+
+| Board | Instruction capacity |
+|---|---|
+| Alveo U200 | 32,768 (32 K) |
+| Alveo U50 | 32,768 (32 K) |
+| Alveo U55C | 131,072 (128 K) |
+
 Long-running experiments normally use loops rather than unrolling every DRAM
 command on the host.
 
