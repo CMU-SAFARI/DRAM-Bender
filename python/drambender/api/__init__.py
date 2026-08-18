@@ -26,6 +26,9 @@ from .board import (
     HBM2U55C,
     HBMTemperature,
     HostInterface,
+    PowerTelemetry,
+    RailTelemetry,
+    SensorStat,
     open_board,
 )
 from .execution import (
@@ -67,8 +70,11 @@ __all__ = [
     "HBMTemperature",
     "HostInterface",
     "PCType",
+    "PowerTelemetry",
     "Program",
     "ProgramBuilder",
+    "RailTelemetry",
+    "SensorStat",
     "TimingStat",
     "TimingSummary",
     "open_board",

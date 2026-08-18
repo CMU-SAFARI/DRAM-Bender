@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "cms_monitor.h"
 #include "h2c_protocol.h"
 
 namespace DRAMBender {
@@ -37,9 +38,14 @@ constexpr HBM2Capabilities k_u55c_capabilities{
 };
 }  // namespace
 
-HBM2::HBM2(std::unique_ptr<IHostInterface> host_interface, HBM2Capabilities capabilities)
+HBM2::HBM2(std::unique_ptr<IHostInterface> host_interface,
+           HBM2Capabilities capabilities,
+           std::unique_ptr<CmsMonitor> monitor)
     : IBoard(std::move(host_interface), capabilities.instruction_capacity),
-      capabilities_(capabilities) {}
+      capabilities_(capabilities),
+      monitor_(std::move(monitor)) {}
+
+HBM2::~HBM2() = default;
 
 HBM2U50::HBM2U50(std::string pci_bdf, int xdma_channel, HostInterface host_interface)
     : HBM2U50(create_host_interface(host_interface, std::move(pci_bdf), xdma_channel)) {}
@@ -48,10 +54,26 @@ HBM2U50::HBM2U50(std::unique_ptr<IHostInterface> host_interface)
     : HBM2(std::move(host_interface), k_u50_capabilities) {}
 
 HBM2U55C::HBM2U55C(std::string pci_bdf, int xdma_channel, HostInterface host_interface)
-    : HBM2U55C(create_host_interface(host_interface, std::move(pci_bdf), xdma_channel)) {}
+    // U55C supports power telemetry, so build a CMS monitor from the PCI BDF.
+    // pci_bdf is copied (not moved) so both the host interface and the monitor
+    // get it.
+    : HBM2(create_host_interface(host_interface, pci_bdf, xdma_channel),
+           k_u55c_capabilities,
+           std::make_unique<CmsMonitor>(pci_bdf, xdma_channel)) {}
 
 HBM2U55C::HBM2U55C(std::unique_ptr<IHostInterface> host_interface)
     : HBM2(std::move(host_interface), k_u55c_capabilities) {}
+
+PowerTelemetry HBM2::read_power_telemetry() {
+  if (!capabilities_.power_supported) {
+    throw std::runtime_error("This HBM2 board does not support power telemetry.");
+  }
+  if (!monitor_) {
+    throw std::runtime_error(
+        "Power telemetry requires a board opened through an XDMA endpoint.");
+  }
+  return monitor_->read();
+}
 
 HBMTemperature HBM2::read_temperature() {
   synchronize();

@@ -988,6 +988,29 @@ NB_MODULE(_core, m) {
       .def_rw("stack0_celsius", &HBMTemperature::stack0_celsius)
       .def_rw("stack1_celsius", &HBMTemperature::stack1_celsius);
 
+  nb::class_<SensorStat>(
+      m, "SensorStat", "Instantaneous, maximum, and average value of one sensor.")
+      .def_rw("instant", &SensorStat::instant)
+      .def_rw("max", &SensorStat::max)
+      .def_rw("average", &SensorStat::average);
+
+  nb::class_<RailTelemetry>(
+      m, "RailTelemetry", "Voltage (mV), current (mA), and derived power (mW) for one rail.")
+      .def_rw("voltage_mv", &RailTelemetry::voltage_mv)
+      .def_rw("current_ma", &RailTelemetry::current_ma)
+      .def_prop_ro("power_mw", &RailTelemetry::power_mw);
+
+  nb::class_<PowerTelemetry>(
+      m, "PowerTelemetry", "Card power and thermal telemetry (U55C only).")
+      .def_rw("pex_12v", &PowerTelemetry::pex_12v)
+      .def_rw("pex_3v3", &PowerTelemetry::pex_3v3)
+      .def_rw("vccint", &PowerTelemetry::vccint)
+      .def_rw("vccint_io", &PowerTelemetry::vccint_io)
+      .def_rw("hbm", &PowerTelemetry::hbm)
+      .def_rw("hbm_temp0_celsius", &PowerTelemetry::hbm_temp0_celsius)
+      .def_rw("hbm_temp1_celsius", &PowerTelemetry::hbm_temp1_celsius)
+      .def_prop_ro("total_input_power_mw", &PowerTelemetry::total_input_power_mw);
+
   nb::class_<Program>(m, "Program")
       .def(nb::init<>())
       .def("add_mininst", &Program::add_mininst, nb::rv_policy::reference_internal)
@@ -1264,8 +1287,15 @@ NB_MODULE(_core, m) {
            },
            nb::arg("channels"),
            "Configure the command broadcast channel mask (U55C only).")
+      .def("read_power_telemetry",
+           [](HBM2& board) {
+             nb::gil_scoped_release release;
+             return board.read_power_telemetry();
+           },
+           "Read card power and thermal telemetry from the CMS (U55C only).")
       .def_prop_ro("num_sids", &HBM2::num_sids)
-      .def_prop_ro("broadcast_supported", &HBM2::broadcast_supported);
+      .def_prop_ro("broadcast_supported", &HBM2::broadcast_supported)
+      .def_prop_ro("power_supported", &HBM2::power_supported);
 
   nb::class_<HBM2U50, HBM2>(
       m,

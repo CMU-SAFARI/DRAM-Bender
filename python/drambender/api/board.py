@@ -9,6 +9,9 @@ from .._core import (
     HBM2U55C,
     HBMTemperature,
     HostInterface,
+    PowerTelemetry,
+    RailTelemetry,
+    SensorStat,
     open_board as _native_open_board,
 )
 from .program.targets import DDR4Target, HBM2Target, HBM2U50Target, HBM2U55Target
@@ -56,5 +59,8 @@ __all__ = [
     "HBM2U55C",
     "HBMTemperature",
     "HostInterface",
+    "PowerTelemetry",
+    "RailTelemetry",
+    "SensorStat",
     "open_board",
 ]

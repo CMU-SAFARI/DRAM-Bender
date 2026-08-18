@@ -264,6 +264,33 @@ class DDR4(Board):
 
     def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 
+class SensorStat:
+    """Instantaneous, maximum, and average value of one sensor."""
+    instant: int
+    max: int
+    average: int
+
+class RailTelemetry:
+    """Voltage (mV), current (mA), and derived power (mW) for one rail."""
+    voltage_mv: SensorStat
+    current_ma: SensorStat
+
+    @property
+    def power_mw(self) -> SensorStat: ...
+
+class PowerTelemetry:
+    """Card power and thermal telemetry (U55C only)."""
+    pex_12v: RailTelemetry
+    pex_3v3: RailTelemetry
+    vccint: RailTelemetry
+    vccint_io: RailTelemetry
+    hbm: RailTelemetry
+    hbm_temp0_celsius: SensorStat
+    hbm_temp1_celsius: SensorStat
+
+    @property
+    def total_input_power_mw(self) -> SensorStat: ...
+
 class HBM2(Board):
     """Shared base for HBM2 boards. Construct HBM2U50 or HBM2U55C."""
 
@@ -279,11 +306,18 @@ class HBM2(Board):
         """Configure the command broadcast channel mask (U55C only)."""
         ...
 
+    def read_power_telemetry(self) -> PowerTelemetry:
+        """Read card power and thermal telemetry from the CMS (U55C only)."""
+        ...
+
     @property
     def num_sids(self) -> int: ...
 
     @property
     def broadcast_supported(self) -> bool: ...
+
+    @property
+    def power_supported(self) -> bool: ...
 
 class HBM2U50(HBM2):
     """Alveo U50 HBM2 board: 1 SID, no broadcast, 32 K instructions."""

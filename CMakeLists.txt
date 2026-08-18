@@ -33,6 +33,7 @@ add_library(DRAMBender
   src/api/board/DDR4.cpp
   src/api/board/HBM2.cpp
   src/api/board/board.cpp
+  src/api/board/cms_monitor.cpp
   src/api/program/instruction.cpp
   src/api/program/program.cpp
   src/utils/utils.cpp
@@ -181,6 +182,15 @@ if (BUILD_TESTING)
   )
   target_link_libraries(drambender_xdma_device_resolver_test PRIVATE DRAMBender)
   add_test(NAME drambender_xdma_device_resolver_test COMMAND drambender_xdma_device_resolver_test)
+
+  add_executable(drambender_cms_telemetry_test
+    tests/cms_telemetry_test.cpp
+  )
+  target_include_directories(drambender_cms_telemetry_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(drambender_cms_telemetry_test PRIVATE DRAMBender)
+  add_test(NAME drambender_cms_telemetry_test COMMAND drambender_cms_telemetry_test)
 
   if (DRAMBENDER_BUILD_BOARD_TESTS)
     add_executable(drambender_rw_test
