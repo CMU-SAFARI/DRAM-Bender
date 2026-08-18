@@ -93,6 +93,40 @@ class HBM2Target:
         _validate_int_field(self.column_stride, name=f"{name}.column_stride", minimum=1)
         _validate_int_field(self.words_per_cacheline, name=f"{name}.words_per_cacheline", minimum=1)
 
+    @property
+    def rank(self) -> int:
+        return self.pseudo_channel
+
+    @property
+    def cachelines_per_row(self) -> int:
+        return self.columns_per_row
+
+    @property
+    def receive_bytes_per_row(self) -> int:
+        return self.columns_per_row * 64
+
+    def physical_bank(self, bank):
+        """Return BAR bank value with SID encoded in BAR[4].
+
+        Logical banks remain 0..15 and the stack ID is encoded as
+        bank + 16 * sid. Single-SID boards (U50) always have sid == 0, so the
+        bank passes through unchanged. Symbolic JIT banks are kept as a narrow
+        affine scalar expression for native template rendering.
+        """
+        sid = _coerce_int(self.sid, name="HBM2Target.sid")
+        offset = 16 * sid
+        if isinstance(bank, ScalarSentinel):
+            return ScalarAffineRef(bank.name, offset=offset)
+        if isinstance(bank, ScalarParamRef):
+            return ScalarAffineRef(bank.name, offset=offset)
+        if isinstance(bank, ScalarAffineRef):
+            return ScalarAffineRef(
+                bank.name,
+                multiplier=bank.multiplier,
+                offset=bank.offset + offset,
+            )
+        return _coerce_int(bank, name="HBM2Target bank") + offset
+
 
 @dataclass(frozen=True)
 class HBM2U50Target(HBM2Target):
@@ -110,39 +144,6 @@ class HBM2U55Target(HBM2Target):
     num_sids: ClassVar[int] = 2
     broadcast_supported: ClassVar[bool] = True
     instruction_capacity: ClassVar[int] = 131072
-
-    @property
-    def rank(self) -> int:
-        return self.pseudo_channel
-
-    @property
-    def cachelines_per_row(self) -> int:
-        return self.columns_per_row
-
-    @property
-    def receive_bytes_per_row(self) -> int:
-        return self.columns_per_row * 64
-
-    def physical_bank(self, bank):
-        """Return BAR bank value with SID encoded in BAR[4].
-
-        For the latest U55 SID bitstream, logical banks remain 0..15 and the
-        stack ID is encoded as bank + 16 * sid. Symbolic JIT banks are kept as
-        a narrow affine scalar expression for native template rendering.
-        """
-        sid = _coerce_int(self.sid, name="HBM2Target.sid")
-        offset = 16 * sid
-        if isinstance(bank, ScalarSentinel):
-            return ScalarAffineRef(bank.name, offset=offset)
-        if isinstance(bank, ScalarParamRef):
-            return ScalarAffineRef(bank.name, offset=offset)
-        if isinstance(bank, ScalarAffineRef):
-            return ScalarAffineRef(
-                bank.name,
-                multiplier=bank.multiplier,
-                offset=bank.offset + offset,
-            )
-        return _coerce_int(bank, name="HBM2Target bank") + offset
 
 
 def normalize_target(target: Any | None):
