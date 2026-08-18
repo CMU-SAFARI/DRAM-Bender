@@ -1,7 +1,7 @@
 # Vivado Project Skeletons
 
 Each board directory keeps only the source-like files needed to reconstruct or
-open the DRAM-BenderV2 Vivado project:
+open the DRAM Bender Vivado project:
 
 - the top-level `.xpr`
 - board constraints

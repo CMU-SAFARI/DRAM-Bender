@@ -23,13 +23,13 @@ migrate cleanly across versions:
 
 | Board | Project | Vivado |
 |---|---|---|
-| Alveo U200 | `hw/projects/U200` | 2020.2 |
-| Alveo U50 | `hw/projects/U50-HBM` | 2020.2 |
+| Alveo U200 | `hw/projects/U200` | 2024.2 |
+| Alveo U50 | `hw/projects/U50-HBM` | 2024.2 |
 | Alveo U55C | `hw/projects/U55-HBM` | 2024.2 |
 
-The metadata for every released bitstream — memory configuration, Vivado
-version, and file checksums — is documented in the
-[bitstreams repository](https://github.com/CMU-SAFARI/dram-bender-bitstreams).
+The test status of every released bitstream is documented in the
+[bitstreams repository](https://github.com/CMU-SAFARI/dram-bender-bitstreams);
+the memory configuration is encoded in each bitstream's file name.
 
 ## Build with the Vivado GUI
 

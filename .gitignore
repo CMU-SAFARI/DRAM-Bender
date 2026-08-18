@@ -40,15 +40,6 @@ hw/**/*.cache/
 hw/**/*.sim/
 hw/**/*.gen/
 hw/**/ip_user_files/
-hw/prebuilt/*
-!hw/prebuilt/README.md
-!hw/prebuilt/XCU200/
-!hw/prebuilt/XCU200/XCU200_C1_UDIMM_1R_x8.bit
-!hw/prebuilt/XCU200/XCU200_C1_UDIMM_1R_x8.ltx
-!hw/prebuilt/XCU200/XCU200_C1_UDIMM_2R_x8.bit
-!hw/prebuilt/XCU200/XCU200_C1_UDIMM_2R_x8.ltx
-!hw/prebuilt/XCU200/XCU200_C1_RDIMM_1R_x4.bit
-!hw/prebuilt/XCU200/XCU200_C1_RDIMM_1R_x4.ltx
 
 # XDMA is vendored as source. Local kernel/tool builds stay untracked.
 xdma/xdma/*.ko

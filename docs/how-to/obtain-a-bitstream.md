@@ -14,8 +14,9 @@ The submodule provides one directory per supported board:
 - `hw/prebuilt/XCU50/` — Alveo U50 (HBM2)
 - `hw/prebuilt/XCU55/` — Alveo U55C (HBM2)
 
-See the bitstreams repository for the supported memory configuration, the
-Vivado version, and the checksum of each `.bit` and `.ltx` file.
+The memory configuration is encoded in each bitstream's file name (for
+example, `XCU200_C1_UDIMM_ANYRANK_x8.bit`). The bitstreams repository
+documents the test status of each released file.
 
 To build a bitstream yourself instead, see
 [Build an FPGA bitstream](build-a-bitstream.md).

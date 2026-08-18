@@ -98,7 +98,7 @@ The documentation under [`docs/`](docs/README.md) follows the
 │   ├── projects/             # Board-specific Vivado projects
 │   ├── scripts/              # FPGA programming and generation scripts
 │   ├── sim/                  # RTL simulation sources
-│   └── prebuilt/             # Released bitstreams and debug probe files
+│   └── prebuilt/             # Released bitstreams (git submodule)
 ├── include/drambender/       # Public C++ headers
 ├── python/drambender/        # Python package
 ├── src/                      # C++ implementation and Python bindings
