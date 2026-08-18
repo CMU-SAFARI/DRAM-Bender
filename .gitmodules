@@ -1,3 +1,3 @@
 [submodule "hw/prebuilt"]
 	path = hw/prebuilt
-	url = https://github.com/CMU-SAFARI/dram-bender-bitstreams.git
+	url = https://github.com/CMU-SAFARI/dram-bender-prebuilt-bitstreams.git
