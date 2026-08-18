@@ -23,10 +23,6 @@ old_python/
 .claude/settings.local.json
 CLAUDE.md
 
-docs/*
-!docs/u200_host_setup.md
-!docs/u200_fpga_acceptance.md
-
 # Hardware/Vivado generated output. Keep source skeletons under hw/, but do
 # not let local Vivado runs or bitstreams enter the main repository.
 hw/**/.Xil/

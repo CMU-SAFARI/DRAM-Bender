@@ -1,0 +1,80 @@
+# Python API Reference
+
+A compact map of the public Python surface. The
+[program-writing tutorial](../tutorials/writing-programs.md) shows every item
+below in running code, and
+[`examples/tutorial.ipynb`](../../examples/tutorial.ipynb) covers the complete
+feature set.
+
+## Memory targets
+
+| Object | Board | Key fields |
+|---|---|---|
+| `drambender.api.DDR4Target` | U200 | `cachelines_per_row`, `column_stride`, `words_per_cacheline`, `rank` |
+| `drambender.api.HBM2Target` | U50, U55C | `channel`, `pseudo_channel`, `sid`, `columns_per_row`, `column_stride`, `words_per_cacheline` |
+
+The `channel`, `pseudo_channel`, and `sid` fields select locations within
+HBM2. They are unrelated to `xdma_channel`, which selects a host DMA endpoint.
+
+## Built-in programs
+
+`drambender.builtin_programs.configure(target=...)` binds the built-in
+templates to a target. Available templates include row read/write
+(`read_row`, `write_row`) and single-sided and double-sided RowHammer
+programs. Each template returns a `FinalProgram`.
+
+## `FinalProgram`
+
+Building a program does not open or access the FPGA. A `FinalProgram` can be
+inspected, held, reused, and submitted later.
+
+| Member | Purpose |
+|---|---|
+| `print(program)` | Decoded instruction stream |
+| `instruction_count` | Number of encoded instructions |
+| `dry_run(max_instructions=...)` | Software-VM execution report: instructions, branches, registers, timing, DRAM-command counts |
+| `trace_dram_commands()` | Timestamped DRAM-command trace; `trace.truncated` flags an incomplete trace |
+| `trace.summarize_timings()` | Observed tRCD, tRAS, and tRP minima and maxima (observational, not a specification check) |
+
+## Board access
+
+| Member | Purpose |
+|---|---|
+| `drambender.api.open_board(target, pci_bdf=..., xdma_channel=..., host_interface=HostInterface.XDMA)` | Open one `(PCI BDF, XDMA channel)` endpoint; usable as a context manager |
+| `board.execute(programs)` | Submit one program or a list/tuple; readback is delivered in program order |
+| `board.receive_into(buffer, timeout=None)` | Fill a preallocated, writable, C-contiguous buffer whose size is a multiple of four bytes |
+| `board.synchronize()` | Wait for outstanding work |
+| `board.reset_fpga()` | Reset FPGA logic during a normally synchronized session |
+| `board.full_reset()` | Additionally cancel active readback, drain stale host data, and clear queued software readback |
+
+Exiting the context manager releases the endpoint but does not itself perform
+a full hardware reset. The API performs `full_reset()` before raising when
+`receive_into()` times out, when it surfaces an asynchronous readback error,
+or when Ctrl+C interrupts a receive or synchronization wait on the main Python
+thread.
+
+## Custom programs
+
+`drambender.api.ProgramBuilder` is the instruction-level DSL:
+`LI`/`MV`/arithmetic, `DRAM(...)` with four explicit mini-operation slots,
+`DRAMSEQ(...)`, `ALIGN()`, `SLEEP`, labels, and branches. `conclude()`
+resolves labels, appends termination, and inserts readback metadata. The
+instruction list is in the [ISA reference](isa.md).
+
+## JIT controls
+
+`@program_template` compiles a traced builder as a cached C++ plugin.
+Controls live in `drambender.api.jit`:
+
+| Function | Purpose |
+|---|---|
+| `get_last_template_run_stats()` | Whether the last template call compiled or reused a cached specialization |
+| `set_jit_cache_dir(path)` | Choose the cache location before the first template call |
+| `clear_template_caches(clear_disk=True)` | Discard the compiled cache |
+
+## Power telemetry (U55C)
+
+`drambender.api.HBM2U55C` exposes `read_power_telemetry()`; `HBM2U50` reports
+`power_supported == False`. See
+[Read power and temperature telemetry](../how-to/read-power-telemetry.md) for
+the rail and sensor fields.
