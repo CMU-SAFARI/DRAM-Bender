@@ -94,10 +94,10 @@ print(trace)
 print(trace.summarize_timings())
 ```
 
-The VM's reported times default to the U200 clock: a 1.5 ns DRAM command slot
-(666.67 MHz). The U50/U55C designs run the command clock at 600 MHz, so pass
-`dram_inst_latency=5 / 3` to `dry_run()` and `trace_dram_commands()` when
-inspecting an HBM2 program; see the
+The VM's reported times use the DRAM command slot of the program's target:
+1.5 ns (666.67 MHz) on U200 and 5/3 ns (600 MHz) on U50/U55C. Pass
+`dram_inst_latency` to `dry_run()` and `trace_dram_commands()` only to
+override that default; see the
 [timing model](../reference/isa.md#timing-model).
 
 `summarize_timings()` reports observed tRCD, tRAS, and tRP minima and maxima.

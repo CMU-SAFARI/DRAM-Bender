@@ -18,6 +18,7 @@ from drambender._jit import (
     TemplateCompileError,
     in_trace_mode,
     record_lowering_stats,
+    record_trace_dram_inst_latency,
 )
 from .targets import normalize_target
 
@@ -333,10 +334,12 @@ class ProgramBuilder:
         """
         ops = list(self._ops)
         if in_trace_mode():
+            record_trace_dram_inst_latency(self.target.dram_inst_latency_ns)
             return cast("FinalProgram", ops)
 
         start = time.perf_counter()
         final_program = _core.lower(ops)
+        final_program.default_dram_inst_latency = self.target.dram_inst_latency_ns
         record_lowering_stats(
             op_count=len(ops),
             lower_s=time.perf_counter() - start,

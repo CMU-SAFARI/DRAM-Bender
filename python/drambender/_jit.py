@@ -23,6 +23,15 @@ _TRACE_MODE: ContextVar[bool | None] = ContextVar(
     default=None,
 )
 
+# DRAM command slot duration recorded by ProgramBuilder.conclude() during
+# template tracing, so compiled specializations inherit the target's timing.
+_TRACE_DRAM_INST_LATENCY: ContextVar[float | None] = ContextVar(
+    "drambender_program_template_trace_dram_inst_latency",
+    default=None,
+)
+
+_DEFAULT_DRAM_INST_LATENCY = 1.5
+
 
 _CODEGEN_VERSION = 6
 _PLUGIN_ABI_VERSION = 1
@@ -197,6 +206,10 @@ def in_trace_mode() -> bool:
     return bool(_TRACE_MODE.get())
 
 
+def record_trace_dram_inst_latency(latency_ns: float) -> None:
+    _TRACE_DRAM_INST_LATENCY.set(latency_ns)
+
+
 def record_lowering_stats(*, op_count: int, lower_s: float) -> None:
     global _LAST_LOWERING_STATS
     _LAST_LOWERING_STATS = LoweringStats(op_count=op_count, lower_s=lower_s)
@@ -228,10 +241,13 @@ class _CompiledSpecialization:
     cache_key: str
     plugin_path: str
     scalar_names: tuple[str, ...]
+    dram_inst_latency: float = _DEFAULT_DRAM_INST_LATENCY
 
     def instantiate(self, arguments: Mapping[str, Any]):
         kwargs = {name: arguments[name] for name in self.scalar_names}
-        return self.plugin.instantiate(kwargs)
+        program = self.plugin.instantiate(kwargs)
+        program.default_dram_inst_latency = self.dram_inst_latency
+        return program
 
 
 @dataclass(frozen=True)
@@ -343,7 +359,7 @@ def program_template(function=None):
             return result
 
         trace_start = time.perf_counter()
-        trace_ops, scalar_names = _trace_template(
+        trace_ops, scalar_names, dram_inst_latency = _trace_template(
             function,
             signature,
             normalized_arguments,
@@ -354,6 +370,7 @@ def program_template(function=None):
                 function=function,
                 trace_ops=trace_ops,
                 scalar_names=scalar_names,
+                dram_inst_latency=dram_inst_latency,
             )
         except TemplateEnvironmentError as err:
             in_memory_cache[shape_key] = None
@@ -425,12 +442,15 @@ def _shape_key(function, arguments: Mapping[str, Any]) -> tuple[Any, ...]:
     return tuple(shape)
 
 
-def _trace_template(function, signature: inspect.Signature, arguments: Mapping[str, Any]) -> tuple[list[tuple[Any, ...]], tuple[str, ...]]:
+def _trace_template(function, signature: inspect.Signature, arguments: Mapping[str, Any]) -> tuple[list[tuple[Any, ...]], tuple[str, ...], float]:
     trace_arguments, scalar_names = make_template_trace_arguments(arguments)
     token = set_trace_mode(True)
+    latency_token = _TRACE_DRAM_INST_LATENCY.set(None)
     try:
         result = _call_with_arguments(function, signature, trace_arguments)
+        dram_inst_latency = _TRACE_DRAM_INST_LATENCY.get()
     finally:
+        _TRACE_DRAM_INST_LATENCY.reset(latency_token)
         reset_trace_mode(token)
 
     if not isinstance(result, list):
@@ -438,7 +458,9 @@ def _trace_template(function, signature: inspect.Signature, arguments: Mapping[s
             f"Template {function.__qualname__} did not return ProgramBuilder.conclude()."
         )
 
-    return result, scalar_names
+    if dram_inst_latency is None:
+        dram_inst_latency = _DEFAULT_DRAM_INST_LATENCY
+    return result, scalar_names, dram_inst_latency
 
 
 def _call_with_arguments(function, signature: inspect.Signature, arguments: Mapping[str, Any]):
@@ -462,11 +484,12 @@ def _call_with_arguments(function, signature: inspect.Signature, arguments: Mapp
     return function(*positional, **keywords)
 
 
-def _load_or_compile_specialization(*, function, trace_ops, scalar_names) -> tuple[_CompiledSpecialization, dict[str, Any]]:
+def _load_or_compile_specialization(*, function, trace_ops, scalar_names, dram_inst_latency=_DEFAULT_DRAM_INST_LATENCY) -> tuple[_CompiledSpecialization, dict[str, Any]]:
     metadata = _specialization_metadata(
         function=function,
         trace_ops=trace_ops,
         scalar_names=scalar_names,
+        dram_inst_latency=dram_inst_latency,
     )
     cache_dir = get_jit_cache_dir()
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -506,6 +529,7 @@ def _load_or_compile_specialization(*, function, trace_ops, scalar_names) -> tup
         cache_key=stem,
         plugin_path=str(shared_path),
         scalar_names=scalar_names,
+        dram_inst_latency=dram_inst_latency,
     ), {
         "codegen_s": codegen_s,
         "compile_s": compile_s,
@@ -515,7 +539,7 @@ def _load_or_compile_specialization(*, function, trace_ops, scalar_names) -> tup
     }
 
 
-def _specialization_metadata(*, function, trace_ops, scalar_names) -> dict[str, Any]:
+def _specialization_metadata(*, function, trace_ops, scalar_names, dram_inst_latency=_DEFAULT_DRAM_INST_LATENCY) -> dict[str, Any]:
     serialized_trace = _serialize(trace_ops)
     key_material = {
         "template": {
@@ -527,6 +551,9 @@ def _specialization_metadata(*, function, trace_ops, scalar_names) -> dict[str, 
         "trace": serialized_trace,
         "schema": {
             "scalars": list(scalar_names),
+        },
+        "timing": {
+            "dram_inst_latency": dram_inst_latency,
         },
         "codegen_version": _CODEGEN_VERSION,
         "plugin_abi_version": _PLUGIN_ABI_VERSION,

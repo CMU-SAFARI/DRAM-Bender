@@ -269,6 +269,40 @@ def test_hbm2_board_variant_capabilities() -> None:
         raise AssertionError("HBM2Target() should fail")
 
 
+def test_vm_default_latency_follows_target() -> None:
+    hbm2_slot_ns = 5 / 3
+
+    ddr4_program = _tiny_program(target=DDR4Target())
+    _assert(
+        ddr4_program.default_dram_inst_latency == 1.5,
+        f"DDR4 default latency {ddr4_program.default_dram_inst_latency}, expected 1.5",
+    )
+
+    u50_program = _tiny_program(target=HBM2U50Target())
+    _assert(
+        u50_program.default_dram_inst_latency == hbm2_slot_ns,
+        f"U50 default latency {u50_program.default_dram_inst_latency}, expected 5/3",
+    )
+
+    # The JIT path must carry the target latency through compiled plugins.
+    jit_program = _jit_hbm2_physical_bank_template(5)
+    _assert(
+        jit_program.default_dram_inst_latency == hbm2_slot_ns,
+        f"JIT default latency {jit_program.default_dram_inst_latency}, expected 5/3",
+    )
+
+    # The traced timestamps scale with the default, and an explicit value
+    # still overrides it.
+    default_trace = u50_program.trace_dram_commands()
+    override_trace = u50_program.trace_dram_commands(dram_inst_latency=1.5)
+    default_last = default_trace.events[-1].time_ns
+    override_last = override_trace.events[-1].time_ns
+    _assert(
+        abs(default_last - override_last * hbm2_slot_ns / 1.5) < 1e-9,
+        f"trace timestamps did not scale: {default_last} vs {override_last}",
+    )
+
+
 def main() -> int:
     tests = (
         test_builder_requires_explicit_target,
@@ -283,6 +317,7 @@ def main() -> int:
         test_configured_ddr4_builtins,
         test_configured_hbm2_builtins,
         test_jit_physical_bank_affine_scalar,
+        test_vm_default_latency_follows_target,
     )
     for test in tests:
         test()

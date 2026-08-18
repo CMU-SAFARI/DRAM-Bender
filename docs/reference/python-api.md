@@ -37,6 +37,7 @@ inspected, held, reused, and submitted later.
 |---|---|
 | `print(program)` | Decoded instruction stream |
 | `instruction_count` | Number of encoded instructions |
+| `default_dram_inst_latency` | DRAM command slot (ns) of the target the program was built for; used by the VM unless overridden |
 | `dry_run(max_instructions=...)` | Software-VM execution report: instructions, branches, registers, timing, DRAM-command counts |
 | `trace_dram_commands()` | Timestamped DRAM-command trace; `trace.truncated` flags an incomplete trace |
 | `trace.summarize_timings()` | Observed tRCD, tRAS, and tRP minima and maxima (observational, not a specification check) |

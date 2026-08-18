@@ -29,6 +29,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/array.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/vector.h>
@@ -1041,27 +1042,36 @@ NB_MODULE(_core, m) {
       .def_prop_ro("instruction_count", &FinalProgram::instruction_count)
       .def("__len__", &FinalProgram::instruction_count)
       .def("size", &FinalProgram::size)
+      .def_prop_rw("default_dram_inst_latency",
+                   &FinalProgram::default_dram_inst_latency,
+                   &FinalProgram::set_default_dram_inst_latency)
       .def("dry_run",
            [](const FinalProgram& program, size_t max_instructions,
-              double dram_inst_latency, int num_dram_insts_per_fabric_cycle) {
+              std::optional<double> dram_inst_latency,
+              int num_dram_insts_per_fabric_cycle) {
              nb::gil_scoped_release release;
-             vm::TimingConfig timing{dram_inst_latency,
-                                     num_dram_insts_per_fabric_cycle};
+             vm::TimingConfig timing{
+                 dram_inst_latency.value_or(
+                     program.default_dram_inst_latency()),
+                 num_dram_insts_per_fabric_cycle};
              return vm::execute(program, max_instructions, timing);
            },
            nb::arg("max_instructions"),
-           nb::arg("dram_inst_latency") = 1.5,
+           nb::arg("dram_inst_latency") = nb::none(),
            nb::arg("num_dram_insts_per_fabric_cycle") = 4)
       .def("trace_dram_commands",
            [](const FinalProgram& program, size_t max_instructions,
-              double dram_inst_latency, int num_dram_insts_per_fabric_cycle) {
+              std::optional<double> dram_inst_latency,
+              int num_dram_insts_per_fabric_cycle) {
              nb::gil_scoped_release release;
-             vm::TimingConfig timing{dram_inst_latency,
-                                     num_dram_insts_per_fabric_cycle};
+             vm::TimingConfig timing{
+                 dram_inst_latency.value_or(
+                     program.default_dram_inst_latency()),
+                 num_dram_insts_per_fabric_cycle};
              return vm::trace_dram_commands(program, max_instructions, timing);
            },
            nb::arg("max_instructions") = vm::k_default_max_instructions,
-           nb::arg("dram_inst_latency") = 1.5,
+           nb::arg("dram_inst_latency") = nb::none(),
            nb::arg("num_dram_insts_per_fabric_cycle") = 4)
       .def("__str__",
            nb::overload_cast<const FinalProgram&>(&debug::format_program))

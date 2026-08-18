@@ -40,6 +40,9 @@ class DDR4Target:
     words_per_cacheline: int = 16
     rank: int = 0
 
+    # U200 DRAM command clock: 666.67 MHz, one command slot per 1.5 ns.
+    dram_inst_latency_ns: ClassVar[float] = 1.5
+
     def __post_init__(self) -> None:
         _validate_int_field(self.cachelines_per_row, name="DDR4Target.cachelines_per_row", minimum=1)
         _validate_int_field(self.column_stride, name="DDR4Target.column_stride", minimum=1)
@@ -79,6 +82,9 @@ class HBM2Target:
     num_sids: ClassVar[int] = 1
     broadcast_supported: ClassVar[bool] = False
     instruction_capacity: ClassVar[int] = 32768
+
+    # U50/U55C DRAM command clock: 600 MHz, one command slot per 5/3 ns.
+    dram_inst_latency_ns: ClassVar[float] = 5 / 3
 
     def __post_init__(self) -> None:
         if type(self) is HBM2Target:

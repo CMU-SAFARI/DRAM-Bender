@@ -70,13 +70,15 @@ DRAM command slot depends on the board design:
 | Alveo U50 | 600 MHz | 1.67 ns (5/3 ns) |
 | Alveo U55C | 600 MHz | 1.67 ns (5/3 ns) |
 
-The software VM defaults to the U200 timing: a 1.5 ns DRAM slot and four slots
-per fabric cycle. It does not switch with the program's target. When
-inspecting a U50/U55C program, pass the slot duration explicitly:
+The software VM uses the slot duration of the target the program was built
+for (stored on the program as `FinalProgram.default_dram_inst_latency`) and
+four slots per fabric cycle. Pass `dram_inst_latency` explicitly to
+`dry_run()` or `trace_dram_commands()` only when inspecting an image with a
+different clock:
 
 ```python
-result = program.dry_run(max_instructions=1_000_000, dram_inst_latency=5 / 3)
-trace = program.trace_dram_commands(dram_inst_latency=5 / 3)
+result = program.dry_run(max_instructions=1_000_000, dram_inst_latency=1.25)
+trace = program.trace_dram_commands(dram_inst_latency=1.25)
 ```
 
 Most scalar instructions consume one fabric cycle, while a branch resolves in

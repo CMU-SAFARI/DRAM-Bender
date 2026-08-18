@@ -49,10 +49,21 @@ class FinalProgram {
     return program_.size() * sizeof(Inst);
   }
 
+  // DRAM command slot duration (ns) of the target this program was built
+  // for. The software VM uses it when no explicit latency is passed.
+  [[nodiscard]] double default_dram_inst_latency() const noexcept {
+    return default_dram_inst_latency_;
+  }
+
+  void set_default_dram_inst_latency(double latency_ns) noexcept {
+    default_dram_inst_latency_ = latency_ns;
+  }
+
  private:
   std::vector<Inst> program_;
   std::map<std::string, size_t> labels_;
   std::map<size_t, std::string> branches_;
+  double default_dram_inst_latency_ = 1.5;
 
   friend std::string debug::format_program(const FinalProgram& program);
   friend std::string debug::format_program_binary(const FinalProgram& program);
