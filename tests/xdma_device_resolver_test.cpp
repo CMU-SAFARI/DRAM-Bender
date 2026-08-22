@@ -1,4 +1,6 @@
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -7,13 +9,16 @@
 #include <string>
 #include <string_view>
 
+#include "api/host_interface/page_aligned_buffer.h"
 #include "api/host_interface/xdma_device_resolver.h"
+#include "drambender/api/board/board.h"
 
 namespace {
 
 using DRAMBender::xdma_internal::DevicePaths;
 using DRAMBender::xdma_internal::normalize_pci_bdf;
 using DRAMBender::xdma_internal::resolve_device_paths;
+using DRAMBender::host_interface_internal::PageAlignedBuffer;
 
 class TemporaryDirectory {
  public:
@@ -98,6 +103,34 @@ void testNormalization() {
                                        "slot or function");
 }
 
+void testPageAlignedBufferGrowsForLargestProgram() {
+  constexpr size_t initial_send_capacity = 32 * 2048;
+  const size_t largest_program_bytes =
+      DRAMBender::axi_datapath_byte_width *
+      DRAMBender::get_board_config(DRAMBender::BoardType::U55C).instruction_capacity;
+  const auto is_page_aligned = [](const PageAlignedBuffer& buffer) {
+    return reinterpret_cast<std::uintptr_t>(buffer.data()) % PageAlignedBuffer::alignment == 0;
+  };
+
+  PageAlignedBuffer buffer;
+  buffer.ensure_capacity(initial_send_capacity);
+  require(buffer.capacity() >= initial_send_capacity,
+          "initial XDMA staging capacity was not allocated");
+  require(is_page_aligned(buffer),
+          "XDMA staging buffer is not page aligned");
+
+  buffer.ensure_capacity(largest_program_bytes);
+  require(buffer.capacity() >= largest_program_bytes,
+          "XDMA staging buffer did not grow for a U55C-sized program");
+  require(is_page_aligned(buffer),
+          "grown XDMA staging buffer is not page aligned");
+
+  std::byte* const grown_buffer = buffer.data();
+  buffer.ensure_capacity(largest_program_bytes - 1);
+  require(buffer.data() == grown_buffer,
+          "XDMA staging buffer reallocated despite having sufficient capacity");
+}
+
 void testResolveByBdfNotProbeOrder() {
   FakeSysfs fake;
   const auto pci_a = fake.addPciDevice("0000:01:00.0");
@@ -164,6 +197,7 @@ void testRejectsAbsentDeviceAndNegativeChannel() {
 
 int main() {
   try {
+    testPageAlignedBufferGrowsForLargestProgram();
     testNormalization();
     testResolveByBdfNotProbeOrder();
     testRejectsMissingOrInconsistentEndpoints();

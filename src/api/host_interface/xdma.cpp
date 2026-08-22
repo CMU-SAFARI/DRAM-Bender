@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "api/host_interface/byte_stream_buffer.h"
+#include "api/host_interface/page_aligned_buffer.h"
 #include "api/host_interface/xdma_device_resolver.h"
 
 namespace DRAMBender {
@@ -34,12 +35,6 @@ inline constexpr int receive_cancel_poll_ms = 50;
 inline constexpr int drain_quiet_poll_ms = 1;
 inline constexpr int drain_required_quiet_polls = 500;
 
-struct FreeDeleter {
-  void operator()(std::byte* ptr) const noexcept {
-    std::free(ptr);
-  }
-};
-
 class XDMA : public IHostInterface {
  public:
   explicit XDMA(std::string pci_bdf,
@@ -48,7 +43,7 @@ class XDMA : public IHostInterface {
                 size_t recv_buffer_size = 32 * 1024)
       : pci_bdf_(xdma_internal::normalize_pci_bdf(pci_bdf)),
         xdma_channel_(xdma_channel),
-        send_buffer_size_(send_buffer_size),
+        initial_send_buffer_size_(send_buffer_size),
         recv_buffer_size_(recv_buffer_size) {}
 
   ~XDMA() override {
@@ -89,25 +84,23 @@ class XDMA : public IHostInterface {
       }
     }
 
-    m_send_buf_ = allocateAlignedBuffer_(send_buffer_size_);
-    m_recv_buf_ = allocateAlignedBuffer_(recv_buffer_size_);
+    m_send_buf_.ensure_capacity(initial_send_buffer_size_);
+    m_recv_buf_.ensure_capacity(recv_buffer_size_);
   }
 
   size_t send(std::span<const std::byte> data) override {
     if (m_to_card_fd_ < 0) {
       throw std::logic_error("XDMA board is not initialized for sending.");
     }
-    if (data.size() > send_buffer_size_) {
-      throw std::invalid_argument("XDMA send request exceeds the aligned send buffer size.");
-    }
+    m_send_buf_.ensure_capacity(data.size());
 
-    std::memcpy(m_send_buf_.get(), data.data(), data.size());
+    std::memcpy(m_send_buf_.data(), data.data(), data.size());
 
     size_t bytes_sent = 0;
     size_t zero_write_retries = 0;
     while (bytes_sent < data.size()) {
       const ssize_t rc =
-          ::write(m_to_card_fd_, m_send_buf_.get() + bytes_sent, data.size() - bytes_sent);
+          ::write(m_to_card_fd_, m_send_buf_.data() + bytes_sent, data.size() - bytes_sent);
       if (rc < 0) {
         if (errno == EINTR) {
           continue;
@@ -180,7 +173,7 @@ class XDMA : public IHostInterface {
       // the staging buffer only when the logical destination is too small for
       // the unchanged driver read request.
       const bool read_directly = dst.size() >= request_size;
-      std::byte* const read_dst = read_directly ? dst.data() : m_recv_buf_.get();
+      std::byte* const read_dst = read_directly ? dst.data() : m_recv_buf_.data();
       ssize_t rc = ::read(m_from_card_fd_, read_dst, request_size);
       if (rc < 0 && errno == EINTR) {
         continue;
@@ -214,7 +207,7 @@ class XDMA : public IHostInterface {
         return recv_count;
       }
 
-      const std::span<const std::byte> received(m_recv_buf_.get(), recv_count);
+      const std::span<const std::byte> received(m_recv_buf_.data(), recv_count);
       if (receiveCancelled_()) {
         m_recv_pending_.append(received);
         return 0;
@@ -271,7 +264,7 @@ class XDMA : public IHostInterface {
     size_t drain_reads = 0;
     int quiet_polls = 0;
     while (true) {
-      const ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.get(), recv_buffer_size_);
+      const ssize_t rc = ::read(m_from_card_fd_, m_recv_buf_.data(), recv_buffer_size_);
       if (rc > 0) {
         quiet_polls = 0;
         ++drain_reads;
@@ -381,16 +374,6 @@ class XDMA : public IHostInterface {
     }
   }
 
-  static std::unique_ptr<std::byte, FreeDeleter> allocateAlignedBuffer_(size_t size) {
-    void* raw_ptr = nullptr;
-    const size_t aligned_size = ((size + 4095U) / 4096U) * 4096U;
-    if (::posix_memalign(&raw_ptr, 4096, aligned_size) != 0) {
-      throw std::bad_alloc();
-    }
-
-    return std::unique_ptr<std::byte, FreeDeleter>(static_cast<std::byte*>(raw_ptr));
-  }
-
   static int openVerifiedNode_(const xdma_internal::DeviceNode& node,
                                int flags,
                                std::string_view description) {
@@ -450,10 +433,10 @@ class XDMA : public IHostInterface {
 
   const std::string pci_bdf_;
   const int xdma_channel_;
-  const size_t send_buffer_size_;
+  const size_t initial_send_buffer_size_;
   const size_t recv_buffer_size_;
-  std::unique_ptr<std::byte, FreeDeleter> m_send_buf_;
-  std::unique_ptr<std::byte, FreeDeleter> m_recv_buf_;
+  host_interface_internal::PageAlignedBuffer m_send_buf_;
+  host_interface_internal::PageAlignedBuffer m_recv_buf_;
   host_interface_internal::ByteStreamBuffer m_recv_pending_;
   std::optional<xdma_internal::DevicePaths> m_device_paths_;
   int m_to_card_fd_ = -1;
