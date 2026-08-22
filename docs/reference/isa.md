@@ -11,8 +11,11 @@ The maximum number of submitted instructions per program depends on the board:
 | Board | Instruction capacity |
 |---|---|
 | Alveo U200 | 32,768 (32 K) |
-| Alveo U50 | 32,768 (32 K) |
+| Alveo U50 | 2,048 (2 K) |
 | Alveo U55C | 131,072 (128 K) |
+
+These limits come from the built-in `BoardConfig` records listed under
+[Supported boards](supported-boards.md#board-configuration).
 
 Long-running experiments normally use loops rather than unrolling every DRAM
 command on the host.
@@ -70,15 +73,21 @@ DRAM command slot depends on the board design:
 | Alveo U50 | 600 MHz | 1.67 ns (5/3 ns) |
 | Alveo U55C | 600 MHz | 1.67 ns (5/3 ns) |
 
-The software VM uses the slot duration of the target the program was built
-for (stored on the program as `FinalProgram.default_dram_inst_latency`) and
-four slots per fabric cycle. Pass `dram_inst_latency` explicitly to
-`dry_run()` or `trace_dram_commands()` only when inspecting an image with a
-different clock:
+The software VM uses `FinalProgram.default_dram_inst_latency` when no slot
+duration is supplied explicitly. Target-aware Python builders initialize that
+property from the selected target's `BoardConfig`. Independently, the VM
+defaults to four mini-operation slots per fabric cycle, matching every
+maintained board configuration. Pass
+`dram_inst_latency` or `num_dram_insts_per_fabric_cycle` explicitly to
+`dry_run()` or `trace_dram_commands()` when modeling a bitstream with different
+timing or packing:
 
 ```python
 result = program.dry_run(max_instructions=1_000_000, dram_inst_latency=1.25)
-trace = program.trace_dram_commands(dram_inst_latency=1.25)
+trace = program.trace_dram_commands(
+    dram_inst_latency=1.25,
+    num_dram_insts_per_fabric_cycle=4,
+)
 ```
 
 Most scalar instructions consume one fabric cycle, while a branch resolves in
