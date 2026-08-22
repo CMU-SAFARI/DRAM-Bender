@@ -32,6 +32,7 @@
 #include <nanobind/stl/array.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/string_view.h>
 #include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/vector.h>
 
@@ -265,8 +266,7 @@ class MockBoard : public IBoard {
  private:
   MockBoard(std::shared_ptr<MockHostState> state, int receive_timeout_ms)
       : IBoard(std::make_unique<NullHostInterface>(state),
-               2048,
-               1024,
+               get_board_config(BoardType::U200),
                std::chrono::milliseconds(receive_timeout_ms)),
         host_state_(std::move(state)) {}
 
@@ -973,7 +973,10 @@ NB_MODULE(_core, m) {
       .value("DDR4", MemoryType::DDR4)
       .value("HBM2", MemoryType::HBM2);
 
-  nb::class_<BoardConfig>(m, "BoardConfig")
+  nb::class_<BoardConfig>(
+      m,
+      "BoardConfig",
+      "Immutable API-side assumptions for one maintained board bitstream.")
       .def_ro("name", &BoardConfig::name)
       .def_ro("board_type", &BoardConfig::board_type)
       .def_ro("memory_type", &BoardConfig::memory_type)
@@ -986,9 +989,17 @@ NB_MODULE(_core, m) {
       .def_ro("hbm_sid_count", &BoardConfig::hbm_sid_count)
       .def_ro("broadcast_supported", &BoardConfig::broadcast_supported)
       .def_ro("power_telemetry_supported", &BoardConfig::power_telemetry_supported)
-      .def("summary", &BoardConfig::summary);
+      .def("summary", &BoardConfig::summary)
+      .def("__str__", &BoardConfig::summary)
+      .def("__repr__", [](const BoardConfig& config) {
+        return "<BoardConfig " + std::string(config.name) + ">";
+      });
 
-  m.def("get_board_config", &get_board_config, nb::rv_policy::reference);
+  m.def("get_board_config",
+        &get_board_config,
+        nb::rv_policy::reference,
+        nb::arg("board_type"),
+        "Return the built-in configuration for a supported board.");
 
   nb::enum_<PC_TYPE>(m, "PCType")
       .value("WRITE", PC_TYPE::WRITE)
@@ -1276,6 +1287,11 @@ NB_MODULE(_core, m) {
       .def_prop_ro("is_closed",
                    &IBoard::is_closed,
                    "True after the host connection has been released.")
+      .def_prop_ro(
+          "board_config",
+          &IBoard::board_config,
+          nb::rv_policy::reference_internal,
+          "API-side hardware assumptions used by this board handle.")
       .def("__enter__",
            [](IBoard& board) -> IBoard& { return board; },
            nb::rv_policy::reference_internal)
@@ -1426,7 +1442,8 @@ NB_MODULE(_core, m) {
   instr.def("jump", &SMC_JUMP, nb::arg("target"),
             "Unconditional jump.");
   instr.def("sleep", &SMC_SLEEP, nb::arg("cycles"),
-            "Wait for cycles fabric cycles (6 ns each, minimum 3).");
+            "Wait for cycles fabric cycles (minimum 3). The cycle duration "
+            "is fixed by the selected board bitstream.");
   instr.def("end", &SMC_END,
             "Program terminator.");
   instr.def("info", &SMC_INFO, nb::arg("read_count"),

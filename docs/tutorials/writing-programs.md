@@ -32,7 +32,14 @@ hbm2_target = HBM2U55Target(
     pseudo_channel=0,
     sid=0,
 )
+
+print(ddr4_target.board_config.summary())
 ```
+
+Each target's read-only `board_config` identifies the board design and the
+bitstream parameters assumed by the API. The maintained configurations are
+also available directly as `board_configs.U200`, `board_configs.U50`, and
+`board_configs.U55C`; see [Supported boards](../reference/supported-boards.md#board-configuration).
 
 The HBM2 targets default to `columns_per_row=32`, `column_stride=1`, and
 `words_per_cacheline=16`; override them only when the bitstream differs.
@@ -139,6 +146,11 @@ with open_board(
 expected = np.full_like(readback, pattern)
 np.testing.assert_array_equal(readback, expected)
 ```
+
+When the board is opened, the API prints the selected `BoardConfig` and a
+reminder that the programmed bitstream must match. This is a visibility check,
+not automatic bitstream detection. Verify the printed capacities, timing, and
+features before submitting a program.
 
 `board.execute()` accepts one program or a list/tuple of programs. Readback is
 delivered in program order. `receive_into()` writes into a preallocated,

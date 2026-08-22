@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib
 
 import drambender.builtin_programs as builtin_programs
+import drambender._core as native_core
 import drambender.api.board as board_api
 from drambender.api import (
     BoardConfig,
@@ -177,6 +178,15 @@ def test_board_configs_are_bound_immutable_defaults() -> None:
     else:
         raise AssertionError("BoardConfig properties must be immutable")
 
+    board = native_core._MockBoard()
+    try:
+        _assert(
+            board.board_config.board_type == BoardType.U200,
+            "live board should expose the config used by its C++ implementation",
+        )
+    finally:
+        board.close()
+
 
 def test_explicit_ddr4_target_builds() -> None:
     program = _tiny_program(target=DDR4Target())
@@ -224,9 +234,12 @@ def test_hbm2_target_selects_channel_bank_and_rank() -> None:
     _assert_row_events(program, bank=18, rank=1, commands=("PRE", "ACT", "WR", "RD"))
 
 
-def test_legacy_sel_ch_and_ddr4_rejection() -> None:
-    legacy = SEL_CH(4, pseudo_channel=1)
-    _assert(legacy.operands == (4, 1), f"legacy SEL_CH operands are {legacy.operands}")
+def test_explicit_sel_ch_and_ddr4_rejection() -> None:
+    explicit = SEL_CH(4, pseudo_channel=1)
+    _assert(
+        explicit.operands == (4, 1),
+        f"explicit SEL_CH operands are {explicit.operands}",
+    )
     try:
         SEL_CH(DDR4Target())
     except TypeError as exc:
@@ -484,7 +497,7 @@ def main() -> int:
         test_target_rank_default_and_explicit_override,
         test_hbm2_target_selects_channel_bank_and_rank,
         test_hbm2_board_variant_capabilities,
-        test_legacy_sel_ch_and_ddr4_rejection,
+        test_explicit_sel_ch_and_ddr4_rejection,
         test_open_board_accepts_targets_and_board_type,
         test_native_board_selector_requires_complete_bdf,
         test_builtins_are_configured_only,

@@ -160,6 +160,15 @@ if (BUILD_TESTING)
   target_link_libraries(drambender_program_metadata_test PRIVATE DRAMBender)
   add_test(NAME drambender_program_metadata_test COMMAND drambender_program_metadata_test)
 
+  add_executable(drambender_board_config_test
+    tests/board_config_test.cpp
+  )
+  target_include_directories(drambender_board_config_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(drambender_board_config_test PRIVATE DRAMBender)
+  add_test(NAME drambender_board_config_test COMMAND drambender_board_config_test)
+
   add_executable(drambender_vm_timing_test
     tests/vm_timing_test.cpp
   )

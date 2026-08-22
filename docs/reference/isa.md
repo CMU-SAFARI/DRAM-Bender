@@ -86,7 +86,7 @@ timing or packing:
 result = program.dry_run(max_instructions=1_000_000, dram_inst_latency=1.25)
 trace = program.trace_dram_commands(
     dram_inst_latency=1.25,
-    num_dram_insts_per_fabric_cycle=4,
+    num_dram_insts_per_fabric_cycle=2,
 )
 ```
 

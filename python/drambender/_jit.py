@@ -30,7 +30,9 @@ _TRACE_DRAM_INST_LATENCY: ContextVar[float | None] = ContextVar(
     default=None,
 )
 
-_DEFAULT_DRAM_INST_LATENCY = 1.5
+_DEFAULT_DRAM_INST_LATENCY = _core.get_board_config(
+    _core.BoardType.U200
+).dram_command_slot_ns
 
 
 _CODEGEN_VERSION = 6

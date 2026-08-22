@@ -1,8 +1,32 @@
 # C++ API Reference
 
-C++ applications use `DRAMBender::DDR4` for U200 and `DRAMBender::HBM2` for
-U50/U55C. The public headers are under
+C++ applications open maintained designs with `BoardType::U200`,
+`BoardType::U50`, or `BoardType::U55C`. The corresponding concrete board
+classes are `DRAMBender::DDR4`, `DRAMBender::HBM2U50`, and
+`DRAMBender::HBM2U55C`. The public headers are under
 [`include/drambender/`](../../include/drambender/).
+
+## Board configuration
+
+`BoardConfig` centralizes the API assumptions for each board and bitstream.
+Resolve the built-in record with `get_board_config()`, or inspect the same
+record through an opened board:
+
+```cpp
+const auto& expected =
+    DRAMBender::get_board_config(DRAMBender::BoardType::U200);
+const auto summary = expected.summary();
+
+auto board = DRAMBender::create_board(
+    DRAMBender::BoardType::U200, "0000:01:00.0");
+const DRAMBender::BoardConfig& active = board->board_config();
+```
+
+The fields cover board and memory identity, instruction and readback
+capacities, DRAM command timing, HBM topology, and optional features. Opening
+a board prints this configuration and reminds the user that the programmed
+bitstream must match it. The values are not read from the FPGA image. Update
+the API configuration when using a custom bitstream with different parameters.
 
 ## Build the library
 

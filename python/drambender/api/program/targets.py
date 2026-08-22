@@ -158,7 +158,7 @@ class HBM2Target:
 
     @property
     def num_sids(self) -> int:
-        """Compatibility alias for the configured HBM SID count."""
+        """Configured number of HBM stack IDs."""
         return self.board_config.hbm_sid_count
 
     @property

@@ -69,19 +69,6 @@ struct PowerTelemetry {
 class CmsMonitor;  // Internal; defined in src/api/board/cms_monitor.h.
 
 /**
- * @brief Per-board HBM2 capabilities.
- *
- * These differ between the Alveo U50 and U55C designs. See HBM2U50 and
- * HBM2U55C for the concrete values.
- */
-struct HBM2Capabilities {
-  int num_sids;              ///< Number of stack IDs (U50: 1, U55C: 2).
-  bool broadcast_supported;  ///< Command broadcast to a channel mask (U55C only).
-  int instruction_capacity;  ///< Program instruction buffer depth.
-  bool power_supported;      ///< On-card power measurement (U55C only, reserved).
-};
-
-/**
  * @brief Shared base for the HBM2 boards. Not constructed directly; use
  * HBM2U50 or HBM2U55C.
  */
@@ -117,23 +104,28 @@ class HBM2 : public IBoard {
    */
   PowerTelemetry read_power_telemetry();
 
-  int num_sids() const noexcept { return capabilities_.num_sids; }
-  bool broadcast_supported() const noexcept { return capabilities_.broadcast_supported; }
-  bool power_supported() const noexcept { return capabilities_.power_supported; }
+  int num_sids() const noexcept {
+    return static_cast<int>(board_config().hbm_sid_count);
+  }
+  bool broadcast_supported() const noexcept {
+    return board_config().broadcast_supported;
+  }
+  bool power_supported() const noexcept {
+    return board_config().power_telemetry_supported;
+  }
 
   ~HBM2();  // Out-of-line: monitor_ holds an incomplete type.
 
  protected:
   HBM2(std::unique_ptr<IHostInterface> host_interface,
-       HBM2Capabilities capabilities,
+       const BoardConfig& board_config,
        std::unique_ptr<CmsMonitor> monitor = nullptr);
 
-  const HBM2Capabilities capabilities_;
   std::unique_ptr<CmsMonitor> monitor_;
 };
 
 /**
- * @brief Alveo U50 HBM2 board: 1 SID, no command broadcast, 32 K instructions.
+ * @brief Alveo U50 HBM2 board: 1 SID and no command broadcast.
  */
 class HBM2U50 : public HBM2 {
  public:

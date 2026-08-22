@@ -11,6 +11,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -42,21 +43,22 @@ class IBoard {
   };
 
   explicit IBoard(std::unique_ptr<IHostInterface> host_interface,
-                  int max_num_insts_per_prog = 2048,
-                  int readback_buffer_size = 1024,
+                  const BoardConfig& board_config,
                   std::chrono::milliseconds receive_timeout = std::chrono::seconds(5));
 
   IHostInterface& hostInterface() const;
   int readback_buffer_size() const noexcept;
+  void reportOpen_(std::string_view pci_bdf,
+                   int xdma_channel,
+                   HostInterface host_interface) const;
   void sendControlPacket_(std::span<const std::byte> control_packet);
   void sendControlPacketRaw_(std::span<const std::byte> control_packet);
   void ensureOpen_() const;
   std::optional<ReadbackPacket> receiveReadbackPacket_();
 
   std::unique_ptr<IHostInterface> m_host_interface_;
-  const int max_num_insts_per_prog_;
+  const BoardConfig& board_config_;
   std::vector<std::byte> m_send_buffer_;
-  const int readback_buffer_size_;
   const std::chrono::milliseconds receive_timeout_;
 
  public:
@@ -151,6 +153,14 @@ class IBoard {
 
   void close();
   bool is_closed() const noexcept;
+
+  /**
+   * @brief API-side hardware assumptions used by this board handle.
+   *
+   * These values are not detected from the programmed FPGA. The programmed
+   * bitstream must match this configuration.
+   */
+  const BoardConfig& board_config() const noexcept { return board_config_; }
 
  private:
   void consumeData_();

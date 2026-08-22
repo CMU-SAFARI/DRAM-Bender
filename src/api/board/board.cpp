@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <exception>
+#include <iostream>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -48,13 +49,11 @@ std::chrono::steady_clock::time_point saturating_deadline(
 }  // namespace
 
 IBoard::IBoard(std::unique_ptr<IHostInterface> host_interface,
-               int max_num_insts_per_prog,
-               int readback_buffer_size,
+               const BoardConfig& board_config,
                std::chrono::milliseconds receive_timeout)
     : m_host_interface_(std::move(host_interface)),
-      max_num_insts_per_prog_(max_num_insts_per_prog),
-      m_send_buffer_(axi_datapath_byte_width * static_cast<size_t>(max_num_insts_per_prog_)),
-      readback_buffer_size_(readback_buffer_size),
+      board_config_(board_config),
+      m_send_buffer_(axi_datapath_byte_width * board_config_.instruction_capacity),
       receive_timeout_(receive_timeout) {
   if (!m_host_interface_) {
     throw std::invalid_argument("IBoard requires a non-null host interface.");
@@ -106,7 +105,20 @@ IHostInterface& IBoard::hostInterface() const {
 }
 
 int IBoard::readback_buffer_size() const noexcept {
-  return readback_buffer_size_;
+  return static_cast<int>(board_config_.readback_buffer_capacity);
+}
+
+void IBoard::reportOpen_(std::string_view pci_bdf,
+                         int xdma_channel,
+                         HostInterface host_interface) const {
+  std::clog << "[DRAM Bender] Board opened\n"
+            << "PCIe endpoint:              " << pci_bdf << '\n'
+            << "XDMA channel:               " << xdma_channel << '\n'
+            << "Host interface:             " << to_string(host_interface) << '\n'
+            << board_config_.summary() << '\n'
+            << "The API assumes that the programmed bitstream matches this "
+               "board configuration.\n"
+            << std::flush;
 }
 
 void IBoard::rethrowReceiverException_() {
@@ -222,8 +234,11 @@ void IBoard::execute(const FinalProgram& prog) {
   synchronize();
 
   const std::span<const Inst> instructions = prog.instructions();
-  if (instructions.size() > static_cast<size_t>(max_num_insts_per_prog_)) {
-    throw std::invalid_argument("Program exceeds the maximum supported instruction count.");
+  if (instructions.size() > board_config_.instruction_capacity) {
+    throw std::invalid_argument(
+        "Program exceeds the " + std::string(board_config_.name) +
+        " instruction capacity of " +
+        std::to_string(board_config_.instruction_capacity) + ".");
   }
 
   const size_t send_size = instructions.size() * axi_datapath_byte_width;
@@ -363,7 +378,7 @@ size_t IBoard::receiveImpl_(
     if (deadline.has_value() && now >= *deadline) {
       lock.unlock();
       recoverAndRethrow_(std::make_exception_ptr(std::runtime_error(
-          "Timed out while waiting for readback data from the platform.")));
+          "Timed out while waiting for readback data from the board.")));
     }
   }
 
@@ -399,22 +414,22 @@ std::optional<IBoard::ReadbackPacket> IBoard::receiveReadbackPacket_() {
     return std::nullopt;
   }
   if (metadata_bytes != metadata.size()) {
-    throw std::runtime_error("Platform readback metadata packet ended early.");
+    throw std::runtime_error("Board readback metadata packet ended early.");
   }
 
   const auto parsed_metadata = c2h_protocol::parse_readback_metadata(metadata);
   if (parsed_metadata.payload_bytes % sizeof(Word_t) != 0) {
-    throw std::runtime_error("Platform readback payload size is not word-aligned.");
+    throw std::runtime_error("Board readback payload size is not word-aligned.");
   }
   if (parsed_metadata.payload_bytes == 0 && !parsed_metadata.is_last) {
     throw std::runtime_error(
-        "Platform readback metadata declares an empty non-final packet.");
+        "Board readback metadata declares an empty non-final packet.");
   }
 
   std::vector<std::byte> payload(parsed_metadata.payload_bytes);
   const size_t payload_bytes = read_exact(payload);
   if (payload_bytes != payload.size()) {
-    throw std::runtime_error("Platform readback payload ended before the metadata-declared size.");
+    throw std::runtime_error("Board readback payload ended before the metadata-declared size.");
   }
 
   return ReadbackPacket{
@@ -543,11 +558,11 @@ std::unique_ptr<IBoard> create_board(BoardType board_type,
                                      int xdma_channel,
                                      HostInterface host_interface) {
   switch (board_type) {
-    case BoardType::DDR4:
+    case BoardType::U200:
       return std::make_unique<DDR4>(std::move(pci_bdf), xdma_channel, host_interface);
-    case BoardType::HBM2_U50:
+    case BoardType::U50:
       return std::make_unique<HBM2U50>(std::move(pci_bdf), xdma_channel, host_interface);
-    case BoardType::HBM2_U55C:
+    case BoardType::U55C:
       return std::make_unique<HBM2U55C>(std::move(pci_bdf), xdma_channel, host_interface);
   }
 

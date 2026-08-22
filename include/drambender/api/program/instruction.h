@@ -63,8 +63,9 @@ Inst SMC_END();
 Inst SMC_INFO(int rdcnt);
   
 /**
- * Wait for a specified amount of fabric cycles (6ns by default) before 
- * executing the next instruction
+ * Wait for a specified number of fabric cycles before executing the next
+ * instruction. The cycle duration is fixed by the board bitstream and
+ * described by BoardConfig.
  * @param samt how many cycles to wait for, must be greater than 2
  */
 Inst SMC_SLEEP(uint32_t samt);

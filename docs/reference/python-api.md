@@ -6,6 +6,28 @@ below in running code, and
 [`examples/tutorial.ipynb`](../../examples/tutorial.ipynb) covers the complete
 feature set.
 
+## Board configurations
+
+The API provides one immutable `BoardConfig` for each maintained design:
+
+| Object | Board type | Memory type |
+|---|---|---|
+| `drambender.api.board_configs.U200` | `BoardType.U200` | `MemoryType.DDR4` |
+| `drambender.api.board_configs.U50` | `BoardType.U50` | `MemoryType.HBM2` |
+| `drambender.api.board_configs.U55C` | `BoardType.U55C` | `MemoryType.HBM2` |
+
+A configuration exposes `name`, `board_type`, `memory_type`,
+`instruction_capacity`, `dram_command_slot_ns`,
+`dram_slots_per_fabric_cycle`, `readback_buffer_capacity`,
+`hbm_channel_count`, `hbm_pseudo_channel_count`, `hbm_sid_count`,
+`broadcast_supported`, and `power_telemetry_supported`. Call `summary()` for a
+formatted overview.
+
+Targets expose the matching object as `target.board_config`. An opened board
+exposes it as the read-only `board.board_config` property. The built-in values
+describe what the API expects from the programmed bitstream; they are not
+queried from the FPGA image.
+
 ## Memory targets
 
 | Object | Board | Key fields |
@@ -37,7 +59,7 @@ inspected, held, reused, and submitted later.
 |---|---|
 | `print(program)` | Decoded instruction stream |
 | `instruction_count` | Number of encoded instructions |
-| `default_dram_inst_latency` | DRAM command slot (ns) of the target the program was built for; used by the VM unless overridden |
+| `default_dram_inst_latency` | Default DRAM command slot in ns; target-aware Python builders set it from `target.board_config`, while raw construction uses the U200 default |
 | `dry_run(max_instructions=...)` | Software-VM execution report: instructions, branches, registers, timing, DRAM-command counts |
 | `trace_dram_commands()` | Timestamped DRAM-command trace; `trace.truncated` flags an incomplete trace |
 | `trace.summarize_timings()` | Observed tRCD, tRAS, and tRP minima and maxima (observational, not a specification check) |
@@ -46,7 +68,8 @@ inspected, held, reused, and submitted later.
 
 | Member | Purpose |
 |---|---|
-| `drambender.api.open_board(target, pci_bdf=..., xdma_channel=..., host_interface=HostInterface.XDMA)` | Open one `(PCI BDF, XDMA channel)` endpoint; usable as a context manager |
+| `drambender.api.open_board(target_or_type, pci_bdf=..., xdma_channel=..., host_interface=HostInterface.XDMA)` | Open one `(PCI BDF, XDMA channel)` endpoint from a target, `BoardConfig`, or `BoardType.U200`, `BoardType.U50`, or `BoardType.U55C`; usable as a context manager |
+| `board.board_config` | Read-only `BoardConfig` selected for this board |
 | `board.execute(programs)` | Submit one program or a list/tuple; readback is delivered in program order |
 | `board.receive_into(buffer, timeout=None)` | Fill a preallocated, writable, C-contiguous buffer whose size is a multiple of four bytes |
 | `board.synchronize()` | Wait for outstanding work |
@@ -58,6 +81,10 @@ a full hardware reset. The API performs `full_reset()` before raising when
 `receive_into()` times out, when it surfaces an asynchronous readback error,
 or when Ctrl+C interrupts a receive or synchronization wait on the main Python
 thread.
+
+Opening a board prints its configuration summary and states that the API
+expects the programmed bitstream to match. This message reports the selected
+API configuration; it is not bitstream auto-detection.
 
 ## Custom programs
 

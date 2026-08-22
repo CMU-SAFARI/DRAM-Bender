@@ -38,7 +38,9 @@ struct Options {
   int xdma_channel = 0;
   int channel = 0;
   int pseudo_channel = 0;
-  int sid = 1;
+  int sid = static_cast<int>(
+                get_board_config(BoardType::U55C).hbm_sid_count) -
+            1;
   int bank = 0;
   int row = 0;
   int row_count = 1;
@@ -128,6 +130,8 @@ bool parse_value_arg(int argc, char** argv, int* arg_index, std::string_view arg
 }
 
 bool parse_args(int argc, char** argv, Options* options) {
+  const BoardConfig& config = get_board_config(BoardType::U55C);
+
   for (int arg_index = 1; arg_index < argc; ++arg_index) {
     const std::string_view arg(argv[arg_index]);
 
@@ -188,16 +192,32 @@ bool parse_args(int argc, char** argv, Options* options) {
                  k_num_columns * k_bytes_per_hbm_column_pair);
     return false;
   }
-  if (options->channel < 0 || options->channel > 15) {
-    std::fprintf(stderr, "channel must be in range 0..15 for the latest U55 HBM2 image.\n");
+  if (options->channel < 0 ||
+      options->channel >= static_cast<int>(config.hbm_channel_count)) {
+    std::fprintf(stderr,
+                 "channel must be in range 0..%zu for %.*s.\n",
+                 config.hbm_channel_count - 1,
+                 static_cast<int>(config.name.size()),
+                 config.name.data());
     return false;
   }
-  if (options->pseudo_channel != 0 && options->pseudo_channel != 1) {
-    std::fprintf(stderr, "pseudo-channel must be 0 or 1 for HBM2.\n");
+  if (options->pseudo_channel < 0 ||
+      options->pseudo_channel >=
+          static_cast<int>(config.hbm_pseudo_channel_count)) {
+    std::fprintf(stderr,
+                 "pseudo-channel must be in range 0..%zu for %.*s.\n",
+                 config.hbm_pseudo_channel_count - 1,
+                 static_cast<int>(config.name.size()),
+                 config.name.data());
     return false;
   }
-  if (options->sid != 0 && options->sid != 1) {
-    std::fprintf(stderr, "sid must be 0 or 1 for the latest U55 SID bitstream.\n");
+  if (options->sid < 0 ||
+      options->sid >= static_cast<int>(config.hbm_sid_count)) {
+    std::fprintf(stderr,
+                 "sid must be in range 0..%zu for %.*s.\n",
+                 config.hbm_sid_count - 1,
+                 static_cast<int>(config.name.size()),
+                 config.name.data());
     return false;
   }
   if (options->bank < 0 || options->bank > 15) {
@@ -474,7 +494,7 @@ int main(int argc, char** argv) {
               options.receive_bytes);
 
   try {
-    HBM2 board(options.pci_bdf, options.xdma_channel);
+    HBM2U55C board(options.pci_bdf, options.xdma_channel);
     if (!options.skip_temperature) {
       try {
         const HBMTemperature temp = board.read_temperature();

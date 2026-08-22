@@ -121,8 +121,7 @@ class PacketTestBoard : public DRAMBender::IBoard {
  public:
   explicit PacketTestBoard(std::unique_ptr<DRAMBender::IHostInterface> host)
       : DRAMBender::IBoard(std::move(host),
-                           2048,
-                           1024,
+                           DRAMBender::get_board_config(DRAMBender::BoardType::U200),
                            std::chrono::seconds(5)) {}
 
   bool expect_packet(const std::vector<std::byte>& payload, bool is_last) {
@@ -243,8 +242,7 @@ class RecoveryTestBoard : public DRAMBender::IBoard {
                     std::chrono::milliseconds receive_timeout)
       : DRAMBender::IBoard(
             std::make_unique<BlockingHostInterface>(std::move(state)),
-            2048,
-            1024,
+            DRAMBender::get_board_config(DRAMBender::BoardType::U200),
             receive_timeout) {}
 };
 
@@ -573,7 +571,7 @@ bool test_empty_nonlast_metadata_is_malformed() {
   PacketTestBoard board(std::make_unique<FakeHostInterface>(
       std::vector<std::vector<std::byte>>{metadata(0, false)}));
   return board.expect_protocol_error(
-      "Platform readback metadata declares an empty non-final packet.");
+      "Board readback metadata declares an empty non-final packet.");
 }
 
 bool test_empty_last_metadata_remains_valid_packet() {
@@ -589,7 +587,7 @@ bool test_reserved_metadata_bits_are_malformed() {
   PacketTestBoard board(std::make_unique<FakeHostInterface>(
       std::vector<std::vector<std::byte>>{std::move(packet)}));
   return board.expect_protocol_error(
-      "Platform readback metadata contains nonzero reserved bits.");
+      "Board readback metadata contains nonzero reserved bits.");
 }
 
 bool test_receive_timeout_full_resets_and_board_is_reusable() {
@@ -604,7 +602,7 @@ bool test_receive_timeout_full_resets_and_board_is_reusable() {
     return false;
   } catch (const std::runtime_error& error) {
     if (std::string(error.what()) !=
-        "Timed out while waiting for readback data from the platform.") {
+        "Timed out while waiting for readback data from the board.") {
       std::cerr << "unexpected receive timeout error: " << error.what() << '\n';
       return false;
     }
@@ -747,7 +745,7 @@ bool test_protocol_error_full_resets_and_board_is_reusable() {
     return false;
   } catch (const std::runtime_error& error) {
     if (std::string(error.what()) !=
-        "Platform readback metadata declares an empty non-final packet.") {
+        "Board readback metadata declares an empty non-final packet.") {
       std::cerr << "unexpected malformed-metadata error: " << error.what()
                 << '\n';
       return false;
@@ -806,7 +804,7 @@ bool test_failed_automatic_reset_closes_board_and_preserves_timeout() {
     return false;
   } catch (const std::runtime_error& error) {
     if (std::string(error.what()) !=
-        "Timed out while waiting for readback data from the platform.") {
+        "Timed out while waiting for readback data from the board.") {
       std::cerr << "recovery failure masked the original timeout: "
                 << error.what() << '\n';
       return false;

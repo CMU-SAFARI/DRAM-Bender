@@ -8,6 +8,7 @@
 #include <string_view>
 #include <vector>
 
+#include "drambender/api/board/board_config.h"
 #include "drambender/api/program/program.h"
 
 namespace DRAMBender::vm {
@@ -59,12 +60,14 @@ struct DRAMCommandTrace {
 };
 
 // Wall-clock latency of one DRAM mini-instruction and the number of
-// mini-instructions packed into one fabric cycle. Defaults reproduce the
-// standard 6 ns fabric-cycle, 4-slot Bender variant; a 4 ns-cycle variant
-// sets `dram_inst_latency_ns = 1.0`, still with 4 slots.
+// mini-instructions packed into one fabric cycle. Defaults come from the
+// built-in U200 BoardConfig. Override both fields when modeling a bitstream
+// with different timing or packing.
 struct TimingConfig {
-  double dram_inst_latency_ns = 1.5;
-  int num_dram_insts_per_fabric_cycle = 4;
+  double dram_inst_latency_ns =
+      get_board_config(BoardType::U200).dram_command_slot_ns;
+  int num_dram_insts_per_fabric_cycle = static_cast<int>(
+      get_board_config(BoardType::U200).dram_slots_per_fabric_cycle);
 
   double ns_per_cycle() const {
     return dram_inst_latency_ns *

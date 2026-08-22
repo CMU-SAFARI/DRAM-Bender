@@ -31,7 +31,7 @@ inline ReadbackMetadata parse_readback_metadata(
       (words[3] & ~readback_last_mask) != 0;
   if (has_reserved_bits) {
     throw std::runtime_error(
-        "Platform readback metadata contains nonzero reserved bits.");
+        "Board readback metadata contains nonzero reserved bits.");
   }
 
   return ReadbackMetadata{

@@ -49,18 +49,18 @@ constexpr std::string_view to_string(MemoryType memory_type) noexcept {
  * from the programmed FPGA. Custom bitstreams must provide a matching entry.
  */
 struct BoardConfig {
-  std::string_view name;
-  BoardType board_type;
-  MemoryType memory_type;
-  std::size_t instruction_capacity;
-  double dram_command_slot_ns;
-  std::size_t dram_slots_per_fabric_cycle;
-  std::size_t readback_buffer_capacity;
-  std::size_t hbm_channel_count;
-  std::size_t hbm_pseudo_channel_count;
-  std::size_t hbm_sid_count;
-  bool broadcast_supported;
-  bool power_telemetry_supported;
+  std::string_view name;                       ///< Human-readable board name.
+  BoardType board_type;                        ///< Public board selector.
+  MemoryType memory_type;                      ///< Memory technology on the board.
+  std::size_t instruction_capacity;            ///< Encoded instructions in instruction RAM.
+  double dram_command_slot_ns;                 ///< Duration of one DRAM command slot.
+  std::size_t dram_slots_per_fabric_cycle;     ///< Command slots packed per fabric cycle.
+  std::size_t readback_buffer_capacity;        ///< Entries in the FPGA readback buffer.
+  std::size_t hbm_channel_count;               ///< HBM channels; zero for non-HBM boards.
+  std::size_t hbm_pseudo_channel_count;        ///< Pseudo-channels per HBM channel.
+  std::size_t hbm_sid_count;                   ///< Addressable HBM stack IDs.
+  bool broadcast_supported;                    ///< HBM command broadcast support.
+  bool power_telemetry_supported;              ///< On-card power telemetry support.
 
   /** @brief Return a human-readable, multiline description of this configuration. */
   std::string summary() const;

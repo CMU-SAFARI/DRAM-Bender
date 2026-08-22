@@ -67,12 +67,19 @@ std::string BoardConfig::summary() const {
          << "DRAM command slot:          " << std::fixed << std::setprecision(6)
          << dram_command_slot_ns << " ns\n"
          << "DRAM slots/fabric cycle:    " << dram_slots_per_fabric_cycle << '\n'
-         << "Readback buffer capacity:   " << readback_buffer_capacity << '\n'
-         << "HBM channels:               " << hbm_channel_count << '\n'
-         << "HBM pseudo-channels:        " << hbm_pseudo_channel_count << '\n'
-         << "HBM stack IDs:              " << hbm_sid_count << '\n'
-         << "Broadcast supported:        " << yes_no(broadcast_supported) << '\n'
-         << "Power telemetry supported:  " << yes_no(power_telemetry_supported);
+         << "Fabric cycle:               "
+         << dram_command_slot_ns * static_cast<double>(dram_slots_per_fabric_cycle)
+         << " ns\n"
+         << "Readback buffer capacity:   " << readback_buffer_capacity
+         << " entries";
+  if (memory_type == MemoryType::HBM2) {
+    output << '\n'
+           << "HBM channels:               " << hbm_channel_count << '\n'
+           << "HBM pseudo-channels:        " << hbm_pseudo_channel_count << '\n'
+           << "HBM stack IDs:              " << hbm_sid_count << '\n'
+           << "Broadcast supported:        " << yes_no(broadcast_supported) << '\n'
+           << "Power telemetry supported:  " << yes_no(power_telemetry_supported);
+  }
   return output.str();
 }
 

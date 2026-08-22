@@ -18,54 +18,37 @@
 
 namespace DRAMBender {
 
-namespace {
-// Instruction buffer depth per board.
-constexpr int k_u50_instruction_capacity = 32768;    // 32 K
-constexpr int k_u55c_instruction_capacity = 131072;  // 128 K
-
-constexpr HBM2Capabilities k_u50_capabilities{
-    .num_sids = 1,
-    .broadcast_supported = false,
-    .instruction_capacity = k_u50_instruction_capacity,
-    .power_supported = false,
-};
-
-constexpr HBM2Capabilities k_u55c_capabilities{
-    .num_sids = 2,
-    .broadcast_supported = true,
-    .instruction_capacity = k_u55c_instruction_capacity,
-    .power_supported = true,
-};
-}  // namespace
-
 HBM2::HBM2(std::unique_ptr<IHostInterface> host_interface,
-           HBM2Capabilities capabilities,
+           const BoardConfig& board_config,
            std::unique_ptr<CmsMonitor> monitor)
-    : IBoard(std::move(host_interface), capabilities.instruction_capacity),
-      capabilities_(capabilities),
+    : IBoard(std::move(host_interface), board_config),
       monitor_(std::move(monitor)) {}
 
 HBM2::~HBM2() = default;
 
 HBM2U50::HBM2U50(std::string pci_bdf, int xdma_channel, HostInterface host_interface)
-    : HBM2U50(create_host_interface(host_interface, std::move(pci_bdf), xdma_channel)) {}
+    : HBM2U50(create_host_interface(host_interface, pci_bdf, xdma_channel)) {
+  reportOpen_(pci_bdf, xdma_channel, host_interface);
+}
 
 HBM2U50::HBM2U50(std::unique_ptr<IHostInterface> host_interface)
-    : HBM2(std::move(host_interface), k_u50_capabilities) {}
+    : HBM2(std::move(host_interface), get_board_config(BoardType::U50)) {}
 
 HBM2U55C::HBM2U55C(std::string pci_bdf, int xdma_channel, HostInterface host_interface)
     // U55C supports power telemetry, so build a CMS monitor from the PCI BDF.
     // pci_bdf is copied (not moved) so both the host interface and the monitor
     // get it.
     : HBM2(create_host_interface(host_interface, pci_bdf, xdma_channel),
-           k_u55c_capabilities,
-           std::make_unique<CmsMonitor>(pci_bdf, xdma_channel)) {}
+           get_board_config(BoardType::U55C),
+           std::make_unique<CmsMonitor>(pci_bdf, xdma_channel)) {
+  reportOpen_(pci_bdf, xdma_channel, host_interface);
+}
 
 HBM2U55C::HBM2U55C(std::unique_ptr<IHostInterface> host_interface)
-    : HBM2(std::move(host_interface), k_u55c_capabilities) {}
+    : HBM2(std::move(host_interface), get_board_config(BoardType::U55C)) {}
 
 PowerTelemetry HBM2::read_power_telemetry() {
-  if (!capabilities_.power_supported) {
+  if (!board_config().power_telemetry_supported) {
     throw std::runtime_error("This HBM2 board does not support power telemetry.");
   }
   if (!monitor_) {
@@ -156,16 +139,19 @@ void HBM2::discard_readback_data(bool discard) {
 }
 
 void HBM2::set_broadcast_channels(std::span<const int> channels) {
-  if (!capabilities_.broadcast_supported) {
+  if (!board_config().broadcast_supported) {
     throw std::runtime_error(
         "This HBM2 board does not support command broadcast. Select a single "
         "channel with SEL_CH instead.");
   }
 
+  const size_t channel_count = board_config().hbm_channel_count;
   uint32_t channel_mask = 0;
   for (int channel : channels) {
-    if (channel < 0 || channel > 15) {
-      throw std::invalid_argument("HBM2 broadcast channel must be in range 0..15.");
+    if (channel < 0 || static_cast<size_t>(channel) >= channel_count) {
+      throw std::invalid_argument(
+          "HBM2 broadcast channel must be in range 0.." +
+          std::to_string(channel_count - 1) + ".");
     }
     channel_mask |= (uint32_t{1} << static_cast<unsigned>(channel));
   }

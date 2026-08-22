@@ -1290,7 +1290,7 @@ void run_hardware(const Options& options,
   std::string final_reset = "not-opened";
   std::vector<Summary> summaries;
   try {
-    board = create_board(BoardType::DDR4, options.pci_bdf, options.xdma_channel,
+    board = create_board(BoardType::U200, options.pci_bdf, options.xdma_channel,
                          HostInterface::XDMA);
     board->full_reset();
     for (const Workload& workload : workloads) {

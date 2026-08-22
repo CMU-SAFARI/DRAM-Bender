@@ -342,7 +342,7 @@ int main(int argc, char** argv) {
 
   try {
     auto board = create_board(
-        BoardType::DDR4, options.pci_bdf, options.xdma_channel, HostInterface::XDMA);
+        BoardType::U200, options.pci_bdf, options.xdma_channel, HostInterface::XDMA);
     board->reset_fpga();
 
     const FinalProgram program = build_rw_program(

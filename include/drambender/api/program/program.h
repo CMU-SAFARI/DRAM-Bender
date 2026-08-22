@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "drambender/api/board/board_config.h"
 #include "drambender/api/program/instruction.h"
 
 namespace DRAMBender {
@@ -63,7 +64,8 @@ class FinalProgram {
   std::vector<Inst> program_;
   std::map<std::string, size_t> labels_;
   std::map<size_t, std::string> branches_;
-  double default_dram_inst_latency_ = 1.5;
+  double default_dram_inst_latency_ =
+      get_board_config(BoardType::U200).dram_command_slot_ns;
 
   friend std::string debug::format_program(const FinalProgram& program);
   friend std::string debug::format_program_binary(const FinalProgram& program);

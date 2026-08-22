@@ -140,11 +140,17 @@ python examples/read_write.py \
     --pattern 0xDEADBEEF
 ```
 
-A successful run prints:
+A successful run ends with:
 
 ```text
 PASS: 2048 words matched (pattern=0xdeadbeef)
 ```
+
+Before the result, `open_board()` prints the selected board configuration,
+including the instruction capacity, command timing, readback capacity, and
+board-specific features. It also states that the API expects the programmed
+bitstream to match. This output describes the API configuration rather than
+probing the FPGA image, so confirm it against the bitstream you programmed.
 
 This is a quick endpoint and readback check, not an exhaustive memory test. It
 overwrites the selected row. Replace the BDF, channel, bank, row, and pattern

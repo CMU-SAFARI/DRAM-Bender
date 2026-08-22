@@ -546,7 +546,7 @@ class Suite:
                 "delay_seconds": delay_seconds,
                 "delay_cycles": delay_cycles,
                 "timeout_seconds": explicit_timeout_seconds,
-                "expected_error": "Timed out while waiting for readback data from the platform.",
+                "expected_error": "Timed out while waiting for readback data from the board.",
             },
             "status": "running",
         }

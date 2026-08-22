@@ -44,7 +44,7 @@ Integrated Circuits and Systems*, vol. 42, no. 12, pp. 5098-5112, 2023.
 
 DRAM Bender officially supports the AMD/Xilinx Alveo **U200** (external DDR4),
 **U50** (on-board HBM2), and **U55C** (on-board HBM2). Board details, program
-targets, and Vivado versions are listed in
+targets, API board configurations, and Vivado versions are listed in
 [docs/reference/supported-boards.md](docs/reference/supported-boards.md).
 
 ## Quick Start

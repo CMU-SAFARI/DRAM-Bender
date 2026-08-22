@@ -123,10 +123,11 @@ class ProgramBuilder:
     or ``HBM2U55Target(...)`` to make omitted ranks and HBM channel selection
     target-aware while keeping every DRAM command explicit.
 
-    Scalar arithmetic and control-flow instructions take one fabric cycle
-    (6 ns on the supported FPGA variants). DRAM mini-operations live inside
-    :meth:`DRAM` (exact 4-slot packing) or :meth:`DRAMSEQ` (timed sequence);
-    see the module docstring of
+    Scalar arithmetic and control-flow instructions take one fabric cycle.
+    The maintained ISA packs exactly four DRAM command slots into that cycle;
+    ``target.board_config`` reports both the slot duration and the packing.
+    DRAM mini-operations live inside :meth:`DRAM` (exact 4-slot packing) or
+    :meth:`DRAMSEQ` (timed sequence); see the module docstring of
     ``drambender.api.program.instructions`` for the command factories.
     """
 
@@ -225,7 +226,9 @@ class ProgramBuilder:
         return self._emit("SRX")
 
     def SLEEP(self, cycles):
-        """Idle for ``cycles`` fabric cycles (6 ns each on the default variant).
+        """Idle for ``cycles`` target-specific fabric cycles.
+
+        The cycle duration is described by ``target.board_config``.
 
         ``SLEEP(1)``/``SLEEP(2)`` expand to 1–2 ``DRAM(NOP, NOP, NOP, NOP)``
         cycles (no separate scalar instruction). ``SLEEP(N >= 3)`` emits a
@@ -255,7 +258,8 @@ class ProgramBuilder:
         Each ``op`` must be a mini-op from
         ``drambender.api.program.instructions`` (``PRE``, ``ACT``, ``RD``,
         ``WR``, ``REF``, ``SEL_CH``, ``NOP``). Use ``NOP()`` for unused slots.
-        One fabric cycle (6 ns on the default variant).
+        One target-specific fabric cycle; its duration is described by
+        ``target.board_config``.
 
         Example — a single PRE on this bank::
 
