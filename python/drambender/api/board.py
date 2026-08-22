@@ -20,7 +20,9 @@ from .._core import (
 from .program.targets import DDR4Target, HBM2Target
 
 
-def _resolve_board_type(target_or_type) -> BoardType:
+def _resolve_board_type(
+    target_or_type: BoardType | BoardConfig | DDR4Target | HBM2Target,
+) -> BoardType:
     if isinstance(target_or_type, BoardType):
         return target_or_type
     if isinstance(target_or_type, BoardConfig):
@@ -36,7 +38,7 @@ def _resolve_board_type(target_or_type) -> BoardType:
 
 
 def open_board(
-    target_or_type,
+    target_or_type: BoardType | BoardConfig | DDR4Target | HBM2Target,
     pci_bdf: str,
     xdma_channel: int = 0,
     host_interface: HostInterface = HostInterface.XDMA,

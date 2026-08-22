@@ -14,6 +14,7 @@ import numpy as np
 
 from drambender.api import (
     FinalProgram,
+    HBM2,
     HBM2Target,
     HBM2U50,
     HBM2U50Target,
@@ -288,7 +289,12 @@ def main() -> int:
     parser.add_argument("--xdma-channel", type=int, default=0)
     parser.add_argument("--channel", type=int, default=0)
     parser.add_argument("--pseudo-channel", type=int, default=0)
-    parser.add_argument("--sid", type=int, default=1)
+    parser.add_argument(
+        "--sid",
+        type=int,
+        default=None,
+        help="HBM stack ID (default: highest SID supported by the selected board)",
+    )
     parser.add_argument("--bank", type=int, default=0)
     parser.add_argument("--row", type=int, default=0)
     parser.add_argument("--row-count", type=int, default=1)
@@ -313,6 +319,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    target_cls, board_cls = (
+        (HBM2U50Target, HBM2U50)
+        if args.board == "u50"
+        else (HBM2U55Target, HBM2U55C)
+    )
+    config = target_cls().board_config
+    if args.sid is None:
+        args.sid = config.hbm_sid_count - 1
+
     min_receive_bytes = NUM_COLUMNS * BYTES_PER_HBM_COLUMN_PAIR
     if args.receive_bytes < min_receive_bytes:
         print(
@@ -321,14 +336,25 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    if not 0 <= args.channel <= 15:
-        print("channel must be in range 0..15 for the latest U55 HBM2 image", file=sys.stderr)
+    if not 0 <= args.channel < config.hbm_channel_count:
+        print(
+            f"channel must be in range 0..{config.hbm_channel_count - 1} "
+            f"for {config.name}",
+            file=sys.stderr,
+        )
         return 2
-    if args.pseudo_channel not in (0, 1):
-        print("pseudo-channel must be 0 or 1 for HBM2", file=sys.stderr)
+    if not 0 <= args.pseudo_channel < config.hbm_pseudo_channel_count:
+        print(
+            "pseudo-channel must be in range "
+            f"0..{config.hbm_pseudo_channel_count - 1} for {config.name}",
+            file=sys.stderr,
+        )
         return 2
-    if args.sid not in (0, 1):
-        print("sid must be 0 or 1 for the latest U55 SID bitstream", file=sys.stderr)
+    if not 0 <= args.sid < config.hbm_sid_count:
+        print(
+            f"sid must be in range 0..{config.hbm_sid_count - 1} for {config.name}",
+            file=sys.stderr,
+        )
         return 2
     if not 0 <= args.bank <= 15:
         print("bank must be in range 0..15; sid is encoded separately in BAR[4]", file=sys.stderr)
@@ -346,9 +372,6 @@ def main() -> int:
         print("iterations must be greater than 0", file=sys.stderr)
         return 2
 
-    target_cls, board_cls = (
-        (HBM2U50Target, HBM2U50) if args.board == "u50" else (HBM2U55Target, HBM2U55C)
-    )
     target = target_cls(
         channel=args.channel,
         pseudo_channel=args.pseudo_channel,

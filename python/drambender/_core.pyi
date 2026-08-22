@@ -376,12 +376,12 @@ class HBM2(Board):
     def power_supported(self) -> bool: ...
 
 class HBM2U50(HBM2):
-    """Alveo U50 HBM2 board: 1 SID, no broadcast, 32 K instructions."""
+    """Alveo U50 HBM2 board."""
 
     def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 
 class HBM2U55C(HBM2):
-    """Alveo U55C HBM2 board: 2 SIDs, broadcast, 128 K instructions."""
+    """Alveo U55C HBM2 board."""
 
     def __init__(self, pci_bdf: str, xdma_channel: int = 0, host_interface: HostInterface = HostInterface.XDMA) -> None: ...
 

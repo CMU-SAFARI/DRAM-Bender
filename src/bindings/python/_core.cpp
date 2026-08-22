@@ -1332,7 +1332,7 @@ NB_MODULE(_core, m) {
   nb::class_<HBM2U50, HBM2>(
       m,
       "HBM2U50",
-      "Alveo U50 HBM2 board: 1 SID, no broadcast, 32 K instructions.")
+      "Alveo U50 HBM2 board.")
       .def(nb::init<std::string, int, HostInterface>(),
            nb::arg("pci_bdf"),
            nb::arg("xdma_channel") = 0,
@@ -1341,7 +1341,7 @@ NB_MODULE(_core, m) {
   nb::class_<HBM2U55C, HBM2>(
       m,
       "HBM2U55C",
-      "Alveo U55C HBM2 board: 2 SIDs, broadcast, 128 K instructions.")
+      "Alveo U55C HBM2 board.")
       .def(nb::init<std::string, int, HostInterface>(),
            nb::arg("pci_bdf"),
            nb::arg("xdma_channel") = 0,
