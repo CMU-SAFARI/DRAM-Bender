@@ -19,6 +19,7 @@
 #include "drambender/api/board/DDR4.h"
 #include "drambender/api/board/HBM2.h"
 #include "drambender/api/board/board.h"
+#include "drambender/api/board/board_config.h"
 #include "drambender/api/host_interface/host_interface.h"
 #include "drambender/api/program/instruction.h"
 #include "drambender/api/program/program.h"
@@ -964,9 +965,30 @@ NB_MODULE(_core, m) {
       .value("Ethernet", HostInterface::Ethernet);
 
   nb::enum_<BoardType>(m, "BoardType")
-      .value("DDR4", BoardType::DDR4)
-      .value("HBM2_U50", BoardType::HBM2_U50)
-      .value("HBM2_U55C", BoardType::HBM2_U55C);
+      .value("U200", BoardType::U200)
+      .value("U50", BoardType::U50)
+      .value("U55C", BoardType::U55C);
+
+  nb::enum_<MemoryType>(m, "MemoryType")
+      .value("DDR4", MemoryType::DDR4)
+      .value("HBM2", MemoryType::HBM2);
+
+  nb::class_<BoardConfig>(m, "BoardConfig")
+      .def_ro("name", &BoardConfig::name)
+      .def_ro("board_type", &BoardConfig::board_type)
+      .def_ro("memory_type", &BoardConfig::memory_type)
+      .def_ro("instruction_capacity", &BoardConfig::instruction_capacity)
+      .def_ro("dram_command_slot_ns", &BoardConfig::dram_command_slot_ns)
+      .def_ro("dram_slots_per_fabric_cycle", &BoardConfig::dram_slots_per_fabric_cycle)
+      .def_ro("readback_buffer_capacity", &BoardConfig::readback_buffer_capacity)
+      .def_ro("hbm_channel_count", &BoardConfig::hbm_channel_count)
+      .def_ro("hbm_pseudo_channel_count", &BoardConfig::hbm_pseudo_channel_count)
+      .def_ro("hbm_sid_count", &BoardConfig::hbm_sid_count)
+      .def_ro("broadcast_supported", &BoardConfig::broadcast_supported)
+      .def_ro("power_telemetry_supported", &BoardConfig::power_telemetry_supported)
+      .def("summary", &BoardConfig::summary);
+
+  m.def("get_board_config", &get_board_config, nb::rv_policy::reference);
 
   nb::enum_<PC_TYPE>(m, "PCType")
       .value("WRITE", PC_TYPE::WRITE)

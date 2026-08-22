@@ -16,11 +16,55 @@ class HostInterface(enum.Enum):
     Ethernet = 2
 
 class BoardType(enum.Enum):
+    U200 = 0
+
+    U50 = 1
+
+    U55C = 2
+
+class MemoryType(enum.Enum):
     DDR4 = 0
 
-    HBM2_U50 = 1
+    HBM2 = 1
 
-    HBM2_U55C = 2
+class BoardConfig:
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def board_type(self) -> BoardType: ...
+
+    @property
+    def memory_type(self) -> MemoryType: ...
+
+    @property
+    def instruction_capacity(self) -> int: ...
+
+    @property
+    def dram_command_slot_ns(self) -> float: ...
+
+    @property
+    def dram_slots_per_fabric_cycle(self) -> int: ...
+
+    @property
+    def readback_buffer_capacity(self) -> int: ...
+
+    @property
+    def hbm_channel_count(self) -> int: ...
+
+    @property
+    def hbm_pseudo_channel_count(self) -> int: ...
+
+    @property
+    def hbm_sid_count(self) -> int: ...
+
+    @property
+    def broadcast_supported(self) -> bool: ...
+
+    @property
+    def power_telemetry_supported(self) -> bool: ...
+
+    def summary(self) -> str: ...
 
 class PCType(enum.Enum):
     WRITE = 0
@@ -348,6 +392,8 @@ def open_board(board_type: BoardType, pci_bdf: str, xdma_channel: int = 0, host_
     XDMA endpoint on that function.
     """
     ...
+
+def get_board_config(board_type: BoardType) -> BoardConfig: ...
 
 def lower(ops: list) -> FinalProgram: ...
 

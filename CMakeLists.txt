@@ -33,6 +33,7 @@ add_library(DRAMBender
   src/api/board/DDR4.cpp
   src/api/board/HBM2.cpp
   src/api/board/board.cpp
+  src/api/board/board_config.cpp
   src/api/board/cms_monitor.cpp
   src/api/program/instruction.cpp
   src/api/program/program.cpp

@@ -10,10 +10,11 @@
 #include <mutex>
 #include <optional>
 #include <span>
-#include <string_view>
+#include <string>
 #include <thread>
 #include <vector>
 
+#include "drambender/api/board/board_config.h"
 #include "drambender/api/host_interface/host_interface.h"
 #include "drambender/api/program/program.h"
 
@@ -23,25 +24,6 @@ using Word_t = uint32_t;
 using Inst_t = uint64_t;
 
 inline constexpr size_t axi_datapath_byte_width = 32;
-
-enum class BoardType {
-  DDR4,
-  HBM2_U50,
-  HBM2_U55C,
-};
-
-constexpr std::string_view to_string(BoardType board_type) noexcept {
-  switch (board_type) {
-    case BoardType::DDR4:
-      return "DDR4";
-    case BoardType::HBM2_U50:
-      return "HBM2_U50";
-    case BoardType::HBM2_U55C:
-      return "HBM2_U55C";
-  }
-
-  return "Unknown";
-}
 
 /**
  * @brief Abstract interface for FPGA boards.
