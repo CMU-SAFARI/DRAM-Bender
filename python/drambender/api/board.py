@@ -1,7 +1,8 @@
-"""Hardware interface: Board classes, board-type enums, and factory."""
+"""Hardware interface: boards, their configurations, and the open factory."""
 
 from .._core import (
     Board,
+    BoardConfig,
     BoardType,
     DDR4,
     HBM2,
@@ -9,30 +10,28 @@ from .._core import (
     HBM2U55C,
     HBMTemperature,
     HostInterface,
+    MemoryType,
     PowerTelemetry,
     RailTelemetry,
     SensorStat,
+    get_board_config,
     open_board as _native_open_board,
 )
-from .program.targets import DDR4Target, HBM2Target, HBM2U50Target, HBM2U55Target
+from .program.targets import DDR4Target, HBM2Target
 
 
 def _resolve_board_type(target_or_type) -> BoardType:
     if isinstance(target_or_type, BoardType):
         return target_or_type
+    if isinstance(target_or_type, BoardConfig):
+        return target_or_type.board_type
     if isinstance(target_or_type, DDR4Target):
-        return BoardType.DDR4
-    # Check the concrete HBM2 targets before the abstract base.
-    if isinstance(target_or_type, HBM2U50Target):
-        return BoardType.HBM2_U50
-    if isinstance(target_or_type, HBM2U55Target):
-        return BoardType.HBM2_U55C
+        return target_or_type.board_config.board_type
     if isinstance(target_or_type, HBM2Target):
-        raise TypeError(
-            "Use HBM2U50Target or HBM2U55Target, not the abstract HBM2Target."
-        )
+        return target_or_type.board_config.board_type
     raise TypeError(
-        "open_board expects a DDR4Target, HBM2U50Target, HBM2U55Target, or BoardType."
+        "open_board expects a DDR4Target, HBM2U50Target, HBM2U55Target, "
+        "BoardConfig, or BoardType."
     )
 
 
@@ -52,6 +51,7 @@ def open_board(
 
 __all__ = [
     "Board",
+    "BoardConfig",
     "BoardType",
     "DDR4",
     "HBM2",
@@ -59,8 +59,10 @@ __all__ = [
     "HBM2U55C",
     "HBMTemperature",
     "HostInterface",
+    "MemoryType",
     "PowerTelemetry",
     "RailTelemetry",
     "SensorStat",
+    "get_board_config",
     "open_board",
 ]

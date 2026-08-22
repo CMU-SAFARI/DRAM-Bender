@@ -8,6 +8,7 @@ import importlib
 import drambender.builtin_programs as builtin_programs
 import drambender.api.board as board_api
 from drambender.api import (
+    BoardConfig,
     BoardType,
     DDR4,
     DDR4Target,
@@ -15,7 +16,10 @@ from drambender.api import (
     HBM2U50Target,
     HBM2U55Target,
     HostInterface,
+    MemoryType,
     ProgramBuilder,
+    board_configs,
+    get_board_config,
     open_board,
     program_template,
 )
@@ -65,6 +69,113 @@ def test_builder_requires_explicit_target() -> None:
             _assert("target=DDR4Target" in str(exc), f"unclear target error: {exc}")
         else:
             raise AssertionError("ProgramBuilder without an explicit target should fail")
+
+
+def test_board_configs_are_bound_immutable_defaults() -> None:
+    expected = (
+        (
+            board_configs.U200,
+            "U200",
+            BoardType.U200,
+            MemoryType.DDR4,
+            32768,
+            1.5,
+            0,
+            0,
+            0,
+            False,
+            False,
+        ),
+        (
+            board_configs.U50,
+            "U50",
+            BoardType.U50,
+            MemoryType.HBM2,
+            2048,
+            5 / 3,
+            16,
+            2,
+            1,
+            False,
+            False,
+        ),
+        (
+            board_configs.U55C,
+            "U55C",
+            BoardType.U55C,
+            MemoryType.HBM2,
+            131072,
+            5 / 3,
+            16,
+            2,
+            2,
+            True,
+            True,
+        ),
+    )
+
+    for (
+        config,
+        name,
+        board_type,
+        memory_type,
+        instruction_capacity,
+        command_slot_ns,
+        hbm_channel_count,
+        hbm_pseudo_channel_count,
+        hbm_sid_count,
+        broadcast_supported,
+        power_telemetry_supported,
+    ) in expected:
+        _assert(isinstance(config, BoardConfig), f"{name} is not a BoardConfig")
+        _assert(config.name == name, f"unexpected config name {config.name}")
+        _assert(config.board_type == board_type, f"{name} board type mismatch")
+        _assert(config.memory_type == memory_type, f"{name} memory type mismatch")
+        _assert(
+            config.instruction_capacity == instruction_capacity,
+            f"{name} instruction capacity mismatch",
+        )
+        _assert(
+            config.dram_command_slot_ns == command_slot_ns,
+            f"{name} slot duration mismatch",
+        )
+        _assert(
+            config.dram_slots_per_fabric_cycle == 4,
+            f"{name} DRAM slot count mismatch",
+        )
+        _assert(
+            config.readback_buffer_capacity == 1024,
+            f"{name} readback capacity mismatch",
+        )
+        _assert(
+            config.hbm_channel_count == hbm_channel_count,
+            f"{name} HBM channel count mismatch",
+        )
+        _assert(
+            config.hbm_pseudo_channel_count == hbm_pseudo_channel_count,
+            f"{name} HBM pseudo-channel count mismatch",
+        )
+        _assert(
+            config.hbm_sid_count == hbm_sid_count,
+            f"{name} HBM SID count mismatch",
+        )
+        _assert(
+            config.broadcast_supported is broadcast_supported,
+            f"{name} broadcast mismatch",
+        )
+        _assert(
+            config.power_telemetry_supported is power_telemetry_supported,
+            f"{name} power telemetry mismatch",
+        )
+        resolved = get_board_config(board_type)
+        _assert(resolved.board_type == config.board_type, f"{name} registry lookup mismatch")
+
+    try:
+        board_configs.U200.instruction_capacity = 1
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError("BoardConfig properties must be immutable")
 
 
 def test_explicit_ddr4_target_builds() -> None:
@@ -136,15 +247,17 @@ def test_open_board_accepts_targets_and_board_type() -> None:
     try:
         open_board(DDR4Target(), "0000:01:00.0", 0, HostInterface.XDMA)
         open_board(HBM2U55Target(), "0000:81:00.0", 1, HostInterface.XDMA)
-        open_board(BoardType.DDR4, "0001:01:00.0", 2, HostInterface.XDMA)
+        open_board(BoardType.U200, "0001:01:00.0", 2, HostInterface.XDMA)
+        open_board(board_configs.U50, "0000:82:00.0", 3, HostInterface.XDMA)
     finally:
         board_api._native_open_board = original_native_open_board
 
     _assert(
         calls == [
-            (BoardType.DDR4, "0000:01:00.0", 0, HostInterface.XDMA),
-            (BoardType.HBM2_U55C, "0000:81:00.0", 1, HostInterface.XDMA),
-            (BoardType.DDR4, "0001:01:00.0", 2, HostInterface.XDMA),
+            (BoardType.U200, "0000:01:00.0", 0, HostInterface.XDMA),
+            (BoardType.U55C, "0000:81:00.0", 1, HostInterface.XDMA),
+            (BoardType.U200, "0001:01:00.0", 2, HostInterface.XDMA),
+            (BoardType.U50, "0000:82:00.0", 3, HostInterface.XDMA),
         ],
         f"unexpected open_board dispatch calls: {calls}",
     )
@@ -244,10 +357,33 @@ def test_jit_physical_bank_affine_scalar() -> None:
 
 
 def test_hbm2_board_variant_capabilities() -> None:
+    ddr4 = DDR4Target()
+    _assert(
+        ddr4.board_config is board_configs.U200,
+        "DDR4 target should use U200 config",
+    )
+    _assert(
+        ddr4.instruction_capacity == ddr4.board_config.instruction_capacity,
+        "DDR4 instruction capacity must come from its board config",
+    )
+
     u50 = HBM2U50Target(channel=2, sid=0)
-    _assert(u50.num_sids == 1, "U50 num_sids should be 1")
-    _assert(u50.broadcast_supported is False, "U50 must not support broadcast")
-    _assert(u50.instruction_capacity == 32768, "U50 instruction capacity should be 32K")
+    _assert(
+        u50.board_config is board_configs.U50,
+        "U50 target should use U50 config",
+    )
+    _assert(
+        u50.num_sids == u50.board_config.hbm_sid_count,
+        "U50 SID count must come from config",
+    )
+    _assert(
+        u50.broadcast_supported is u50.board_config.broadcast_supported,
+        "U50 broadcast capability must come from config",
+    )
+    _assert(
+        u50.instruction_capacity == u50.board_config.instruction_capacity,
+        "U50 instruction capacity must come from config",
+    )
 
     try:
         HBM2U50Target(sid=1)
@@ -256,10 +392,47 @@ def test_hbm2_board_variant_capabilities() -> None:
     else:
         raise AssertionError("HBM2U50Target(sid=1) should fail")
 
+    try:
+        HBM2U50Target(channel=u50.board_config.hbm_channel_count)
+    except ValueError as exc:
+        _assert(
+            "channel" in str(exc),
+            f"U50 channel bound should come from config: {exc}",
+        )
+    else:
+        raise AssertionError("HBM2U50Target accepted a channel beyond its board config")
+
+    try:
+        HBM2U50Target(pseudo_channel=u50.board_config.hbm_pseudo_channel_count)
+    except ValueError as exc:
+        _assert(
+            "pseudo_channel" in str(exc),
+            f"U50 pseudo-channel bound should come from config: {exc}",
+        )
+    else:
+        raise AssertionError("HBM2U50Target accepted a pseudo-channel beyond its board config")
+
     u55 = HBM2U55Target(channel=2, sid=1)
-    _assert(u55.num_sids == 2, "U55C num_sids should be 2")
-    _assert(u55.broadcast_supported is True, "U55C must support broadcast")
-    _assert(u55.instruction_capacity == 131072, "U55C instruction capacity should be 128K")
+    _assert(
+        u55.board_config is board_configs.U55C,
+        "U55C target should use U55C config",
+    )
+    _assert(
+        u55.num_sids == u55.board_config.hbm_sid_count,
+        "U55C SID count must come from config",
+    )
+    _assert(
+        u55.broadcast_supported is u55.board_config.broadcast_supported,
+        "U55C broadcast capability must come from config",
+    )
+    _assert(
+        u55.power_telemetry_supported is u55.board_config.power_telemetry_supported,
+        "U55C power telemetry capability must come from config",
+    )
+    _assert(
+        u55.instruction_capacity == u55.board_config.instruction_capacity,
+        "U55C instruction capacity must come from config",
+    )
 
     try:
         HBM2Target()
@@ -305,6 +478,7 @@ def test_vm_default_latency_follows_target() -> None:
 
 def main() -> int:
     tests = (
+        test_board_configs_are_bound_immutable_defaults,
         test_builder_requires_explicit_target,
         test_explicit_ddr4_target_builds,
         test_target_rank_default_and_explicit_override,

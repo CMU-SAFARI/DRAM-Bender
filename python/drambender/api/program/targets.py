@@ -6,6 +6,9 @@ from typing import Any, ClassVar
 
 from drambender._jit import ScalarAffineRef, ScalarParamRef, ScalarSentinel
 
+from ..._core import BoardConfig
+from ..board_configs import U200, U50, U55C
+
 
 def _coerce_int(value: Any, *, name: str) -> int:
     try:
@@ -33,15 +36,14 @@ def _validate_int_field(value: Any, *, name: str, minimum: int, maximum: int | N
 
 @dataclass(frozen=True)
 class DDR4Target:
-    """DDR4 target defaults used by existing Python DRAM Bender programs."""
+    """Alveo U200 DDR4 target."""
 
     cachelines_per_row: int = 128
     column_stride: int = 8
     words_per_cacheline: int = 16
     rank: int = 0
 
-    # U200 DRAM command clock: 666.67 MHz, one command slot per 1.5 ns.
-    dram_inst_latency_ns: ClassVar[float] = 1.5
+    _board_config: ClassVar[BoardConfig] = U200
 
     def __post_init__(self) -> None:
         _validate_int_field(self.cachelines_per_row, name="DDR4Target.cachelines_per_row", minimum=1)
@@ -52,6 +54,24 @@ class DDR4Target:
     @property
     def columns_per_row(self) -> int:
         return self.cachelines_per_row
+
+    @property
+    def board_config(self) -> BoardConfig:
+        """Immutable hardware assumptions for the U200 bitstream."""
+        return self._board_config
+
+    @property
+    def instruction_capacity(self) -> int:
+        return self.board_config.instruction_capacity
+
+    @property
+    def dram_inst_latency_ns(self) -> float:
+        """Duration of one DRAM command slot, in nanoseconds."""
+        return self.board_config.dram_command_slot_ns
+
+    @property
+    def dram_slots_per_fabric_cycle(self) -> int:
+        return self.board_config.dram_slots_per_fabric_cycle
 
     def physical_bank(self, bank):
         """Return the bank value used by BAR for DDR4.
@@ -67,8 +87,8 @@ class HBM2Target:
     """Shared base for HBM2 targets.
 
     This class is abstract. Use :class:`HBM2U50Target` or
-    :class:`HBM2U55Target`, which set the per-board capabilities (SID count,
-    broadcast support, and instruction buffer depth).
+    :class:`HBM2U55Target`, which select the corresponding board
+    configuration.
     """
 
     channel: int = 0
@@ -78,13 +98,7 @@ class HBM2Target:
     column_stride: int = 1
     words_per_cacheline: int = 16
 
-    # Per-board capabilities. Subclasses override these class attributes.
-    num_sids: ClassVar[int] = 1
-    broadcast_supported: ClassVar[bool] = False
-    instruction_capacity: ClassVar[int] = 32768
-
-    # U50/U55C DRAM command clock: 600 MHz, one command slot per 5/3 ns.
-    dram_inst_latency_ns: ClassVar[float] = 5 / 3
+    _board_config: ClassVar[BoardConfig | None] = None
 
     def __post_init__(self) -> None:
         if type(self) is HBM2Target:
@@ -92,9 +106,25 @@ class HBM2Target:
                 "HBM2Target is abstract; use HBM2U50Target or HBM2U55Target."
             )
         name = type(self).__name__
-        _validate_int_field(self.channel, name=f"{name}.channel", minimum=0, maximum=15)
-        _validate_int_field(self.pseudo_channel, name=f"{name}.pseudo_channel", minimum=0, maximum=1)
-        _validate_int_field(self.sid, name=f"{name}.sid", minimum=0, maximum=self.num_sids - 1)
+        config = self.board_config
+        _validate_int_field(
+            self.channel,
+            name=f"{name}.channel",
+            minimum=0,
+            maximum=config.hbm_channel_count - 1,
+        )
+        _validate_int_field(
+            self.pseudo_channel,
+            name=f"{name}.pseudo_channel",
+            minimum=0,
+            maximum=config.hbm_pseudo_channel_count - 1,
+        )
+        _validate_int_field(
+            self.sid,
+            name=f"{name}.sid",
+            minimum=0,
+            maximum=config.hbm_sid_count - 1,
+        )
         _validate_int_field(self.columns_per_row, name=f"{name}.columns_per_row", minimum=1)
         _validate_int_field(self.column_stride, name=f"{name}.column_stride", minimum=1)
         _validate_int_field(self.words_per_cacheline, name=f"{name}.words_per_cacheline", minimum=1)
@@ -102,6 +132,42 @@ class HBM2Target:
     @property
     def rank(self) -> int:
         return self.pseudo_channel
+
+    @property
+    def board_config(self) -> BoardConfig:
+        """Immutable hardware assumptions for this target's bitstream."""
+        config = type(self)._board_config
+        if config is None:
+            raise TypeError(
+                "HBM2Target is abstract; use HBM2U50Target or HBM2U55Target."
+            )
+        return config
+
+    @property
+    def instruction_capacity(self) -> int:
+        return self.board_config.instruction_capacity
+
+    @property
+    def dram_inst_latency_ns(self) -> float:
+        """Duration of one DRAM command slot, in nanoseconds."""
+        return self.board_config.dram_command_slot_ns
+
+    @property
+    def dram_slots_per_fabric_cycle(self) -> int:
+        return self.board_config.dram_slots_per_fabric_cycle
+
+    @property
+    def num_sids(self) -> int:
+        """Compatibility alias for the configured HBM SID count."""
+        return self.board_config.hbm_sid_count
+
+    @property
+    def broadcast_supported(self) -> bool:
+        return self.board_config.broadcast_supported
+
+    @property
+    def power_telemetry_supported(self) -> bool:
+        return self.board_config.power_telemetry_supported
 
     @property
     def cachelines_per_row(self) -> int:
@@ -136,20 +202,16 @@ class HBM2Target:
 
 @dataclass(frozen=True)
 class HBM2U50Target(HBM2Target):
-    """Alveo U50 HBM2 target: 1 SID, no broadcast, 32 K instruction buffer."""
+    """Alveo U50 HBM2 target."""
 
-    num_sids: ClassVar[int] = 1
-    broadcast_supported: ClassVar[bool] = False
-    instruction_capacity: ClassVar[int] = 32768
+    _board_config: ClassVar[BoardConfig] = U50
 
 
 @dataclass(frozen=True)
 class HBM2U55Target(HBM2Target):
-    """Alveo U55C HBM2 target: 2 SIDs, broadcast, 128 K instruction buffer."""
+    """Alveo U55C HBM2 target."""
 
-    num_sids: ClassVar[int] = 2
-    broadcast_supported: ClassVar[bool] = True
-    instruction_capacity: ClassVar[int] = 131072
+    _board_config: ClassVar[BoardConfig] = U55C
 
 
 def normalize_target(target: Any | None):
