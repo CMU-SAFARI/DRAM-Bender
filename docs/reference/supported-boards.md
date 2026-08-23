@@ -6,7 +6,7 @@ The following boards are officially supported and maintained:
 |---|---|---|---|---|---|---|
 | AMD/Xilinx Alveo U200 | `BoardType.U200`, `board_configs.U200` | `DDR4Target` | External DDR4 UDIMM or RDIMM | 1.5 ns (666.67 MHz) | 2024.2 | [`hw/projects/U200`](../../hw/projects/U200) |
 | AMD/Xilinx Alveo U50 | `BoardType.U50`, `board_configs.U50` | `HBM2U50Target` | On-board HBM2 | 1.67 ns (600 MHz) | 2024.2 | [`hw/projects/U50-HBM`](../../hw/projects/U50-HBM) |
-| AMD/Xilinx Alveo U55C | `BoardType.U55C`, `board_configs.U55C` | `HBM2U55Target` | On-board HBM2 | 1.67 ns (600 MHz) | 2024.2 | [`hw/projects/U55-HBM`](../../hw/projects/U55-HBM) |
+| AMD/Xilinx Alveo U55C | `BoardType.U55C`, `board_configs.U55C` | `HBM2U55CTarget` | On-board HBM2 | 1.67 ns (600 MHz) | 2024.2 | [`hw/projects/U55-HBM`](../../hw/projects/U55-HBM) |
 
 The DRAM command slot duration is what the software VM uses as
 `dram_inst_latency`; see the [timing model](isa.md#timing-model).

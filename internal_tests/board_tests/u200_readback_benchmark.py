@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 import platform
 import socket
+import struct
 import subprocess
 import sys
 import time
@@ -36,7 +37,7 @@ from drambender.api import DDR4Target, HostInterface, ProgramBuilder, open_board
 from drambender.api.program.instructions import ACT, NOP, PRE, RD, WR
 
 
-SCHEMA = "drambender.u200-readback-benchmark.v1"
+SCHEMA = "drambender.u200-readback-benchmark"
 BYTES_PER_CACHELINE = 64
 WORDS_PER_CACHELINE = 16
 CACHELINES_PER_ROW = 128
@@ -270,12 +271,17 @@ def validate_program(program: Any, expected_reads: int) -> dict[str, Any]:
         raise AssertionError(
             f"offline validation expected {expected_reads} RD commands, got {observed_reads}"
         )
+    instructions = program.instructions()
+    instruction_bytes = struct.pack(
+        f"<{len(instructions)}Q", *(int(instruction) for instruction in instructions)
+    )
     return {
         "static_instructions": int(program.instruction_count),
         "dynamic_instructions": int(result.instructions_executed),
         "cycles": int(result.total_cycles),
         "reads": observed_reads,
         "writes": int(result.dram_cmd_counts["WR"]),
+        "instruction_sha256": hashlib.sha256(instruction_bytes).hexdigest(),
     }
 
 
@@ -328,6 +334,20 @@ def build_workload(name: str, bank: int, start_row: int, seed: int) -> dict[str,
         "expected": expected,
         "expected_sha256": hashlib.sha256(expected.tobytes()).hexdigest(),
     }
+
+
+def workload_sha256(workload: dict[str, Any], args: argparse.Namespace) -> str:
+    identity = (
+        f"name={workload['name']}\n"
+        f"payload_bytes={workload['payload_bytes']}\n"
+        f"cachelines={workload['cachelines']}\n"
+        f"rows={workload['rows']}\n"
+        f"bank={args.bank}\n"
+        f"start_row={args.start_row}\n"
+        f"seed={args.seed}\n"
+        f"expected_sha256={workload.get('expected_sha256') or 'none'}\n"
+    )
+    return hashlib.sha256(identity.encode("ascii")).hexdigest()
 
 
 def percentile_linear(samples: list[int], percentile: float) -> float:
@@ -493,7 +513,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stack-label",
         required=True,
-        help="user-declared stack identifier, e.g. new-repo-metadata-v1",
+        help="user-declared stack identifier, e.g. current-python-api",
     )
     parser.add_argument(
         "--driver-label",
@@ -592,7 +612,7 @@ def main() -> int:
         "package": package_provenance(),
         "pci_device": sysfs_device_provenance(args.pci_bdf),
         "xdma_module": module_provenance("drambender_xdma"),
-        "adapter": "new_repo_python_nanobind",
+        "adapter": "python_nanobind",
         "stack_label": args.stack_label,
         "driver_label": args.driver_label,
         "bitstream": {
@@ -645,6 +665,7 @@ def main() -> int:
                     payload_bytes=workload["payload_bytes"],
                     cachelines=workload["cachelines"],
                     rows=workload["rows"],
+                    workload_sha256=workload_sha256(workload, args),
                     program_validation=workload["program_validation"],
                     setup_programs=len(workload["setup_programs"]),
                     expected_sha256=workload.get("expected_sha256"),

@@ -1343,7 +1343,8 @@ NB_MODULE(_core, m) {
            "Read card power and thermal telemetry from the CMS (U55C only).")
       .def_prop_ro("num_sids", &HBM2::num_sids)
       .def_prop_ro("broadcast_supported", &HBM2::broadcast_supported)
-      .def_prop_ro("power_supported", &HBM2::power_supported);
+      .def_prop_ro("power_telemetry_supported",
+                   &HBM2::power_telemetry_supported);
 
   nb::class_<HBM2U50, HBM2>(
       m,

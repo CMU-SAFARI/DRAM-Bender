@@ -54,7 +54,7 @@ def main() -> int:
         xdma_channel=args.xdma_channel,
         host_interface=HostInterface.XDMA,
     )
-    board.reset_fpga()
+    board.full_reset()
 
     total_vulnerable = 0
     total_bitflips = 0

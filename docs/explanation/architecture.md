@@ -44,7 +44,7 @@ channel, pseudo-channel, and stack-selection rules.
 
 DRAM read results enter the readback engine, which frames data for the host.
 The framing protocol has its own page:
-[The readback protocol (metadata-v1)](readback-protocol.md).
+[The readback protocol](readback-protocol.md).
 
 ## Extending the ISA
 

@@ -3,7 +3,7 @@
 
 Writes a rotating pattern to every row in a bank, reads each row back
 immediately, and verifies byte-by-byte.  Python equivalent of
-tests/board_tests/rw_test.cpp.
+internal_tests/board_tests/rw_test.cpp.
 """
 
 import argparse
@@ -194,7 +194,7 @@ def main() -> int:
           f"bytes/row={row_bytes}")
 
     board = drambender.api.DDR4(args.pci_bdf, args.xdma_channel)
-    board.reset_fpga()
+    board.full_reset()
     board.execute(build_rw_program(args.bank, args.num_rows, args.num_cls, args.pattern))
 
     buf = np.empty(row_bytes, dtype=np.uint8)

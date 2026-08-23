@@ -78,7 +78,7 @@ def main() -> int:
     subprocess.run(
         [
             str(args.python_executable),
-            "tests/jit_benchmark/bench_jit_templates.py",
+            "internal_tests/jit_benchmark/bench_jit_templates.py",
             "--quick",
             "--native-exe",
             str(native_exe),
@@ -89,7 +89,7 @@ def main() -> int:
     subprocess.run(
         [
             str(args.python_executable),
-            "tests/jit_benchmark/profile_jit_templates.py",
+            "internal_tests/jit_benchmark/profile_jit_templates.py",
             "--quick",
             "--workload",
             "rowhammer",

@@ -32,7 +32,7 @@ def _resolve_board_type(
     if isinstance(target_or_type, HBM2Target):
         return target_or_type.board_config.board_type
     raise TypeError(
-        "open_board expects a DDR4Target, HBM2U50Target, HBM2U55Target, "
+        "open_board expects a DDR4Target, HBM2U50Target, HBM2U55CTarget, "
         "BoardConfig, or BoardType."
     )
 

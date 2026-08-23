@@ -15,14 +15,14 @@ from drambender._core import FinalProgram, Program
 from drambender._jit import program_template
 
 from .builder import ProgramBuilder
-from .targets import DDR4Target, HBM2Target, HBM2U50Target, HBM2U55Target
+from .targets import DDR4Target, HBM2Target, HBM2U50Target, HBM2U55CTarget
 
 __all__ = [
     "DDR4Target",
     "FinalProgram",
     "HBM2Target",
     "HBM2U50Target",
-    "HBM2U55Target",
+    "HBM2U55CTarget",
     "Program",
     "ProgramBuilder",
     "program_template",

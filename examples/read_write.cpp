@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
   try {
     auto board = create_board(
         BoardType::U200, opts.pci_bdf, opts.xdma_channel, HostInterface::XDMA);
-    board->reset_fpga();
+    board->full_reset();
 
     const FinalProgram write_program = build_write_program(opts.bank, opts.row, opts.pattern);
     const FinalProgram read_program  = build_read_program(opts.bank, opts.row);

@@ -82,7 +82,7 @@ def main() -> int:
 
     try:
         with HBM2U55C(args.pci_bdf, args.xdma_channel) as board:
-            if not board.power_supported:
+            if not board.power_telemetry_supported:
                 raise AssertionError("board reports power telemetry unsupported")
             for i in range(args.samples):
                 telemetry = board.read_power_telemetry()

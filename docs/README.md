@@ -47,5 +47,5 @@ Design discussion and background.
 
 - [Hardware architecture](explanation/architecture.md) — the execution
   pipeline, the DDR4 and HBM2 adapters, and how to extend the ISA.
-- [The readback protocol (metadata-v1)](explanation/readback-protocol.md)
+- [The readback protocol](explanation/readback-protocol.md)
 - [Why the XDMA driver is a fork](explanation/xdma-fork.md)

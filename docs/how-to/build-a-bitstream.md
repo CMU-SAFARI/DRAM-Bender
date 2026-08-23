@@ -28,7 +28,7 @@ migrate cleanly across versions:
 | Alveo U55C | `hw/projects/U55-HBM` | 2024.2 |
 
 The test status of every released bitstream is documented in the
-[bitstreams repository](https://github.com/CMU-SAFARI/dram-bender-bitstreams);
+[bitstreams repository](https://github.com/CMU-SAFARI/dram-bender-prebuilt-bitstreams);
 the memory configuration is encoded in each bitstream's file name.
 
 ## Build with the Vivado GUI
@@ -42,7 +42,7 @@ the memory configuration is encoded in each bitstream's file name.
 
 ## Build in batch mode
 
-From a board project directory, the legacy batch flow generates the bitstream
+From a board project directory, the batch flow generates the bitstream
 without the GUI:
 
 ```bash

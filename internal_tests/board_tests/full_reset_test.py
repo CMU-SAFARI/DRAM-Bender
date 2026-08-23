@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Full-reset recovery test for DRAM Bender.
 
-Python equivalent of tests/board_tests/full_reset_test.cpp.
+Python equivalent of internal_tests/board_tests/full_reset_test.cpp.
 """
 
 import argparse
@@ -137,7 +137,7 @@ def main() -> int:
             xdma_channel=args.xdma_channel,
             host_interface=HostInterface.XDMA,
         ) as board:
-            board.reset_fpga()
+            board.full_reset()
 
             board.execute(build_long_no_read_program())
             time.sleep(0.020)

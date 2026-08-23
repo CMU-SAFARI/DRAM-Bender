@@ -47,7 +47,7 @@ using namespace DRAMBender;
 
 namespace {
 
-constexpr std::string_view k_schema = "drambender.u200-readback-benchmark.v1";
+constexpr std::string_view k_schema = "drambender.u200-readback-benchmark";
 constexpr size_t k_bytes_per_cacheline = 64;
 constexpr size_t k_words_per_cacheline = 16;
 constexpr size_t k_cachelines_per_row = 128;
@@ -735,6 +735,21 @@ struct Workload {
   std::optional<std::string> expected_sha256;
 };
 
+std::string workload_sha256(const Workload& workload, const Options& options) {
+  std::ostringstream identity;
+  identity << "name=" << workload.name << '\n'
+           << "payload_bytes=" << workload.payload_bytes << '\n'
+           << "cachelines=" << workload.cachelines << '\n'
+           << "rows=" << workload.rows << '\n'
+           << "bank=" << options.bank << '\n'
+           << "start_row=" << options.start_row << '\n'
+           << "seed=" << options.seed << '\n'
+           << "expected_sha256="
+           << (workload.expected_sha256 ? *workload.expected_sha256 : "none") << '\n';
+  const std::string text = identity.str();
+  return sha256_bytes(text.data(), text.size());
+}
+
 Workload build_workload(std::string name, int bank, int start_row, uint32_t seed) {
   const size_t cachelines = *cachelines_for(name);
   if (cachelines == 0) {
@@ -857,8 +872,8 @@ void write_program_manifest(const std::filesystem::path& path,
                            std::optional<size_t> setup_index,
                            const FinalProgram& program,
                            const ProgramValidation& validation) {
-    output << "{\"schema\":\"drambender.u200-program-manifest.v1\""
-           << ",\"adapter\":\"new_repo_native_cpp\""
+    output << "{\"schema\":\"drambender.u200-program-manifest\""
+           << ",\"adapter\":\"native_cpp\""
            << ",\"stack_label\":" << json_quote(options.stack_label)
            << ",\"workload\":" << json_quote(workload.name)
            << ",\"role\":" << json_quote(role)
@@ -866,6 +881,8 @@ void write_program_manifest(const std::filesystem::path& path,
     if (setup_index) output << *setup_index;
     else output << "null";
     output << ",\"instruction_count\":" << program.instruction_count()
+           << ",\"workload_sha256\":"
+           << json_quote(workload_sha256(workload, options))
            << ",\"instruction_sha256\":"
            << json_quote(validation.instruction_sha256)
            << ",\"instructions_hex\":" << instruction_hex_json(program)
@@ -1231,7 +1248,7 @@ std::string provenance_json(const Options& options) {
          << ",\"pid\":" << static_cast<long long>(::getpid())
          << ",\"sched_getaffinity\":" << cpu_affinity_json()
          << ",\"sched_getcpu_at_start\":" << ::sched_getcpu()
-         << ",\"adapter\":\"new_repo_native_cpp\""
+         << ",\"adapter\":\"native_cpp\""
          << ",\"cpp_standard\":" << __cplusplus
          << ",\"compiler\":" << json_quote(__VERSION__)
          << ",\"source_file\":" << json_quote(__FILE__)
@@ -1299,6 +1316,8 @@ void run_hardware(const Options& options,
             << ",\"payload_bytes\":" << workload.payload_bytes
             << ",\"cachelines\":" << workload.cachelines
             << ",\"rows\":" << workload.rows
+            << ",\"workload_sha256\":"
+            << json_quote(workload_sha256(workload, options))
             << ",\"program_validation\":" << validation_json(workload.validation)
             << ",\"setup_programs\":" << workload.setup_programs.size()
             << ",\"expected_sha256\":"

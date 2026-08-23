@@ -4,7 +4,7 @@ set -euo pipefail
 
 SOURCE_DIR="${1:?source directory is required}"
 
-for script in install_dkms.sh uninstall_dkms.sh install_access.sh uninstall_access.sh load_driver.sh; do
+for script in build_driver.sh install_access.sh uninstall_access.sh load_driver.sh; do
   if [[ ! -x "${SOURCE_DIR}/xdma/${script}" ]]; then
     echo "Deployment script is not executable: xdma/${script}" >&2
     exit 1
@@ -31,29 +31,34 @@ reject_literal() {
 
 require_literal xdma/xdma/Makefile 'TARGET_MODULE:=drambender_xdma'
 require_literal xdma/README.md 'Linux `5.4` and `7.0`'
-require_literal xdma/dkms.conf 'PACKAGE_VERSION="0.1.0"'
-require_literal xdma/dkms.conf 'BUILT_MODULE_NAME[0]="drambender_xdma"'
-require_literal xdma/dkms.conf "MAKE[0]=\"'make' -C xdma"
+require_literal xdma/build_driver.sh 'Compile the XDMA kernel module without loading it.'
+require_literal xdma/build_driver.sh 'KDIR="${KERNEL_DIR}"'
+require_literal xdma/build_driver.sh 'DEBUG="${DEBUG}"'
+require_literal xdma/build_driver.sh 'MODULE_PATH="${SCRIPT_DIR}/xdma/drambender_xdma.ko"'
+reject_literal xdma/build_driver.sh 'insmod '
 require_literal xdma/load_driver.sh 'MODULE_NAME="drambender_xdma"'
+require_literal xdma/load_driver.sh 'Load an already-built XDMA kernel module.'
+require_literal xdma/load_driver.sh 'enable_st_c2h_credit=1'
+require_literal xdma/load_driver.sh 'find_stream_pairs /dev'
 require_literal xdma/xdma/xdma_mod.c '#define DRV_MODULE_NAME'
 require_literal xdma/xdma/xdma_mod.c '"xdma"'
 require_literal xdma/xdma/xdma_cdev.h '#define XDMA_NODE_NAME'
 require_literal xdma/xdma/xdma_cdev.h '"xdma"'
-require_literal xdma/modprobe.d/drambender-xdma.conf \
-  'options drambender_xdma enable_st_c2h_credit=1'
 require_literal xdma/udev/70-drambender-xdma.rules \
   'SUBSYSTEM=="xdma", KERNEL=="xdma*", GROUP="drambender", MODE="0660"'
-require_literal xdma/install_dkms.sh 'dkms_registration_present'
-reject_literal xdma/install_dkms.sh 'dkms remove'
-reject_literal xdma/install_dkms.sh ' --force'
+require_literal xdma/install_access.sh 'GROUP_NAME="drambender"'
+require_literal xdma/install_access.sh 'usermod --append --groups'
+require_literal xdma/install_access.sh 'install -D -m 0644'
+require_literal xdma/uninstall_access.sh 'rm -f "${RULE_DEST}"'
+require_literal xdma/uninstall_access.sh 'group and its memberships were left intact intentionally'
 require_literal xdma/readme.txt 'sudo ./load_driver.sh poll_mode=1'
 reject_literal xdma/readme.txt 'insmod xdma/'
 
 provenance_files=(
-  tests/board_tests/multi_endpoint_interrupt_test.py
-  tests/board_tests/sibling_reset_isolation_test.py
-  tests/board_tests/u200_readback_benchmark.py
-  tests/board_tests/u200_readback_benchmark.cpp
+  internal_tests/board_tests/multi_endpoint_interrupt_test.py
+  internal_tests/board_tests/sibling_reset_isolation_test.py
+  internal_tests/board_tests/u200_readback_benchmark.py
+  internal_tests/board_tests/u200_readback_benchmark.cpp
 )
 for file in "${provenance_files[@]}"; do
   require_literal "${file}" drambender_xdma
@@ -106,19 +111,6 @@ fi
 validate_insmod_args interrupt_mode=3
 if validate_insmod_args enable_st_c2h_credit=0 2>/dev/null; then
   echo "Loader accepted an override that disables required C2H credits." >&2
-  exit 1
-fi
-
-# DKMS 2.8 uses comma-separated status while newer DKMS releases may use a
-# package/version prefix. Clean install rejects either without parsing it.
-# shellcheck disable=SC1091
-source "${SOURCE_DIR}/xdma/install_dkms.sh"
-dkms_registration_present \
-  'drambender-xdma, 0.1.0, 5.4.0-216-generic, x86_64: installed'
-dkms_registration_present \
-  'drambender-xdma/0.1.0, 7.0.0-28-generic, x86_64: installed'
-if dkms_registration_present $' \n\t'; then
-  echo "Whitespace-only DKMS status was treated as a registration." >&2
   exit 1
 fi
 

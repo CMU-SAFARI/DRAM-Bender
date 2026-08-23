@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
   try {
     auto board = create_board(
         BoardType::U200, opts.pci_bdf, opts.xdma_channel, HostInterface::XDMA);
-    board->reset_fpga();
+    board->full_reset();
 
     std::vector<std::byte> row_buffer(k_row_bytes);
     size_t total_flips = 0;

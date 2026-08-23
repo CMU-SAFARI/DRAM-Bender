@@ -3,11 +3,11 @@
 # print a side-by-side runtime + correctness table.
 #
 # Usage:
-#   bash tests/jit_benchmark/run_benchmark.sh
-#   bash tests/jit_benchmark/run_benchmark.sh --start-row 200 --num-victims 64 --hammer-count 250000
+#   bash internal_tests/jit_benchmark/run_benchmark.sh
+#   bash internal_tests/jit_benchmark/run_benchmark.sh --start-row 200 --num-victims 64 --hammer-count 250000
 #
 # Any CLI args are forwarded verbatim to every variant. Benchmarks use MI1
-# row mapping (see tests/jit_benchmark/single_sided_rowhammer_bench.{py,cpp}).
+# row mapping (see internal_tests/jit_benchmark/single_sided_rowhammer_bench.{py,cpp}).
 #
 # The *_bench.{py,cpp} sources are the instrumented counterparts of the clean
 # reference examples in examples.

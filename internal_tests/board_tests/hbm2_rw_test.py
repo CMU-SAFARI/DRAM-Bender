@@ -19,7 +19,7 @@ from drambender.api import (
     HBM2U50,
     HBM2U50Target,
     HBM2U55C,
-    HBM2U55Target,
+    HBM2U55CTarget,
     ProgramBuilder,
 )
 from drambender.api.program.instructions import ACT, NOP, PRE, RD, SEL_CH, WR
@@ -322,7 +322,7 @@ def main() -> int:
     target_cls, board_cls = (
         (HBM2U50Target, HBM2U50)
         if args.board == "u50"
-        else (HBM2U55Target, HBM2U55C)
+        else (HBM2U55CTarget, HBM2U55C)
     )
     config = target_cls().board_config
     if args.sid is None:

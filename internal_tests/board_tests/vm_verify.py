@@ -133,7 +133,7 @@ def main() -> int:
     args = parser.parse_args()
 
     board = drambender.api.DDR4(args.pci_bdf, args.xdma_channel)
-    board.reset_fpga()
+    board.full_reset()
     print("Board reset complete.\n")
 
     print(f"{'Test':<25s} {'VM cycles':>12s} {'VM time':>12s} {'HW wall':>12s} {'Ratio':>8s}")
@@ -149,7 +149,7 @@ def main() -> int:
     ]
 
     for name, prog in tests:
-        board.reset_fpga()
+        board.full_reset()
         run_test(board, name, prog)
 
     print("\nNote: HW wall includes PCIe round-trip (~100-200us fixed overhead).")

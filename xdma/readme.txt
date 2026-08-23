@@ -118,10 +118,13 @@ Usage:
         cd tools
   - Compile the provided example test tools.
         make
+  - Return to the driver directory.
+        cd ..
   - Load it with the supported wrapper. This also enforces the streaming-credit
-    mode required by metadata-v1 readback.
+    mode required by DRAM Bender's framed readback protocol.
         sudo ./load_driver.sh
   - Run the provided test script to generate basic DMA traffic.
+        cd tests
         ./run_test.sh
 
 	For more extensive memory mapped test:

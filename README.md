@@ -68,7 +68,7 @@ cd xdma && ./build_driver.sh && sudo ./install_access.sh --user "$USER" \
 # Install the Python API and run one DDR4 read/write test.
 PYTHON_BIN=python3.12 bash setup_venv.sh
 source .venv/bin/activate
-python examples/read_write.py --pci-bdf 0000:01:00.0 --xdma-channel 0 \
+python examples/read_write.py --board u200 --pci-bdf 0000:01:00.0 --xdma-channel 0 \
     --bank 0 --row 0 --pattern 0xDEADBEEF
 ```
 
@@ -102,7 +102,7 @@ The documentation under [`docs/`](docs/README.md) follows the
 ├── include/drambender/       # Public C++ headers
 ├── python/drambender/        # Python package
 ├── src/                      # C++ implementation and Python bindings
-├── tests/                    # Software tests and hardware diagnostics
+├── internal_tests/           # Internal software and hardware qualification
 ├── xdma/                     # DRAM Bender XDMA driver
 ├── build.sh                  # Local C++ and Python build helper
 └── setup_venv.sh             # Python environment setup
@@ -110,11 +110,8 @@ The documentation under [`docs/`](docs/README.md) follows the
 
 ## Known Issues
 
-- The metadata-v1 readback format is a protocol boundary between the bitstream
-  and the host software. Released bitstreams from this repository are **not**
-  compatible with the original public DRAM Bender host code, and old
-  bitstreams are not compatible with this host software. Use a bitstream and
-  host software from the same repository generation. See
+- The readback metadata protocol is a boundary between the bitstream and the
+  host software. Use the bitstream distributed for this software. See
   [the readback protocol](docs/explanation/readback-protocol.md).
 - The XDMA driver is a modified fork and must not be loaded together with the
   stock Xilinx `xdma` module. There is no automatic rebuild hook: rebuild and

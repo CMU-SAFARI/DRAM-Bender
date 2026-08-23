@@ -1,4 +1,4 @@
-# The Readback Protocol (metadata-v1)
+# The Readback Protocol
 
 DRAM read results enter the readback engine, which batches data into framed
 XDMA packets. For each batch, the engine emits a metadata packet that declares
@@ -13,12 +13,10 @@ long idle intervals. It is also why the host driver matters — the readback
 path depends on the credit-based read support in the
 [forked XDMA driver](xdma-fork.md).
 
-## Compatibility
+## Software and bitstream pairing
 
-The metadata-v1 format is a protocol boundary between the bitstream and the
-host software. It is **not** compatible with pre-metadata bitstreams or with
-the original public DRAM Bender host code. Use a released bitstream and the
-host software from the same repository generation together.
+The readback metadata format is a protocol boundary between the bitstream and
+the host software. Use the bitstream distributed for this software.
 
 ## Sources
 

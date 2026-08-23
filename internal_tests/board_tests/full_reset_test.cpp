@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
   try {
     auto board = create_board(
         BoardType::U200, opts.pci_bdf, opts.xdma_channel, HostInterface::XDMA);
-    board->reset_fpga();
+    board->full_reset();
 
     board->execute(build_long_no_read_program());
     std::this_thread::sleep_for(20ms);

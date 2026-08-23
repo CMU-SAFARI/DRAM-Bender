@@ -87,7 +87,7 @@ class HBM2Target:
     """Shared base for HBM2 targets.
 
     This class is abstract. Use :class:`HBM2U50Target` or
-    :class:`HBM2U55Target`, which select the corresponding board
+    :class:`HBM2U55CTarget`, which select the corresponding board
     configuration.
     """
 
@@ -103,7 +103,7 @@ class HBM2Target:
     def __post_init__(self) -> None:
         if type(self) is HBM2Target:
             raise TypeError(
-                "HBM2Target is abstract; use HBM2U50Target or HBM2U55Target."
+                "HBM2Target is abstract; use HBM2U50Target or HBM2U55CTarget."
             )
         name = type(self).__name__
         config = self.board_config
@@ -139,7 +139,7 @@ class HBM2Target:
         config = type(self)._board_config
         if config is None:
             raise TypeError(
-                "HBM2Target is abstract; use HBM2U50Target or HBM2U55Target."
+                "HBM2Target is abstract; use HBM2U50Target or HBM2U55CTarget."
             )
         return config
 
@@ -208,7 +208,7 @@ class HBM2U50Target(HBM2Target):
 
 
 @dataclass(frozen=True)
-class HBM2U55Target(HBM2Target):
+class HBM2U55CTarget(HBM2Target):
     """Alveo U55C HBM2 target."""
 
     _board_config: ClassVar[BoardConfig] = U55C
@@ -224,6 +224,6 @@ __all__ = [
     "DDR4Target",
     "HBM2Target",
     "HBM2U50Target",
-    "HBM2U55Target",
+    "HBM2U55CTarget",
     "normalize_target",
 ]

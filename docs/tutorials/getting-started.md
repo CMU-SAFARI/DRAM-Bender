@@ -126,13 +126,18 @@ Set `PYTHON_BIN` to another Python 3.10 or newer interpreter if needed. Set
 `CXX=/path/to/g++-11-or-newer` before running the setup script when the
 default compiler is too old.
 
-## Step 5: Run a small DDR4 read/write test
+## Step 5: Run a small read/write test
 
-[`examples/read_write.py`](../../examples/read_write.py) writes one U200 DDR4
-row, reads it back, and compares every returned word:
+[`examples/read_write.py`](../../examples/read_write.py) writes one row, reads
+it back, and compares every returned word. The same example and the same
+target-aware `write_row` and `read_row` programs support U200 DDR4 and U50/U55C
+HBM2.
+
+For U200:
 
 ```bash
 python examples/read_write.py \
+    --board u200 \
     --pci-bdf 0000:01:00.0 \
     --xdma-channel 0 \
     --bank 0 \
@@ -143,8 +148,44 @@ python examples/read_write.py \
 A successful run ends with:
 
 ```text
-PASS: 2048 words matched (pattern=0xdeadbeef)
+PASS: 2048 words matched (board=u200, pattern=0xdeadbeef)
 ```
+
+For U50:
+
+```bash
+python examples/read_write.py \
+    --board u50 \
+    --pci-bdf 0000:01:00.0 \
+    --xdma-channel 0 \
+    --channel 0 \
+    --pseudo-channel 0 \
+    --sid 0 \
+    --bank 0 \
+    --row 0 \
+    --pattern 0xDEADBEEF
+```
+
+For U55C, change `--board` and select the HBM2 coordinates described by the
+bitstream:
+
+```bash
+python examples/read_write.py \
+    --board u55c \
+    --pci-bdf 0000:01:00.0 \
+    --xdma-channel 0 \
+    --channel 0 \
+    --pseudo-channel 0 \
+    --sid 0 \
+    --bank 0 \
+    --row 0 \
+    --pattern 0xDEADBEEF
+```
+
+`--channel`, `--pseudo-channel`, and `--sid` are HBM2 memory coordinates.
+They are separate from `--xdma-channel`, which selects the host transport
+endpoint. U50 accepts SID 0. U55C accepts the SIDs supported by its programmed
+design.
 
 Before the result, `open_board()` prints the selected board configuration,
 including the instruction capacity, command timing, readback capacity, and
@@ -152,34 +193,17 @@ board-specific features. It also states that the API expects the programmed
 bitstream to match. This output describes the API configuration rather than
 probing the FPGA image, so confirm it against the bitstream you programmed.
 
+The execution workflow is identical for all three boards: construct the
+selected target, bind the built-in programs, open the board from that target,
+execute the write and read, receive the result, and synchronize. HBM2 raw
+readback is the one board-specific data detail. Each 64-byte column result
+carries both pseudo-channels, so the example verifies the 32-byte half selected
+by the target.
+
 This is a quick endpoint and readback check, not an exhaustive memory test. It
 overwrites the selected row. Replace the BDF, channel, bank, row, and pattern
 arguments with values appropriate for your system. If the memory geometry
-differs, edit the target constants near the top of the example before running
-it.
-
-The Python program-building interface is shared by DDR4 and HBM2. The same
-`write_row` and `read_row` templates accept either a `DDR4Target` or an HBM2
-target (`HBM2U50Target`, `HBM2U55Target`). An HBM2 target carries channel,
-pseudo-channel, and stack (SID) selections; set them to match the bitstream
-and experiment. Its raw readback layout differs from DDR4.
-
-For U50/U55C, run the HBM2 counterpart
-[`examples/read_write_hbm2.py`](../../examples/read_write_hbm2.py):
-
-```bash
-python examples/read_write_hbm2.py \
-    --pci-bdf 0000:01:00.0 \
-    --board u55c \
-    --channel 0 \
-    --pseudo-channel 0 \
-    --sid 0 \
-    --pattern 0xDEADBEEF
-```
-
-It writes and reads one row at the selected HBM2 location. Each 64-byte
-column readback carries both pseudo-channels, so the example verifies the
-32-byte half belonging to the selected pseudo-channel.
+differs, update `make_target()` in the example before running it.
 
 ## Next steps
 

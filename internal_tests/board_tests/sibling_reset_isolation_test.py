@@ -34,14 +34,6 @@ from drambender.api import DDR4Target, HostInterface, ProgramBuilder, open_board
 from drambender.api.program.instructions import ACT, NOP, PRE, RD, WR
 
 
-DEFAULT_BDFS = (
-    "0000:01:00.0",
-    "0000:21:00.0",
-    "0000:22:00.0",
-    "0000:41:00.0",
-    "0000:42:00.0",
-    "0000:61:00.0",
-)
 BDF_RE = re.compile(r"^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:([0-9a-fA-F]{2})\.[0-7]$")
 CACHELINES_PER_ROW = 128
 WORDS_PER_CACHELINE = 16
@@ -665,7 +657,7 @@ def provenance(cases: list[Case], delay_cycles: int) -> dict[str, Any]:
     extension_path = Path(drambender._core.__file__).resolve()
     return {
         "type": "environment",
-        "schema": "drambender-sibling-reset-isolation-v1",
+        "schema": "drambender-sibling-reset-isolation",
         "started_utc": datetime.now(timezone.utc).isoformat(),
         "hostname": socket.gethostname(),
         "kernel": os.uname().release,
@@ -733,7 +725,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--bdf",
         action="append",
         type=parse_bdf,
-        help="U200 PCI BDF; repeat for multiple cards (default: all six FPGA99 BDFs).",
+        help="U200 PCI BDF; repeat for every card to qualify.",
     )
     parser.add_argument(
         "--direction",
@@ -762,10 +754,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--child-role", choices=("active", "resetter"), help=argparse.SUPPRESS)
     parser.add_argument("--child-case-json", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
-    bdfs = args.bdf or list(DEFAULT_BDFS)
-    if len(set(bdfs)) != len(bdfs):
+    if not args.child_role and not args.bdf:
+        parser.error("at least one --bdf is required")
+    if args.bdf and len(set(args.bdf)) != len(args.bdf):
         parser.error("BDFs must be unique")
-    args.bdf = bdfs
     if args.child_role and not args.child_case_json:
         parser.error("--child-role requires --child-case-json")
     delay_seconds = args.delay_cycles * FABRIC_CYCLE_NS / 1e9

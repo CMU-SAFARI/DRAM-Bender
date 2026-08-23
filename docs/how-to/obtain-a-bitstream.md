@@ -1,7 +1,7 @@
 # Obtain a Bitstream
 
 Prebuilt bitstreams live in a separate repository,
-[CMU-SAFARI/dram-bender-bitstreams](https://github.com/CMU-SAFARI/dram-bender-bitstreams),
+[CMU-SAFARI/dram-bender-prebuilt-bitstreams](https://github.com/CMU-SAFARI/dram-bender-prebuilt-bitstreams),
 included here as the `hw/prebuilt` submodule. Fetch them with:
 
 ```bash

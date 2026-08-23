@@ -12,13 +12,13 @@ you do not have one, start with [Getting started](getting-started.md).
 
 ## Describe the memory target
 
-Use `DDR4Target` for U200, `HBM2U50Target` for U50, and `HBM2U55Target` for
+Use `DDR4Target` for U200, `HBM2U50Target` for U50, and `HBM2U55CTarget` for
 U55C. (`HBM2Target` is their abstract base; it cannot be instantiated
 directly.) Target objects carry the geometry and address-selection
 information used by target-aware program templates.
 
 ```python
-from drambender.api import DDR4Target, HBM2U55Target
+from drambender.api import DDR4Target, HBM2U55CTarget
 
 ddr4_target = DDR4Target(
     cachelines_per_row=128,
@@ -27,7 +27,7 @@ ddr4_target = DDR4Target(
     rank=0,
 )
 
-hbm2_target = HBM2U55Target(
+hbm2_target = HBM2U55CTarget(
     channel=0,
     pseudo_channel=0,
     sid=0,

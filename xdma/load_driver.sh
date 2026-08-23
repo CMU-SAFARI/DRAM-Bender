@@ -59,7 +59,7 @@ validate_insmod_args() {
   for argument in "$@"; do
     case "${argument}" in
       enable_st_c2h_credit=*)
-        echo "enable_st_c2h_credit is fixed at 1 for metadata-v1 readback." >&2
+        echo "enable_st_c2h_credit is fixed at 1 for framed readback." >&2
         return 1
         ;;
     esac

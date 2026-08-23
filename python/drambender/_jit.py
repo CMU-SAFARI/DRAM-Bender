@@ -74,7 +74,7 @@ class _SentinelBase:
     def _unsupported(self, action: str):
         raise TemplateCompileError(
             f"Template parameter {self.name!r} was used in unsupported way: {action}. "
-            "V1 templates only support direct parameter substitution in builder calls."
+            "Program templates support direct parameter substitution in builder calls."
         )
 
     def __bool__(self):

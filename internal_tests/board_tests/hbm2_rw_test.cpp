@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <exception>
+#include <memory>
 #include <span>
 #include <string>
 #include <string_view>
@@ -35,12 +36,11 @@ constexpr int PATTERN_REG = 6;
 
 struct Options {
   std::string pci_bdf;
+  std::string board = "u55c";
   int xdma_channel = 0;
   int channel = 0;
   int pseudo_channel = 0;
-  int sid = static_cast<int>(
-                get_board_config(BoardType::U55C).hbm_sid_count) -
-            1;
+  int sid = -1;
   int bank = 0;
   int row = 0;
   int row_count = 1;
@@ -54,7 +54,8 @@ struct Options {
 
 void print_usage(const char* argv0) {
   std::fprintf(stderr,
-               "Usage: %s --pci-bdf dddd:bb:ss.f [--xdma-channel N] [--channel N] "
+               "Usage: %s --pci-bdf dddd:bb:ss.f [--board u50|u55c] "
+               "[--xdma-channel N] [--channel N] "
                "[--pseudo-channel N] [--sid N] [--bank N] [--row N] "
                "[--row-count N] [--pattern HEX_OR_DEC] [--receive-bytes N] "
                "[--iterations N] [--progress-interval N] [--static-only] "
@@ -130,8 +131,6 @@ bool parse_value_arg(int argc, char** argv, int* arg_index, std::string_view arg
 }
 
 bool parse_args(int argc, char** argv, Options* options) {
-  const BoardConfig& config = get_board_config(BoardType::U55C);
-
   for (int arg_index = 1; arg_index < argc; ++arg_index) {
     const std::string_view arg(argv[arg_index]);
 
@@ -151,6 +150,9 @@ bool parse_args(int argc, char** argv, Options* options) {
     bool ok = true;
     if (arg == "--pci-bdf") {
       options->pci_bdf = argv[arg_index];
+    } else if (arg == "--board") {
+      options->board = argv[arg_index];
+      ok = options->board == "u50" || options->board == "u55c";
     } else if (arg == "--xdma-channel") {
       ok = parse_int(argv[arg_index], &options->xdma_channel);
     } else if (arg == "--channel") {
@@ -184,6 +186,13 @@ bool parse_args(int argc, char** argv, Options* options) {
                    static_cast<int>(arg.size()), arg.data());
       return false;
     }
+  }
+
+  const BoardType board_type =
+      options->board == "u50" ? BoardType::U50 : BoardType::U55C;
+  const BoardConfig& config = get_board_config(board_type);
+  if (options->sid == -1) {
+    options->sid = static_cast<int>(config.hbm_sid_count) - 1;
   }
 
   if (options->receive_bytes <
@@ -479,8 +488,9 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  std::printf("hbm2_rw_test: pci_bdf=%s xdma_channel=%d channel=%d pch=%d sid=%d "
+  std::printf("hbm2_rw_test: board=%s pci_bdf=%s xdma_channel=%d channel=%d pch=%d sid=%d "
               "bank=%d physical_bar=%d rows=%d..%d pattern=0x%08x receive_bytes=%zu\n",
+              options.board.c_str(),
               options.pci_bdf.c_str(),
               options.xdma_channel,
               options.channel,
@@ -494,10 +504,15 @@ int main(int argc, char** argv) {
               options.receive_bytes);
 
   try {
-    HBM2U55C board(options.pci_bdf, options.xdma_channel);
-    if (!options.skip_temperature) {
+    std::unique_ptr<HBM2> board;
+    if (options.board == "u50") {
+      board = std::make_unique<HBM2U50>(options.pci_bdf, options.xdma_channel);
+    } else {
+      board = std::make_unique<HBM2U55C>(options.pci_bdf, options.xdma_channel);
+    }
+    if (options.board == "u55c" && !options.skip_temperature) {
       try {
-        const HBMTemperature temp = board.read_temperature();
+        const HBMTemperature temp = board->read_temperature();
         std::printf("HBM temperature: stack0=%dC stack1=%dC\n",
                     temp.stack0_celsius,
                     temp.stack1_celsius);
@@ -510,9 +525,9 @@ int main(int argc, char** argv) {
     size_t reported_mismatches = 0;
     if (options.row_count == 1) {
       for (int iteration = 1; iteration <= options.iterations; ++iteration) {
-        board.full_reset();
-        board.discard_readback_data(false);
-        total_mismatches += execute_and_verify(board,
+        board->full_reset();
+        board->discard_readback_data(false);
+        total_mismatches += execute_and_verify(*board,
                                                first_program,
                                                options.pseudo_channel,
                                                options.pattern,
@@ -527,8 +542,8 @@ int main(int argc, char** argv) {
                     options.receive_bytes);
       }
     } else {
-      board.full_reset();
-      board.discard_readback_data(false);
+      board->full_reset();
+      board->discard_readback_data(false);
       for (int row_offset = 0; row_offset < options.row_count; ++row_offset) {
         const int row = options.row + row_offset;
         const FinalProgram program = row_offset == 0
@@ -538,7 +553,7 @@ int main(int argc, char** argv) {
                                                                  physical_bank,
                                                                  row,
                                                                  options.pattern);
-        total_mismatches += execute_and_verify(board,
+        total_mismatches += execute_and_verify(*board,
                                                program,
                                                options.pseudo_channel,
                                                options.pattern,

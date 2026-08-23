@@ -2,7 +2,8 @@
 
 The Alveo U55C design exposes card power and thermal telemetry through the Card
 Management Subsystem (CMS). `HBM2U55C` reads it with `read_power_telemetry()`.
-This is a U55C-only feature; `HBM2U50` reports `power_supported == False` and
+This is a U55C-only feature; `HBM2U50` reports
+`power_telemetry_supported == False` and
 raises if you call it.
 
 Telemetry is read over the card's `/dev/xdma*_user` node, which is separate from
@@ -11,7 +12,7 @@ the program/readback path. It does not require a running program.
 ```python
 from drambender.api import HBM2U55C
 
-with HBM2U55C("0000:81:00.0") as board:
+with HBM2U55C("0000:01:00.0") as board:
     t = board.read_power_telemetry()
 
     # HBM 1.2V rail: each field is instant / max / average.
@@ -30,10 +31,3 @@ Every rail exposes `voltage_mv`, `current_ma`, and derived `power_mw`, each a
 `voltage_mv * current_ma / 1000`; its `max` field is the product of the maxima
 (an upper envelope, not a simultaneous sample). `total_input_power_mw` is the
 sum of the two PCIe input rails (12V + 3.3V).
-
-A hardware smoke test is in
-[`tests/board_tests/power_telemetry_test.py`](../../tests/board_tests/power_telemetry_test.py):
-
-```bash
-python tests/board_tests/power_telemetry_test.py --pci-bdf 0000:81:00.0 --samples 5
-```

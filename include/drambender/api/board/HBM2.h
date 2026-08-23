@@ -110,7 +110,7 @@ class HBM2 : public IBoard {
   bool broadcast_supported() const noexcept {
     return board_config().broadcast_supported;
   }
-  bool power_supported() const noexcept {
+  bool power_telemetry_supported() const noexcept {
     return board_config().power_telemetry_supported;
   }
 

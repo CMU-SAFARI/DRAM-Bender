@@ -158,7 +158,7 @@ def main() -> int:
     print(f"  victim_data=0x{args.victim_data:08x} aggressor_data=0x{args.aggressor_data:08x}")
 
     board = drambender.api.DDR4(args.pci_bdf, args.xdma_channel)
-    board.reset_fpga()
+    board.full_reset()
 
     row_buffer = np.empty(ROW_BYTES, dtype=np.uint8)
     total_flips = 0

@@ -15,7 +15,7 @@ from drambender.api.jit import (
     get_last_template_run_stats_dict,
     set_jit_cache_dir,
 )
-from tests.jit_benchmark.workloads import (
+from internal_tests.jit_benchmark.workloads import (
     build_pattern_program_compiled,
     build_pattern_program_plain,
     build_rowhammer_program_compiled,

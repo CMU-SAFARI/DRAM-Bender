@@ -127,7 +127,7 @@ endif()
 
 if (DRAMBENDER_BUILD_BOARD_BENCHMARKS)
   add_executable(drambender_u200_readback_benchmark
-    tests/board_tests/u200_readback_benchmark.cpp
+    internal_tests/board_tests/u200_readback_benchmark.cpp
   )
   target_link_libraries(drambender_u200_readback_benchmark PRIVATE DRAMBender)
   target_compile_options(drambender_u200_readback_benchmark PRIVATE
@@ -135,12 +135,12 @@ if (DRAMBENDER_BUILD_BOARD_BENCHMARKS)
   )
 
   add_executable(drambender_board_single_sided_rowhammer_bench
-    tests/jit_benchmark/single_sided_rowhammer_bench.cpp
+    internal_tests/jit_benchmark/single_sided_rowhammer_bench.cpp
   )
   target_link_libraries(drambender_board_single_sided_rowhammer_bench PRIVATE DRAMBender)
 
   add_executable(drambender_board_read_write_bench
-    tests/jit_benchmark/read_write_bench.cpp
+    internal_tests/jit_benchmark/read_write_bench.cpp
   )
   target_link_libraries(drambender_board_read_write_bench PRIVATE DRAMBender)
 endif()
@@ -150,82 +150,103 @@ if (BUILD_TESTING)
 
   add_test(
     NAME drambender_driver_deployment_test
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/driver_deployment_test.sh"
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/internal_tests/driver_deployment_test.sh"
             "${CMAKE_CURRENT_SOURCE_DIR}"
+  )
+  set_tests_properties(drambender_driver_deployment_test PROPERTIES
+    LABELS "host;deployment"
   )
 
   add_executable(drambender_program_metadata_test
-    tests/program_metadata_test.cpp
+    internal_tests/program_metadata_test.cpp
   )
   target_link_libraries(drambender_program_metadata_test PRIVATE DRAMBender)
   add_test(NAME drambender_program_metadata_test COMMAND drambender_program_metadata_test)
+  set_tests_properties(drambender_program_metadata_test PROPERTIES
+    LABELS "host;cpp;program"
+  )
 
   add_executable(drambender_board_config_test
-    tests/board_config_test.cpp
+    internal_tests/board_config_test.cpp
   )
   target_include_directories(drambender_board_config_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
   target_link_libraries(drambender_board_config_test PRIVATE DRAMBender)
   add_test(NAME drambender_board_config_test COMMAND drambender_board_config_test)
+  set_tests_properties(drambender_board_config_test PROPERTIES
+    LABELS "host;cpp;api"
+  )
 
   add_executable(drambender_vm_timing_test
-    tests/vm_timing_test.cpp
+    internal_tests/vm_timing_test.cpp
   )
   target_link_libraries(drambender_vm_timing_test PRIVATE DRAMBender)
   add_test(NAME drambender_vm_timing_test COMMAND drambender_vm_timing_test)
+  set_tests_properties(drambender_vm_timing_test PROPERTIES
+    LABELS "host;cpp;vm"
+  )
 
   add_executable(drambender_readback_protocol_test
-    tests/readback_protocol_test.cpp
+    internal_tests/readback_protocol_test.cpp
   )
   target_include_directories(drambender_readback_protocol_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
   target_link_libraries(drambender_readback_protocol_test PRIVATE DRAMBender)
   add_test(NAME drambender_readback_protocol_test COMMAND drambender_readback_protocol_test)
+  set_tests_properties(drambender_readback_protocol_test PROPERTIES
+    LABELS "host;cpp;readback;recovery"
+  )
 
   add_executable(drambender_xdma_device_resolver_test
-    tests/xdma_device_resolver_test.cpp
+    internal_tests/xdma_device_resolver_test.cpp
   )
   target_include_directories(drambender_xdma_device_resolver_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
   target_link_libraries(drambender_xdma_device_resolver_test PRIVATE DRAMBender)
   add_test(NAME drambender_xdma_device_resolver_test COMMAND drambender_xdma_device_resolver_test)
+  set_tests_properties(drambender_xdma_device_resolver_test PROPERTIES
+    LABELS "host;cpp;device-discovery"
+  )
 
   add_executable(drambender_cms_telemetry_test
-    tests/cms_telemetry_test.cpp
+    internal_tests/cms_telemetry_test.cpp
   )
   target_include_directories(drambender_cms_telemetry_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
   target_link_libraries(drambender_cms_telemetry_test PRIVATE DRAMBender)
   add_test(NAME drambender_cms_telemetry_test COMMAND drambender_cms_telemetry_test)
+  set_tests_properties(drambender_cms_telemetry_test PROPERTIES
+    LABELS "host;cpp;telemetry"
+  )
 
   if (DRAMBENDER_BUILD_BOARD_TESTS)
     add_executable(drambender_rw_test
-      tests/board_tests/rw_test.cpp
+      internal_tests/board_tests/rw_test.cpp
     )
     target_link_libraries(drambender_rw_test PRIVATE DRAMBender)
 
     add_executable(drambender_full_reset_test
-      tests/board_tests/full_reset_test.cpp
+      internal_tests/board_tests/full_reset_test.cpp
     )
     target_link_libraries(drambender_full_reset_test PRIVATE DRAMBender)
 
     add_executable(drambender_hbm2_rw_test
-      tests/board_tests/hbm2_rw_test.cpp
+      internal_tests/board_tests/hbm2_rw_test.cpp
     )
     target_link_libraries(drambender_hbm2_rw_test PRIVATE DRAMBender)
 
     add_executable(drambender_rowhammer_test
-      tests/board_tests/rowhammer_test.cpp
+      internal_tests/board_tests/rowhammer_test.cpp
     )
     target_link_libraries(drambender_rowhammer_test PRIVATE DRAMBender)
   endif()
 
   add_executable(drambender_jit_native_benchmark
-    tests/jit_benchmark/jit_native_baseline.cpp
+    internal_tests/jit_benchmark/jit_native_baseline.cpp
   )
   target_link_libraries(drambender_jit_native_benchmark PRIVATE DRAMBender)
 endif()
@@ -239,7 +260,7 @@ if (DRAMBENDER_BUILD_PYTHON)
     set(DEV_MODULE Development.Module)
   endif()
 
-  find_package(Python 3.9 COMPONENTS Interpreter REQUIRED)
+  find_package(Python 3.10 COMPONENTS Interpreter REQUIRED)
 
   execute_process(
     COMMAND "${Python_EXECUTABLE}" -c
@@ -283,7 +304,7 @@ if (DRAMBENDER_BUILD_PYTHON)
     )
   endif()
 
-  find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
+  find_package(Python 3.10 COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
   find_package(nanobind CONFIG QUIET)
   if (NOT nanobind_FOUND)
     FetchContent_Declare(
@@ -328,8 +349,44 @@ if (DRAMBENDER_BUILD_PYTHON)
     add_test(
       NAME drambender_python_interrupt_test
       COMMAND "${Python_EXECUTABLE}"
-              "${CMAKE_CURRENT_SOURCE_DIR}/tests/python_interrupt_test.py"
+              "${CMAKE_CURRENT_SOURCE_DIR}/internal_tests/python_interrupt_test.py"
               --extension "$<TARGET_FILE:drambender_core>"
+    )
+    set_tests_properties(drambender_python_interrupt_test PROPERTIES
+      LABELS "host;python;interrupt;recovery"
+    )
+
+    add_test(
+      NAME drambender_python_target_api_test
+      COMMAND "${Python_EXECUTABLE}"
+              "${CMAKE_CURRENT_SOURCE_DIR}/internal_tests/target_api_test.py"
+    )
+    set_tests_properties(drambender_python_target_api_test PROPERTIES
+      LABELS "host;python;api;vm"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/python:${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+
+    add_test(
+      NAME drambender_multi_endpoint_interrupt_harness_test
+      COMMAND "${Python_EXECUTABLE}"
+              "${CMAKE_CURRENT_SOURCE_DIR}/internal_tests/board_tests/multi_endpoint_interrupt_harness_test.py"
+    )
+    set_tests_properties(drambender_multi_endpoint_interrupt_harness_test PROPERTIES
+      LABELS "host;python;multiboard;recovery"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/python:${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+
+    add_test(
+      NAME drambender_sibling_reset_isolation_harness_test
+      COMMAND "${Python_EXECUTABLE}"
+              "${CMAKE_CURRENT_SOURCE_DIR}/internal_tests/board_tests/sibling_reset_isolation_harness_test.py"
+    )
+    set_tests_properties(drambender_sibling_reset_isolation_harness_test PROPERTIES
+      LABELS "host;python;multiboard;recovery"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/python:${CMAKE_CURRENT_SOURCE_DIR}"
     )
   endif()
 

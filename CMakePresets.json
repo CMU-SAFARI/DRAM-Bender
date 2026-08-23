@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 2,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 20,
@@ -16,18 +16,63 @@
         "Python_EXECUTABLE": "${sourceDir}/.venv/bin/python",
         "DRAMBENDER_BUILD_PYTHON": "ON"
       }
+    },
+    {
+      "name": "internal-tests",
+      "displayName": "DRAMBender Internal Tests",
+      "description": "Dedicated host-only internal-test build; no board tests are executed.",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/internal-tests",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "Python_EXECUTABLE": "${sourceDir}/.venv/bin/python",
+        "DRAMBENDER_BUILD_PYTHON": "ON",
+        "DRAMBENDER_PYTHON_PACKAGE_DIR": "${sourceDir}/python/drambender",
+        "DRAMBENDER_BUILD_BOARD_TESTS": "OFF",
+        "DRAMBENDER_BUILD_BOARD_BENCHMARKS": "OFF"
+      }
+    },
+    {
+      "name": "internal-board-tests",
+      "displayName": "DRAMBender Internal Board Qualification",
+      "description": "Dedicated Release build for explicitly invoked board tests and benchmarks.",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/internal-board-tests",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CMAKE_BUILD_TYPE": "Release",
+        "Python_EXECUTABLE": "${sourceDir}/.venv/bin/python",
+        "DRAMBENDER_BUILD_PYTHON": "ON",
+        "DRAMBENDER_PYTHON_PACKAGE_DIR": "${sourceDir}/python/drambender",
+        "DRAMBENDER_BUILD_BOARD_TESTS": "ON",
+        "DRAMBENDER_BUILD_BOARD_BENCHMARKS": "ON"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "dev",
       "configurePreset": "dev"
+    },
+    {
+      "name": "internal-tests",
+      "configurePreset": "internal-tests"
+    },
+    {
+      "name": "internal-board-tests",
+      "configurePreset": "internal-board-tests"
     }
   ],
   "testPresets": [
     {
-      "name": "dev",
-      "configurePreset": "dev",
+      "name": "internal-tests",
+      "configurePreset": "internal-tests",
+      "filter": {
+        "include": {
+          "label": "host"
+        }
+      },
       "output": {
         "outputOnFailure": true
       }

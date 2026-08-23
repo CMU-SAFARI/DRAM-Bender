@@ -30,14 +30,6 @@ from drambender.api import DDR4Target, HostInterface, ProgramBuilder, open_board
 from drambender.api.program.instructions import ACT, NOP, PRE, RD, WR
 
 
-ENDPOINTS = (
-    "0000:01:00.0/0", "0000:01:00.0/1",
-    "0000:21:00.0/0", "0000:21:00.0/1",
-    "0000:22:00.0/0", "0000:22:00.0/1",
-    "0000:41:00.0/0", "0000:41:00.0/1",
-    "0000:42:00.0/0", "0000:42:00.0/1",
-    "0000:61:00.0/0", "0000:61:00.0/1",
-)
 BDF_RE = re.compile(r"^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7]$")
 CACHELINES_PER_ROW = 128
 WORDS_PER_CACHELINE = 16
@@ -345,7 +337,12 @@ def run_parent(endpoints: list[tuple[str, int]], output: Path) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--endpoint", action="append", type=parse_endpoint)
+    parser.add_argument(
+        "--endpoint",
+        action="append",
+        type=parse_endpoint,
+        help="Complete PCI BDF and channel as dddd:bb:ss.f/CHANNEL; repeat per endpoint.",
+    )
     parser.add_argument("--output", type=Path)
     parser.add_argument("--dry-run-only", action="store_true")
     parser.add_argument("--child-mode", choices=("sigint", "sigkill", "recover"))
@@ -361,7 +358,9 @@ def main() -> int:
         if args.child_bdf is None or args.child_channel not in (0, 1) or args.child_index is None:
             raise SystemExit("child mode requires BDF, channel, and index")
         return child_main(args.child_mode, args.child_bdf, args.child_channel, args.child_index)
-    endpoints = args.endpoint or [parse_endpoint(text) for text in ENDPOINTS]
+    if not args.endpoint:
+        raise SystemExit("at least one --endpoint is required")
+    endpoints = args.endpoint
     if len(set(endpoints)) != len(endpoints):
         raise SystemExit("endpoints must be unique")
     for index in range(len(endpoints)):

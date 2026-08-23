@@ -343,7 +343,7 @@ int main(int argc, char** argv) {
   try {
     auto board = create_board(
         BoardType::U200, options.pci_bdf, options.xdma_channel, HostInterface::XDMA);
-    board->reset_fpga();
+    board->full_reset();
 
     const FinalProgram program = build_rw_program(
         options.bank, options.num_rows, options.num_cls, options.pattern);

@@ -120,7 +120,7 @@ class ProgramBuilder:
     or an integer id (0–15).
 
     ``target=`` is required. Pass ``DDR4Target(...)``, ``HBM2U50Target(...)``,
-    or ``HBM2U55Target(...)`` to make omitted ranks and HBM channel selection
+    or ``HBM2U55CTarget(...)`` to make omitted ranks and HBM channel selection
     target-aware while keeping every DRAM command explicit.
 
     Scalar arithmetic and control-flow instructions take one fabric cycle.
@@ -137,7 +137,7 @@ class ProgramBuilder:
         if target is self._TARGET_UNSET or target is None:
             raise TypeError(
                 "ProgramBuilder requires an explicit target=DDR4Target(...), "
-                "target=HBM2U50Target(...), or target=HBM2U55Target(...)."
+                "target=HBM2U50Target(...), or target=HBM2U55CTarget(...)."
             )
         self.target = normalize_target(target)
         self._registers = _RegisterFile()

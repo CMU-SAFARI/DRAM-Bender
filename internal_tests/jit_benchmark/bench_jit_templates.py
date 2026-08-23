@@ -15,7 +15,7 @@ from drambender.api.jit import (  # noqa: E402
     get_last_template_run_stats_dict,
     set_jit_cache_dir,
 )
-from tests.jit_benchmark.jit_benchmark_utils import (  # noqa: E402
+from internal_tests.jit_benchmark.jit_benchmark_utils import (  # noqa: E402
     DEFAULT_NATIVE_EXE,
     benchmark_compiled_cold,
     benchmark_compiled_hot,

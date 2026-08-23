@@ -9,7 +9,7 @@ import subprocess
 import unittest
 from unittest import mock
 
-from tests.board_tests import sibling_reset_isolation_test as harness
+from internal_tests.board_tests import sibling_reset_isolation_test as harness
 
 
 class FakeInput:

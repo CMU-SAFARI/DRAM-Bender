@@ -34,7 +34,7 @@ queried from the FPGA image.
 |---|---|---|
 | `drambender.api.DDR4Target` | U200 | `cachelines_per_row`, `column_stride`, `words_per_cacheline`, `rank` |
 | `drambender.api.HBM2U50Target` | U50 | `channel`, `pseudo_channel`, `sid` (1 SID, no broadcast) |
-| `drambender.api.HBM2U55Target` | U55C | `channel`, `pseudo_channel`, `sid` (2 SIDs, broadcast) |
+| `drambender.api.HBM2U55CTarget` | U55C | `channel`, `pseudo_channel`, `sid` (2 SIDs, broadcast) |
 
 `HBM2Target` is the abstract base of the two HBM2 targets (useful for
 `isinstance` checks); it cannot be instantiated. The HBM2 targets default to
@@ -108,6 +108,6 @@ Controls live in `drambender.api.jit`:
 ## Power telemetry (U55C)
 
 `drambender.api.HBM2U55C` exposes `read_power_telemetry()`; `HBM2U50` reports
-`power_supported == False`. See
+`power_telemetry_supported == False`. See
 [Read power and temperature telemetry](../how-to/read-power-telemetry.md) for
 the rail and sensor fields.

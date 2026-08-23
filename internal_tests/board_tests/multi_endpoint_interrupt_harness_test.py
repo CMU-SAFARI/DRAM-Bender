@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from tests.board_tests import multi_endpoint_interrupt_test as harness
+from internal_tests.board_tests import multi_endpoint_interrupt_test as harness
 
 
 ENDPOINT = ("0000:01:00.0", 0)

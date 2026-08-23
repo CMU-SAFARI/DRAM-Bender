@@ -8,7 +8,7 @@ stock driver. The fork is based on
 
 ## The rationale
 
-DRAM Bender readback uses the [metadata-v1 protocol](readback-protocol.md):
+DRAM Bender readback uses the [readback metadata protocol](readback-protocol.md):
 the FPGA streams framed batches whose sizes the host does not know in advance,
 across idle intervals that can be arbitrarily long (for example, retention
 experiments). The stock XDMA driver models C2H reads as fixed-size transfers,

@@ -3,8 +3,7 @@
 This directory contains a **modified fork** of the Xilinx XDMA driver from
 `dma_ip_drivers`, branch `2020.2`. This is not the stock Xilinx driver.
 
-DRAM Bender requires this fork. The metadata-v1 readback path (DRAM Bender's
-readback framing protocol; see
+DRAM Bender requires this fork. The readback metadata protocol (see
 [docs/explanation/readback-protocol.md](../docs/explanation/readback-protocol.md))
 depends on a credit-based read path that the stock driver does not contain. See
 [CHANGES-vs-upstream.md](CHANGES-vs-upstream.md) for the full list of changes.
@@ -39,7 +38,6 @@ The compatibility layer centralizes kernel API differences such as:
 - Matching kernel headers/build tree for each target kernel:
   `/lib/modules/<kernel-release>/build`
 - `make` and a compiler compatible with the target kernel
-- Optional: `dkms` for automatic rebuilds after kernel upgrades
 
 ## Compile-Only Build
 
@@ -76,8 +74,8 @@ modinfo -F vermagic xdma/drambender_xdma.ko
 
 The kernel-module artifact is deliberately named `drambender_xdma.ko`.
 Ubuntu also ships an unrelated in-tree module named `xdma`; the unique name
-makes `modinfo`, DKMS state, module parameters, and `/sys/module` provenance
-unambiguous. The externally visible FPGA interface stays unchanged:
+makes `modinfo`, module parameters, and `/sys/module` provenance unambiguous.
+The externally visible FPGA interface stays unchanged:
 
 - PCI driver: `/sys/bus/pci/drivers/xdma`
 - device class: `/sys/class/xdma`
@@ -111,61 +109,9 @@ and unload it deliberately first:
 sudo rmmod drambender_xdma
 ```
 
-When migrating from the old artifact name, the one-time unload command is
-`sudo rmmod xdma`. Check the owner first with
-`readlink -f /sys/bus/pci/drivers/xdma/module`; the similarly named Ubuntu
-module is unrelated and may coexist after this rename.
-
-## DKMS
-
-Install with DKMS so the module is rebuilt for future kernel updates:
-
-```sh
-sudo ./install_dkms.sh
-```
-
-Load the DKMS-installed module immediately when no XDMA PCI driver is already
-registered (otherwise use the deliberate replacement procedure above):
-
-```sh
-sudo modprobe drambender_xdma
-```
-
-The PCI modalias also lets udev load it automatically after a reboot.
-
-Install for a specific kernel:
-
-```sh
-sudo ./install_dkms.sh --kernel-release <kernel-release>
-```
-
-Installation is deliberately clean and non-replacing. If this exact DKMS
-package or its `/usr/src` tree already exists, the installer exits before its
-first write. To intentionally reinstall it, first run:
-
-```sh
-sudo ./uninstall_dkms.sh --remove-source
-```
-
-The installer never removes a module for this or any other kernel. Removing a
-previously loaded driver remains a separate, explicit maintenance action.
-
-Remove the DKMS package:
-
-```sh
-sudo ./uninstall_dkms.sh
-```
-
-Remove the DKMS package and its `/usr/src` source copy:
-
-```sh
-sudo ./uninstall_dkms.sh --remove-source
-```
-
-The DKMS install also installs
-`/etc/modprobe.d/drambender-xdma.conf`, which enables the streaming C2H credit
-mode required by metadata-v1 readback when udev auto-loads the module. Neither
-the install nor uninstall script changes a currently loaded driver.
+The driver is intentionally built and loaded directly from this checkout.
+Experiment hosts should use a pinned kernel. After a deliberate kernel change,
+install the matching headers, rebuild the module, and load it again.
 
 ## Non-root device access
 
@@ -197,9 +143,9 @@ edits account memberships.
 
 ## Hardware Tests
 
-The scripts under `tests/` and any command that touches `/dev/xdma*` require a
-programmed FPGA and a host that is ready for hardware access. Do not run those
-tests as part of normal software-only builds.
+The board-facing programs under `internal_tests/` and any command that touches
+`/dev/xdma*` require a programmed FPGA and a host that is ready for hardware
+access. Do not run them as part of normal software-only builds.
 
 The original vendor license, release notes, tools, and test scripts are
 preserved in this directory.

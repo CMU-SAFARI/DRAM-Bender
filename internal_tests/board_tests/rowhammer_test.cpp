@@ -214,7 +214,7 @@ int main(int argc, char** argv) {
   try {
     auto board = create_board(
         BoardType::U200, opts.pci_bdf, opts.xdma_channel, HostInterface::XDMA);
-    board->reset_fpga();
+    board->full_reset();
 
     std::printf("rowhammer_test: bank=%d start_row=%d num_victims=%d hammer_count=%d\n",
                 opts.bank, opts.start_row, opts.num_victims, opts.hammer_count);

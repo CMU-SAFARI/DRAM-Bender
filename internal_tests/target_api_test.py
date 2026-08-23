@@ -15,7 +15,7 @@ from drambender.api import (
     DDR4Target,
     HBM2Target,
     HBM2U50Target,
-    HBM2U55Target,
+    HBM2U55CTarget,
     HostInterface,
     MemoryType,
     ProgramBuilder,
@@ -213,7 +213,7 @@ def test_target_rank_default_and_explicit_override() -> None:
 
 
 def test_hbm2_target_selects_channel_bank_and_rank() -> None:
-    target = HBM2U55Target(channel=3, pseudo_channel=1, sid=1)
+    target = HBM2U55CTarget(channel=3, pseudo_channel=1, sid=1)
     p = ProgramBuilder(target=target)
     p.LI(target.physical_bank(2), "BAR")
     p.LI(9, "RAR")
@@ -259,7 +259,7 @@ def test_open_board_accepts_targets_and_board_type() -> None:
     board_api._native_open_board = fake_native_open_board
     try:
         open_board(DDR4Target(), "0000:01:00.0", 0, HostInterface.XDMA)
-        open_board(HBM2U55Target(), "0000:81:00.0", 1, HostInterface.XDMA)
+        open_board(HBM2U55CTarget(), "0000:81:00.0", 1, HostInterface.XDMA)
         open_board(BoardType.U200, "0001:01:00.0", 2, HostInterface.XDMA)
         open_board(board_configs.U50, "0000:82:00.0", 3, HostInterface.XDMA)
     finally:
@@ -332,7 +332,7 @@ def test_configured_ddr4_builtins() -> None:
 
 
 def test_configured_hbm2_builtins() -> None:
-    target = HBM2U55Target(channel=3, pseudo_channel=1, sid=1)
+    target = HBM2U55CTarget(channel=3, pseudo_channel=1, sid=1)
     programs = builtin_programs.configure(target=target)
     pattern = (0xDEADBEEF,) * target.words_per_cacheline
     write_program = programs.write_row(2, 7, pattern)
@@ -353,7 +353,7 @@ def test_configured_hbm2_builtins() -> None:
 
 @program_template
 def _jit_hbm2_physical_bank_template(bank: int):
-    target = HBM2U55Target(channel=0, pseudo_channel=1, sid=1)
+    target = HBM2U55CTarget(channel=0, pseudo_channel=1, sid=1)
     p = ProgramBuilder(target=target)
     p.LI(target.physical_bank(bank), "BAR")
     p.LI(0, "RAR")
@@ -425,7 +425,7 @@ def test_hbm2_board_variant_capabilities() -> None:
     else:
         raise AssertionError("HBM2U50Target accepted a pseudo-channel beyond its board config")
 
-    u55 = HBM2U55Target(channel=2, sid=1)
+    u55 = HBM2U55CTarget(channel=2, sid=1)
     _assert(
         u55.board_config is board_configs.U55C,
         "U55C target should use U55C config",

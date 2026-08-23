@@ -2,7 +2,7 @@
 """Seeded DDR4 readback and retention-transport qualification.
 
 This is a correctness test, not a performance benchmark.  It exercises
-metadata-v1 framing over many payload sizes, caller receive partitions,
+the readback framing protocol over many payload sizes, caller receive partitions,
 program shapes, and silent intervals.  Refresh-off retention observations are
 reported separately: receiving the exact number of bytes is mandatory, while
 bit mismatches after a retention delay are measurements rather than transport
@@ -42,8 +42,6 @@ TARGET = DDR4Target(
 )
 
 DEFAULT_SEED = 0x44524631
-DEFAULT_BDF = "0000:01:00.0"
-
 PROFILES = {
     "quick": {
         "payload_cachelines": [1, 2, 7, 8, 31, 63, 64, 65, 127, 128, 129],
@@ -696,7 +694,6 @@ def environment_record(args: argparse.Namespace) -> dict[str, Any]:
     core_path = Path(drambender._core.__file__).resolve()
     return {
         "type": "environment",
-        "schema": 1,
         "seed": args.seed,
         "profile": args.profile,
         "pci_bdf": args.pci_bdf,
@@ -714,7 +711,7 @@ def environment_record(args: argparse.Namespace) -> dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--pci-bdf", type=normalize_bdf, default=DEFAULT_BDF)
+    parser.add_argument("--pci-bdf", type=normalize_bdf, required=True)
     parser.add_argument("--xdma-channel", type=int, default=0)
     parser.add_argument("--profile", choices=sorted(PROFILES), default="standard")
     parser.add_argument("--seed", type=parse_int, default=DEFAULT_SEED)
@@ -734,7 +731,7 @@ def main() -> int:
         f"ddr4-readback-fuzz-{platform.node()}-{int(time.time())}.jsonl"
     )
     print(
-        f"DDR4 metadata-v1 fuzz: bdf={args.pci_bdf} channel={args.xdma_channel} "
+        f"DDR4 readback fuzz: bdf={args.pci_bdf} channel={args.xdma_channel} "
         f"profile={args.profile} seed=0x{args.seed:016x}"
     )
     print(f"Results: {results_path}")

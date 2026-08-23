@@ -4,7 +4,7 @@ This driver is a modified fork of the Xilinx XDMA driver from `dma_ip_drivers`.
 This file lists the changes to the driver module sources.
 
 DRAM Bender requires this fork.
-The metadata-v1 readback path (DRAM Bender's readback framing protocol; see
+The readback metadata protocol (see
 [docs/explanation/readback-protocol.md](../docs/explanation/readback-protocol.md))
 depends on the credit-based read path below.
 The stock Xilinx driver does not contain that path.
@@ -34,7 +34,7 @@ The stock Xilinx driver does not contain that path.
 
 - `cyclic_rx_pages` — the cyclic ring size in pages. Default 8192.
 - `cyclic_initial_credits` — the initial C2H credit window in pages. Default 512.
-- `enable_st_c2h_credit` — required. Set this to 1 for metadata-v1 readback.
+- `enable_st_c2h_credit` — required. Set this to 1 for framed readback.
 
 ## User-visible behavior changes
 
@@ -46,8 +46,6 @@ The stock Xilinx driver does not contain that path.
 
 The files below package and deploy the fork. They are DRAM Bender additions, not upstream module sources.
 
-- `dkms.conf`, `install_dkms.sh`, `uninstall_dkms.sh`
-- `modprobe.d/drambender-xdma.conf`
 - `udev/70-drambender-xdma.rules`, `install_access.sh`, `uninstall_access.sh`
 - `build_driver.sh`, `load_driver.sh`
 
