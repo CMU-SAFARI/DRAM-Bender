@@ -1120,8 +1120,16 @@ def resolve_path(path: Path, caller_cwd: Path) -> Path:
     return expanded.resolve() if expanded.is_absolute() else (caller_cwd / expanded).resolve()
 
 
+def absolute_path_preserving_symlinks(path: Path, caller_cwd: Path) -> Path:
+    """Make an executable path absolute without leaving its virtual environment."""
+    expanded = path.expanduser()
+    return expanded.absolute() if expanded.is_absolute() else (caller_cwd / expanded).absolute()
+
+
 def resolve_cli_paths(args: argparse.Namespace, caller_cwd: Path) -> None:
-    for name in ("python", "topology", "artifact_dir", "json_results", "bitstream_file"):
+    if getattr(args, "python", None) is not None:
+        args.python = absolute_path_preserving_symlinks(args.python, caller_cwd)
+    for name in ("topology", "artifact_dir", "json_results", "bitstream_file"):
         value = getattr(args, name, None)
         if value is not None:
             setattr(args, name, resolve_path(value, caller_cwd))
