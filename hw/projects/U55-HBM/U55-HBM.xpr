@@ -231,6 +231,13 @@
           <Attr Name="IsVisible" Val="1"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/verilog/cmd_gen.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../rtl/verilog/ddr_pipeline.v">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/ddr_pipeline.v"/>
@@ -298,13 +305,6 @@
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../../rtl/verilog/softmc_pipeline.v"/>
           <Attr Name="ImportTime" Val="1693987037"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/verilog/cmd_gen.v">
-        <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
