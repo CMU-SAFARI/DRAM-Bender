@@ -360,6 +360,7 @@ if (DRAMBENDER_BUILD_PYTHON)
       NAME drambender_python_target_api_test
       COMMAND "${Python_EXECUTABLE}"
               "${CMAKE_CURRENT_SOURCE_DIR}/internal_tests/target_api_test.py"
+              --extension "$<TARGET_FILE:drambender_core>"
     )
     set_tests_properties(drambender_python_target_api_test PROPERTIES
       LABELS "host;python;api;vm"

@@ -3,7 +3,43 @@
 
 from __future__ import annotations
 
+import argparse
 import importlib
+import importlib.util
+from pathlib import Path
+import sys
+
+
+def _load_built_extension(extension: Path | None) -> None:
+    """Make this test use the extension built by its CMake test target."""
+    if extension is None:
+        return
+
+    package_dir = Path(__file__).resolve().parents[1] / "python" / "drambender"
+    package_spec = importlib.util.spec_from_file_location(
+        "drambender",
+        package_dir / "__init__.py",
+        submodule_search_locations=[str(package_dir)],
+    )
+    if package_spec is None or package_spec.loader is None:
+        raise RuntimeError(f"cannot load Python package from {package_dir}")
+
+    package = importlib.util.module_from_spec(package_spec)
+    sys.modules["drambender"] = package
+
+    core_spec = importlib.util.spec_from_file_location("drambender._core", extension)
+    if core_spec is None or core_spec.loader is None:
+        raise RuntimeError(f"cannot load extension: {extension}")
+    core = importlib.util.module_from_spec(core_spec)
+    sys.modules["drambender._core"] = core
+    core_spec.loader.exec_module(core)
+    package_spec.loader.exec_module(package)
+
+
+_argument_parser = argparse.ArgumentParser()
+_argument_parser.add_argument("--extension", type=Path)
+_arguments = _argument_parser.parse_args()
+_load_built_extension(_arguments.extension)
 
 import drambender.builtin_programs as builtin_programs
 import drambender._core as native_core
@@ -92,7 +128,7 @@ def test_board_configs_are_bound_immutable_defaults() -> None:
             "U50",
             BoardType.U50,
             MemoryType.HBM2,
-            2048,
+            32768,
             5 / 3,
             16,
             2,

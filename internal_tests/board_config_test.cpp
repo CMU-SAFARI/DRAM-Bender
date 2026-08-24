@@ -121,7 +121,8 @@ int main() {
 
   const BoardConfig& u50 = get_board_config(BoardType::U50);
   require(u50.memory_type == MemoryType::HBM2, "U50 must use HBM2");
-  require(u50.instruction_capacity == 2048, "unexpected U50 instruction capacity");
+  require(u50.instruction_capacity == 32768,
+          "unexpected U50 instruction capacity");
   require(close_enough(u50.dram_command_slot_ns, 5.0 / 3.0),
           "unexpected U50 command slot");
   require(u50.hbm_channel_count == 16, "unexpected U50 HBM channel count");

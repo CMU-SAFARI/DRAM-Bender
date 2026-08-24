@@ -11,7 +11,7 @@ The maximum number of submitted instructions per program depends on the board:
 | Board | Instruction capacity |
 |---|---|
 | Alveo U200 | 32,768 (32 K) |
-| Alveo U50 | 2,048 (2 K) |
+| Alveo U50 | 32,768 (32 K) |
 | Alveo U55C | 131,072 (128 K) |
 
 These limits come from the built-in `BoardConfig` records listed under

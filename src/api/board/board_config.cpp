@@ -27,7 +27,7 @@ constexpr std::array<BoardConfig, 3> k_board_configs{{
         .name = "U50",
         .board_type = BoardType::U50,
         .memory_type = MemoryType::HBM2,
-        .instruction_capacity = 2048,
+        .instruction_capacity = 32768,
         .dram_command_slot_ns = 5.0 / 3.0,
         .dram_slots_per_fabric_cycle = 4,
         .readback_buffer_capacity = 1024,
