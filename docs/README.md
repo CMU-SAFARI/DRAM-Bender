@@ -40,6 +40,8 @@ Facts, formats, and API surfaces.
 - [ISA: instruction format and registers](reference/isa.md)
 - [Python API](reference/python-api.md)
 - [C++ API](reference/cpp-api.md)
+- [Changes in v2](reference/changes-in-v2.md) — what changed relative to the
+  previous public release
 
 ## Explanation
 

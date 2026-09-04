@@ -10,6 +10,25 @@ DRAM Bender builds on [SoftMC](https://github.com/CMU-SAFARI/SoftMC). This
 repository contains the Python and C++ APIs, the FPGA RTL, Vivado projects for
 the maintained boards, the PCIe driver, and example programs.
 
+## What's New in v2
+
+Version 2 is a ground-up overhaul of the previous public release. Board
+support now focuses on the Alveo U200, U50, and the newly added U55C, with all
+Vivado projects upgraded to 2024.2 and prebuilt bitstreams moved to a
+submodule. The host software was
+rewritten as an installable C++20 library with a first-class, pip-installable
+Python API that adds a program builder, target-aware built-in programs, a
+tracing JIT for program templates, and a software VM for validating programs
+without hardware. Boards are now selected by PCI BDF instead of a fixed device
+path, DDR4 and HBM2 share one unified API driven by a central board
+configuration registry, and readback uses a framed metadata protocol that
+makes completion deterministic. The bundled XDMA driver became a clearly
+identified fork (`drambender_xdma`) with a credit-based cyclic receive path
+and exclusive endpoint ownership, the U55C gained power and thermal telemetry,
+and the repository gained a qualification test suite and this
+Diátaxis-structured documentation. The full list is in
+[docs/reference/changes-in-v2.md](docs/reference/changes-in-v2.md).
+
 ## Cite DRAM Bender
 
 Please cite the following paper if you use DRAM Bender:
