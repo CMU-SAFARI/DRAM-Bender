@@ -123,14 +123,6 @@ The documentation under [`docs/`](docs/README.md) follows the
 - The API in this repository differs in places from the API described in the
   DRAM Bender publication.
 
-## Prior Work Using DRAM Bender
-
-Sources for reproducing two studies that use DRAM Bender are available in
-separate repositories:
-
-- [U-TRR](https://github.com/CMU-SAFARI/U-TRR)
-- [QUAC-TRNG](https://github.com/CMU-SAFARI/QUAC-TRNG)
-
 ## Contributing
 
 Contributions that add experiments, improve the APIs, extend the ISA, or add a
@@ -146,7 +138,7 @@ Those who discover or resolve issues, or adapt DRAM Bender to additional FPGA
 boards, are encouraged to reach out to:
 
 - Ataberk Olgun (ataberk.olgun [at] safari [dot] ethz [dot] ch)
-- Hasan Hassan (hasan.hasan [at] safari [dot] ethz [dot] ch)
+- Haocong Luo (haocong.luo [at] safari [dot] ethz [dot] ch)
 
 ## License
 
