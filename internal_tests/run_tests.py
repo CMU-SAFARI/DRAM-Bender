@@ -683,6 +683,18 @@ def board_cases(args: argparse.Namespace, artifact_dir: Path) -> list[Case]:
                     args.board,
                 )
             )
+        if includes_python(args):
+            cases.append(
+                python_case(
+                    f"{args.board.upper()} HBM2 channel isolation (Python)",
+                    python,
+                    "hbm2_channel_isolation_test.py",
+                    *board_args,
+                    "--board",
+                    args.board,
+                    "--sweep",
+                )
+            )
         if args.board == "u55c":
             cases.append(
                 python_case(

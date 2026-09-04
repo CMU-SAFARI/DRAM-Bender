@@ -84,7 +84,7 @@ selected device nodes, and exclusive use of the listed endpoints.
 | `u200-recovery` | C++ and Python active/stale-read cancellation and same-handle reuse, plus Python-orchestrated SIGINT, SIGKILL, and fresh-process recovery |
 | `u200-fuzz` | Seeded standard readback fuzzing over sizes, receive partitions, patterns, program shapes, timeouts, FPGA sleeps, and host retention waits |
 | `u200-soak` | Longer seeded fuzz and retention run with the same assertions |
-| `hbm2-smoke` | Matching C++ and Python HBM2 read/write checks for U50 or U55C, plus U55C telemetry |
+| `hbm2-smoke` | Matching C++ and Python HBM2 read/write checks for U50 or U55C, a Python channel-isolation sweep, plus U55C telemetry |
 | `multiboard-correctness` | Barrier-aligned concurrent read/write integrity on every supplied endpoint |
 | `multiboard-recovery` | Interrupt recovery on every endpoint and `full_reset()` isolation in both channel directions on every supplied board |
 | `u200-performance` | Matching current C++ and Python readback workloads with correctness checks and full provenance |
